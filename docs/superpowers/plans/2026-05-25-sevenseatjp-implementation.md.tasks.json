@@ -1,0 +1,185 @@
+{
+  "planPath": "docs/superpowers/plans/2026-05-25-sevenseatjp-implementation.md",
+  "specPath": "docs/superpowers/specs/2026-05-25-sevenseatjp-design.md",
+  "lastUpdated": "2026-05-25T00:00:00Z",
+  "tasks": [
+    {
+      "id": "1",
+      "subject": "Task 1: 项目骨架与工具链",
+      "status": "pending",
+      "metadata": {
+        "files": ["package.json", "tsconfig.json", "biome.json", "astro.config.mjs", "src/styles/globals.css", "src/pages/index.astro", ".gitignore", ".env.local.example", ".dev.vars.example"],
+        "verifyCommand": "bun install && bun run build && bun run lint && bun run typecheck"
+      }
+    },
+    {
+      "id": "2",
+      "subject": "Task 2: CF Pages 部署配置 + 首次部署",
+      "status": "pending",
+      "blockedBy": ["1"],
+      "metadata": {
+        "files": ["public/_headers", "public/robots.txt", "public/favicon.svg", "src/pages/index.astro"],
+        "verifyCommand": "curl -sI https://<prod-url>/ && curl -sI https://<prod-url>/robots.txt"
+      }
+    },
+    {
+      "id": "3",
+      "subject": "Task 3: i18n 路由 + helpers",
+      "status": "pending",
+      "blockedBy": ["2"],
+      "metadata": {
+        "files": ["src/i18n/ja.json", "src/i18n/zh.json", "src/i18n/t.ts", "src/lib/alternate.ts", "src/pages/index.astro", "src/pages/zh/index.astro"],
+        "verifyCommand": "bun run typecheck && bun run build && grep -q '東京' dist/index.html && grep -q '东京' dist/zh/index.html"
+      }
+    },
+    {
+      "id": "4",
+      "subject": "Task 4: Content Collections schema + seed 数据",
+      "status": "pending",
+      "blockedBy": ["3"],
+      "metadata": {
+        "files": ["src/content.config.ts", "src/content/routes/", "src/content/packages/", "src/content/vehicles/", "src/content/faq/", "src/content/testimonials/", "src/assets/vehicles/"],
+        "verifyCommand": "bun run build"
+      }
+    },
+    {
+      "id": "5",
+      "subject": "Task 5: BaseLayout + LangSwitch + UTM attribution",
+      "status": "pending",
+      "blockedBy": ["4"],
+      "metadata": {
+        "files": ["src/layouts/BaseLayout.astro", "src/components/ui/LangSwitch.astro", "src/lib/attribution.client.ts", "src/pages/index.astro", "src/pages/zh/index.astro"],
+        "verifyCommand": "bun run build && grep -c 'hreflang=' dist/index.html"
+      }
+    },
+    {
+      "id": "6",
+      "subject": "Task 6: 共享 UI 组件 (Section/Container/Card/Button)",
+      "status": "pending",
+      "blockedBy": ["5"],
+      "metadata": {
+        "files": ["src/components/ui/Section.astro", "src/components/ui/Container.astro", "src/components/ui/Card.astro", "src/components/ui/Button.astro"],
+        "verifyCommand": "bun run build && bun run typecheck"
+      }
+    },
+    {
+      "id": "7",
+      "subject": "Task 7: HomePage 完整页面",
+      "status": "pending",
+      "blockedBy": ["6"],
+      "metadata": {
+        "files": ["src/components/pages/HomePage.astro", "src/components/home/Hero.astro", "src/components/home/ServiceGrid.astro", "src/components/home/TestimonialsList.astro", "src/pages/index.astro", "src/pages/zh/index.astro"],
+        "verifyCommand": "bun run build"
+      }
+    },
+    {
+      "id": "8",
+      "subject": "Task 8: About + FAQ 页",
+      "status": "pending",
+      "blockedBy": ["6"],
+      "metadata": {
+        "files": ["src/components/pages/AboutPage.astro", "src/components/pages/FaqPage.astro", "src/pages/about.astro", "src/pages/faq.astro", "src/pages/zh/about.astro", "src/pages/zh/faq.astro"],
+        "verifyCommand": "bun run build"
+      }
+    },
+    {
+      "id": "9",
+      "subject": "Task 9: 服务详情页 (机场 + 白马)",
+      "status": "pending",
+      "blockedBy": ["6"],
+      "metadata": {
+        "files": ["src/components/route/PriceTable.astro", "src/components/pages/AirportTransferPage.astro", "src/components/pages/SkiHakubaPage.astro", "src/pages/airport-transfer.astro", "src/pages/ski-hakuba.astro", "src/pages/zh/airport-transfer.astro", "src/pages/zh/ski-hakuba.astro"],
+        "verifyCommand": "bun run build"
+      }
+    },
+    {
+      "id": "10",
+      "subject": "Task 10: 服务详情页 (包车 + 租车) + 价格表 + 车辆",
+      "status": "pending",
+      "blockedBy": ["6"],
+      "metadata": {
+        "files": ["src/components/pages/CharterPage.astro", "src/components/pages/RentalPage.astro", "src/components/pages/PricingPage.astro", "src/components/pages/VehiclesPage.astro", "src/components/route/PackageCard.astro", "src/components/route/VehicleCard.astro"],
+        "verifyCommand": "bun run build"
+      }
+    },
+    {
+      "id": "11",
+      "subject": "Task 11: 法务页 3 个",
+      "status": "pending",
+      "blockedBy": ["6"],
+      "metadata": {
+        "files": ["src/components/pages/legal/TokushohoPage.astro", "src/components/pages/legal/PrivacyPage.astro", "src/components/pages/legal/CancelPolicyPage.astro", "src/pages/legal/", "src/pages/zh/legal/"],
+        "verifyCommand": "bun run build"
+      }
+    },
+    {
+      "id": "12",
+      "subject": "Task 12: 询价表单 - Schema + 前端 + Turnstile",
+      "status": "pending",
+      "blockedBy": ["6"],
+      "metadata": {
+        "files": ["src/lib/schemas/inquiry.ts", "src/components/inquiry/InquiryForm.astro", "src/components/inquiry/inquiry-form.client.ts", "src/components/pages/InquiryPage.astro", "src/pages/inquiry.astro", "src/pages/zh/inquiry.astro"],
+        "verifyCommand": "bun run build && grep -q 'challenges.cloudflare.com' dist/inquiry/index.html && ! grep -q 'challenges.cloudflare.com' dist/index.html"
+      }
+    },
+    {
+      "id": "13",
+      "subject": "Task 13: 询价表单 - Pages Function + 邮件模板 + 本地链路调通",
+      "status": "pending",
+      "blockedBy": ["12"],
+      "metadata": {
+        "files": ["functions/api/inquiry.ts", "src/emails/InquiryInternal.tsx", "src/emails/InquiryCustomer.tsx"],
+        "verifyCommand": "bun run typecheck && bun run dev (manual browser test)"
+      }
+    },
+    {
+      "id": "14",
+      "subject": "Task 14: SEO 完整化 (sitemap + JSON-LD + OG)",
+      "status": "pending",
+      "blockedBy": ["7", "8", "9", "10", "11", "13"],
+      "metadata": {
+        "files": ["astro.config.mjs", "src/layouts/BaseLayout.astro", "src/components/seo/LocalBusinessJsonLd.astro", "src/components/pages/HomePage.astro", "public/og-default.png"],
+        "verifyCommand": "bun run build && test -f dist/sitemap-index.xml && grep -q '/zh/' dist/sitemap-index.xml"
+      }
+    },
+    {
+      "id": "15",
+      "subject": "Task 15: Playwright E2E + GitHub Actions CI",
+      "status": "pending",
+      "blockedBy": ["13", "14"],
+      "metadata": {
+        "files": ["playwright.config.ts", "tests/e2e/pages.spec.ts", "tests/e2e/i18n.spec.ts", "tests/e2e/inquiry.spec.ts", ".github/workflows/ci.yml"],
+        "verifyCommand": "bun run test:e2e --reporter=line"
+      }
+    },
+    {
+      "id": "16",
+      "subject": "Task 16: 性能调优 + 上线冒烟 [user-gate]",
+      "status": "pending",
+      "blockedBy": ["15"],
+      "metadata": {
+        "userGate": true,
+        "requiresUserSpecification": false,
+        "tags": ["user-gate", "launch"],
+        "failurePolicy": "block",
+        "gateScope": "launch-acceptance",
+        "files": ["src/layouts/BaseLayout.astro", "src/content/vehicles/", "docs/launch-checklist.md"],
+        "verifyCommand": "cat docs/launch-checklist.md && git tag --list v1.0.0",
+        "acceptanceCriteria": [
+          "Lighthouse 5 页 perf/a11y >=95 SEO=100 截图存档",
+          "mail-tester >=9/10 截图",
+          "5 真实邮箱测试结果记录",
+          "6 项跨设备记录",
+          "双语无残留验证",
+          "13 个 URL 全部 200",
+          "CTA 语言匹配 grep",
+          "Turnstile 真实通过",
+          "内部邮件归因完整",
+          "CSP 无 violation",
+          "生产域名 DNS+SSL OK",
+          "v1.0.0 tag 已推"
+        ]
+      }
+    }
+  ]
+}
