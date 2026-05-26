@@ -18,20 +18,18 @@ interface TripItem {
   title: string;
   duration: string;
   startingFrom: number;
+  sortKey: number;
 }
 
-const airportRoutes = routes
-  .filter((r) => r.data.category === 'airport')
-  .sort((a, b) => a.data.order - b.data.order);
-const skiRoutes = routes
-  .filter((r) => r.data.category === 'ski')
-  .sort((a, b) => a.data.order - b.data.order);
-const charterPkgs = packages
-  .filter((p) => p.data.type === 'charter')
-  .sort((a, b) => a.data.order - b.data.order);
-const rentalPkgs = packages
-  .filter((p) => p.data.type === 'rental')
-  .sort((a, b) => a.data.order - b.data.order);
+// Trips merge into one ordered list. Sort key combines a category-priority
+// offset with the trip's own .order field so the airport routes (highest
+// volume) lead, then full-day charter, ski (seasonal), self-drive rental.
+const CATEGORY_PRIORITY = {
+  airport: 0,
+  charter: 100,
+  ski: 200,
+  rental: 300,
+} as const;
 
 function routeToTrip(r: CollectionEntry<'routes'>): TripItem {
   const minFare = Math.min(...r.data.fares.map((f) => f.jpy));
@@ -40,6 +38,7 @@ function routeToTrip(r: CollectionEntry<'routes'>): TripItem {
     title: `${r.data.from[locale]} → ${r.data.to[locale]}`,
     duration: `${r.data.durationMin} ${locale === 'zh' ? '分' : '分'}`,
     startingFrom: minFare,
+    sortKey: CATEGORY_PRIORITY[r.data.category] + r.data.order,
   };
 }
 
@@ -52,69 +51,45 @@ function packageToTrip(p: CollectionEntry<'packages'>): TripItem {
     title: p.data.title[locale],
     duration: longest.label[locale],
     startingFrom: minFare,
+    sortKey: CATEGORY_PRIORITY[p.data.type] + p.data.order,
   };
 }
 
-const groups = [
-  {
-    key: 'airport',
-    label: t(locale, 'trip.browse.group.airport'),
-    items: airportRoutes.map(routeToTrip),
-  },
-  {
-    key: 'day',
-    label: t(locale, 'trip.browse.group.day'),
-    items: charterPkgs.map(packageToTrip),
-  },
-  {
-    key: 'ski',
-    label: t(locale, 'trip.browse.group.ski'),
-    items: skiRoutes.map(routeToTrip),
-  },
-  {
-    key: 'selfdrive',
-    label: t(locale, 'trip.browse.group.selfdrive'),
-    items: rentalPkgs.map(packageToTrip),
-  },
-];
+const trips: TripItem[] = [
+  ...routes.map(routeToTrip),
+  ...packages.map(packageToTrip),
+].sort((a, b) => a.sortKey - b.sortKey);
 ---
 <section class="flex justify-center">
   <div class="w-full max-w-7xl px-5 sm:px-8 py-16 sm:py-24 grid grid-cols-12 gap-6 sm:gap-12">
     <p class="caption col-span-12 md:col-span-2">{t(locale, 'trip.browse.heading')}</p>
-    <div class="col-span-12 md:col-span-10 flex flex-col gap-14 sm:gap-20">
-      {groups.map((group) => (
-        <div class="flex flex-col gap-6 sm:gap-8">
-          <h3 class="font-display text-2xl sm:text-3xl text-text">{group.label}</h3>
-          <ol class="flex flex-col">
-            {group.items.map((item, i) => (
-              <li>
-                <a
-                  href={`${prefix}/trip/${item.slug}`}
-                  class:list={[
-                    'group flex flex-col gap-2 sm:grid sm:grid-cols-12 sm:gap-4 sm:items-baseline py-5 sm:py-6 text-text hover:text-gold transition-colors min-h-11',
-                    i > 0 && 'border-t border-border',
-                  ]}
-                >
-                  <div class="flex items-baseline gap-4 sm:contents">
-                    <span class="ordinal text-text-muted tabular text-sm w-8 sm:col-span-1 sm:w-auto">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <span class="flex-1 sm:col-span-7 font-display text-xl sm:text-2xl group-hover:translate-x-1 transition-transform">
-                      {item.title}
-                    </span>
-                  </div>
-                  <div class="flex items-baseline gap-4 ps-12 sm:contents text-sm text-text-muted">
-                    <span class="tabular sm:col-span-2 sm:text-end">{item.duration}</span>
-                    <span class="tabular sm:col-span-2 sm:text-end">
-                      <span class="text-text-deep">¥</span><span>{yen.format(item.startingFrom)}〜</span>
-                    </span>
-                  </div>
-                </a>
-              </li>
-            ))}
-          </ol>
-        </div>
+    <ol class="col-span-12 md:col-span-10 flex flex-col">
+      {trips.map((item, i) => (
+        <li>
+          <a
+            href={`${prefix}/trip/${item.slug}`}
+            class:list={[
+              'group flex flex-col gap-2 sm:grid sm:grid-cols-12 sm:gap-4 sm:items-baseline py-5 sm:py-6 text-text hover:text-gold transition-colors min-h-11',
+              i > 0 && 'border-t border-border',
+            ]}
+          >
+            <div class="flex items-baseline gap-4 sm:contents">
+              <span class="ordinal text-text-muted tabular text-sm w-8 sm:col-span-1 sm:w-auto">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span class="flex-1 sm:col-span-7 font-display text-xl sm:text-2xl group-hover:translate-x-1 transition-transform">
+                {item.title}
+              </span>
+            </div>
+            <div class="flex items-baseline gap-4 ps-12 sm:contents text-sm text-text-muted">
+              <span class="tabular sm:col-span-2 sm:text-end">{item.duration}</span>
+              <span class="tabular sm:col-span-2 sm:text-end">
+                <span class="text-text-deep">¥</span><span>{yen.format(item.startingFrom)}〜</span>
+              </span>
+            </div>
+          </a>
+        </li>
       ))}
-    </div>
+    </ol>
   </div>
 </section>
