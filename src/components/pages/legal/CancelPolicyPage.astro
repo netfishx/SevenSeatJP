@@ -1,0 +1,78 @@
+---
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { type Locale, t } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+
+const rows: ReadonlyArray<{
+  window: { ja: string; zh: string };
+  fee: { ja: string; zh: string };
+}> = [
+  {
+    window: { ja: 'ご出発 7 日前まで', zh: '出发前 7 天以上' },
+    fee: { ja: '無料', zh: '免费' },
+  },
+  {
+    window: { ja: 'ご出発 3〜6 日前', zh: '出发前 3-6 天' },
+    fee: { ja: '料金の 30%', zh: '订单金额的 30%' },
+  },
+  {
+    window: { ja: 'ご出発 24〜48 時間前', zh: '出发前 24-48 小时' },
+    fee: { ja: '料金の 50%', zh: '订单金额的 50%' },
+  },
+  {
+    window: { ja: 'ご出発 24 時間以内', zh: '出发前 24 小时以内' },
+    fee: { ja: '料金の 100%', zh: '订单金额的 100%' },
+  },
+];
+
+const notes = {
+  ja: 'フライト遅延に伴うピックアップ時刻のずれはキャンセル料の対象外です。台風・大雪などの不可抗力時は別途協議の上、対応いたします。',
+  zh: '航班延误导致的接车时间变更不计入取消费。台风、大雪等不可抗力情况，会另行协商处理。',
+} as const;
+---
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'legal.cancel.title')}
+  description={t(locale, 'legal.cancel.intro')}
+>
+  <Section>
+    <Container class="flex flex-col gap-8">
+      <header class="flex flex-col gap-3">
+        <h1 class="text-3xl text-gold font-display">{t(locale, 'legal.cancel.title')}</h1>
+        <p class="text-text-muted leading-relaxed">{t(locale, 'legal.cancel.intro')}</p>
+      </header>
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="bg-surface border-b border-border">
+              <th class="px-3 py-3 text-start font-display text-text-muted uppercase tracking-wider text-xs">
+                {locale === 'ja' ? 'キャンセル時期' : '取消时间'}
+              </th>
+              <th class="px-3 py-3 text-end font-display text-text-muted uppercase tracking-wider text-xs">
+                {locale === 'ja' ? 'キャンセル料' : '取消费用'}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              rows.map((r) => (
+                <tr class="border-b border-border align-top">
+                  <td class="px-3 py-3 text-text">{r.window[locale]}</td>
+                  <td class="px-3 py-3 text-gold font-display text-end">{r.fee[locale]}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="text-sm text-text-muted leading-relaxed">{notes[locale]}</p>
+      <p class="text-xs text-text-muted">{t(locale, 'legal.last_updated')}</p>
+    </Container>
+  </Section>
+</BaseLayout>

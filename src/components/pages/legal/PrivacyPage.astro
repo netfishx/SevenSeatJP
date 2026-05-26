@@ -1,0 +1,81 @@
+---
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { type Locale, t } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+
+const sections: ReadonlyArray<{ heading: { ja: string; zh: string }; body: { ja: string; zh: string } }> = [
+  {
+    heading: { ja: '取得する情報', zh: '收集的信息' },
+    body: {
+      ja: 'お問合せフォームに入力された氏名・連絡先(メール / LINE / 微信)・予約内容・備考、ならびにアクセス時の UTM 流入元情報。',
+      zh: '通过询价表单提交的姓名、联系方式(邮箱/LINE/微信)、预约内容、备注，以及访问时的 UTM 来源信息。',
+    },
+  },
+  {
+    heading: { ja: '利用目的', zh: '使用目的' },
+    body: {
+      ja: 'お問合せへの回答、ご予約手続き、サービス提供、サービス改善のための内部分析(個人特定不可)。',
+      zh: '回复询价、办理预约、提供服务、内部服务改进分析(不做个人识别)。',
+    },
+  },
+  {
+    heading: { ja: '保管場所と期間', zh: '保存位置与期限' },
+    body: {
+      ja: 'お問合せ内容は Resend(メール送信サービス)で最大 30 日間、社内 Gmail 受信箱で対応完了後 1 年間保管します。',
+      zh: '询价内容在 Resend(邮件发送服务)上最长保留 30 天，公司 Gmail 收件箱保留至处理完成后 1 年。',
+    },
+  },
+  {
+    heading: { ja: '第三者への提供', zh: '向第三方提供' },
+    body: {
+      ja: '法令に基づく場合、または運送実施のため提携ドライバーへ最小限の情報共有(氏名・連絡先・お迎え場所)を行う場合を除き、原則として第三者に提供しません。',
+      zh: '除依据法令要求，或为执行运送任务向合作司机最小限度共享(姓名·联系方式·上车地点)外，原则上不向第三方提供。',
+    },
+  },
+  {
+    heading: { ja: '解析ツールの利用', zh: '关于分析工具' },
+    body: {
+      ja: '本サイトは Google Analytics / Meta Pixel 等のサードパーティ解析ツールを使用していません。bot 対策の Cloudflare Turnstile はクッキーを使用せず動作します。',
+      zh: '本网站不使用 Google Analytics / Meta Pixel 等第三方分析工具。机器人验证使用的 Cloudflare Turnstile 不使用 cookie。',
+    },
+  },
+  {
+    heading: { ja: '開示・訂正・削除のご請求', zh: '查询·更正·删除请求' },
+    body: {
+      ja: 'お客様自身の情報について開示・訂正・削除をご希望の場合は、お問合せフォームよりご連絡ください。本人確認のうえ対応いたします。',
+      zh: '如您希望查询、更正或删除您本人的信息，请通过询价表单联系我们。完成身份核验后处理。',
+    },
+  },
+];
+---
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'legal.privacy.title')}
+  description={t(locale, 'legal.privacy.intro')}
+>
+  <Section>
+    <Container class="flex flex-col gap-8">
+      <header class="flex flex-col gap-3">
+        <h1 class="text-3xl text-gold font-display">{t(locale, 'legal.privacy.title')}</h1>
+        <p class="text-text-muted leading-relaxed">{t(locale, 'legal.privacy.intro')}</p>
+      </header>
+      <div class="flex flex-col gap-6">
+        {
+          sections.map((s) => (
+            <section class="flex flex-col gap-2 border-b border-border pb-4">
+              <h2 class="font-display text-gold text-lg">{s.heading[locale]}</h2>
+              <p class="text-text-muted text-sm leading-relaxed">{s.body[locale]}</p>
+            </section>
+          ))
+        }
+      </div>
+      <p class="text-xs text-text-muted">{t(locale, 'legal.last_updated')}</p>
+    </Container>
+  </Section>
+</BaseLayout>

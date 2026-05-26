@@ -1,0 +1,89 @@
+---
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { type Locale, t } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+
+const fields: ReadonlyArray<{ label: { ja: string; zh: string }; value: { ja: string; zh: string } }> = [
+  {
+    label: { ja: '販売事業者', zh: '销售事业者' },
+    value: { ja: 'SevenSeatJP(屋号)', zh: 'SevenSeatJP(商号)' },
+  },
+  {
+    label: { ja: '運営責任者', zh: '运营负责人' },
+    value: { ja: '担当責任者(お問合せ時に開示)', zh: '负责人(询价时披露)' },
+  },
+  {
+    label: { ja: '所在地', zh: '所在地' },
+    value: { ja: '〒000-0000 東京都(詳細はお問合せ時に開示)', zh: '邮编 000-0000 东京都(详细询价时披露)' },
+  },
+  {
+    label: { ja: '連絡先', zh: '联系方式' },
+    value: { ja: 'LINE / 微信 / Eメール(お問合せフォーム経由)', zh: 'LINE / 微信 / 邮件(经询价表单)' },
+  },
+  {
+    label: { ja: '取扱商品', zh: '提供商品' },
+    value: {
+      ja: 'ハイヤー手配サービス(空港送迎・チャーター・スキー送迎・レンタル)',
+      zh: '包车安排服务(机场接送·包车·滑雪接送·租车)',
+    },
+  },
+  {
+    label: { ja: '販売価格', zh: '销售价格' },
+    value: {
+      ja: '各サービスページ記載の価格(税込)。追加料金が発生する場合は事前に書面でお見積りいたします。',
+      zh: '以各服务页面所列价格为准(含税)。如有附加费用，会事先以书面形式提供报价。',
+    },
+  },
+  {
+    label: { ja: '支払方法', zh: '支付方式' },
+    value: {
+      ja: '銀行振込 / PayPay / Alipay / WeChat Pay / 現金(日本円)',
+      zh: '银行转账 / PayPay / Alipay / WeChat Pay / 现金(日元)',
+    },
+  },
+  {
+    label: { ja: '商品引渡時期', zh: '服务提供时间' },
+    value: { ja: 'ご予約日時にサービス開始', zh: '按预约日期开始提供服务' },
+  },
+  {
+    label: { ja: '返品・交換', zh: '退换' },
+    value: {
+      ja: 'サービスの性質上、返品はお受けできません。キャンセル・変更はキャンセルポリシーをご参照ください。',
+      zh: '服务性质决定不接受退货。取消或变更请参考取消政策。',
+    },
+  },
+];
+---
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'legal.tokushoho.title')}
+  description={t(locale, 'legal.tokushoho.intro')}
+>
+  <Section>
+    <Container class="flex flex-col gap-8">
+      <header class="flex flex-col gap-3">
+        <h1 class="text-3xl text-gold font-display">{t(locale, 'legal.tokushoho.title')}</h1>
+        <p class="text-text-muted leading-relaxed">{t(locale, 'legal.tokushoho.intro')}</p>
+      </header>
+      <dl class="flex flex-col gap-5">
+        {
+          fields.map((f) => (
+            <div class="grid grid-cols-1 md:grid-cols-[12rem_1fr] gap-2 md:gap-6 border-b border-border pb-4">
+              <dt class="font-display text-gold text-sm uppercase tracking-wider">
+                {f.label[locale]}
+              </dt>
+              <dd class="text-text-muted text-sm leading-relaxed">{f.value[locale]}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <p class="text-xs text-text-muted">{t(locale, 'legal.last_updated')}</p>
+    </Container>
+  </Section>
+</BaseLayout>
