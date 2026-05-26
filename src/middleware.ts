@@ -9,6 +9,8 @@ export const onRequest = defineMiddleware(async (_ctx, next) => {
     'Permissions-Policy',
     'geolocation=(), microphone=(), camera=()',
   );
+  // Blocked while placeholder assets remain. Task 16 removes this line.
+  res.headers.set('X-Robots-Tag', 'noindex, nofollow');
   res.headers.set(
     'Content-Security-Policy',
     [

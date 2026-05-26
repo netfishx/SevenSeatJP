@@ -1,4 +1,7 @@
+# Indexing blocked while placeholder content remains in production
+# (1×1 OG image, 1×1 vehicle photos, undisclosed Tokushoho operator fields).
+# Task 16 lifts this once those assets are replaced.
 User-agent: *
-Allow: /
+Disallow: /
 
 Sitemap: https://sevenseatjp.com/sitemap-index.xml

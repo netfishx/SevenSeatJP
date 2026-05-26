@@ -113,30 +113,37 @@ if (form) {
     submitBtn.disabled = true;
     submitBtn.setAttribute('aria-busy', 'true');
 
-    const { data, error } = await actions.inquiry(input);
+    try {
+      const { data, error } = await actions.inquiry(input);
 
-    if (data?.ok) {
-      const card = document.createElement('div');
-      card.className =
-        'flex flex-col items-center gap-3 p-12 bg-surface border border-border rounded-[var(--radius-card)] text-center';
-      card.innerHTML = `
-        <h2 class="text-2xl text-gold font-display">${
-          locale === 'zh' ? '感谢您的询价' : 'お問合せありがとうございました'
-        }</h2>
-        <p class="text-text-muted">${success[locale]}</p>
-      `;
-      form.replaceWith(card);
-      return;
-    }
+      if (data?.ok) {
+        const card = document.createElement('div');
+        card.className =
+          'flex flex-col items-center gap-3 p-12 bg-surface border border-border rounded-[var(--radius-card)] text-center';
+        card.innerHTML = `
+          <h2 class="text-2xl text-gold font-display">${
+            locale === 'zh' ? '感谢您的询价' : 'お問合せありがとうございました'
+          }</h2>
+          <p class="text-text-muted">${success[locale]}</p>
+        `;
+        form.replaceWith(card);
+        return;
+      }
 
-    if (error) {
-      const code = (error.code as ErrorCode) ?? 'INTERNAL_SERVER_ERROR';
-      showError(errorMap[code] ?? 'email_send_failed');
+      if (error) {
+        const code = (error.code as ErrorCode) ?? 'INTERNAL_SERVER_ERROR';
+        showError(errorMap[code] ?? 'email_send_failed');
+      }
+    } catch (e) {
+      // Network drop / fetch reject / Astro Actions transport failure.
+      console.error('inquiry_submit_failed', e);
+      showError('email_send_failed');
+    } finally {
+      (
+        window as Window & { turnstile?: { reset: () => void } }
+      ).turnstile?.reset();
+      submitBtn.disabled = false;
+      submitBtn.removeAttribute('aria-busy');
     }
-    (
-      window as Window & { turnstile?: { reset: () => void } }
-    ).turnstile?.reset();
-    submitBtn.disabled = false;
-    submitBtn.removeAttribute('aria-busy');
   });
 }

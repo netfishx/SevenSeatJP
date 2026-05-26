@@ -6,10 +6,16 @@ interface Props {
 }
 const { locale } = Astro.props;
 
-const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA';
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+if (!siteKey) {
+  throw new Error(
+    'PUBLIC_TURNSTILE_SITE_KEY must be defined at build time. ' +
+      'Set it in .env.local (dev) or Workers Builds env (prod / preview).',
+  );
+}
 const countryCodes = ['+81', '+86', '+852', '+853', '+886', '+1', '+44', '+65', '+82'] as const;
 ---
-<form id="inquiry-form" novalidate class="flex flex-col gap-6 w-full">
+<form id="inquiry-form" class="flex flex-col gap-6 w-full">
   <div class="flex flex-col gap-2">
     <label for="serviceType" class="text-sm font-display text-text">
       {t(locale, 'inquiry.field.serviceType')}
