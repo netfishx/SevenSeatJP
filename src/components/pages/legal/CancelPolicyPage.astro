@@ -44,7 +44,7 @@ const notes = {
   <Section>
     <Container class="flex flex-col gap-8">
       <header class="flex flex-col gap-3">
-        <h1 class="text-3xl text-gold font-display">{t(locale, 'legal.cancel.title')}</h1>
+        <h1 class="text-3xl text-text font-display">{t(locale, 'legal.cancel.title')}</h1>
         <p class="text-text-muted leading-relaxed">{t(locale, 'legal.cancel.intro')}</p>
       </header>
       <div class="w-full overflow-x-auto">
@@ -64,7 +64,7 @@ const notes = {
               rows.map((r) => (
                 <tr class="border-b border-border align-top">
                   <td class="px-3 py-3 text-text">{r.window[locale]}</td>
-                  <td class="px-3 py-3 text-gold font-display text-end">{r.fee[locale]}</td>
+                  <td class="px-3 py-3 text-text font-display text-end">{r.fee[locale]}</td>
                 </tr>
               ))
             }

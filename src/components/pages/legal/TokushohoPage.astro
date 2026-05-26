@@ -68,14 +68,14 @@ const fields: ReadonlyArray<{ label: { ja: string; zh: string }; value: { ja: st
   <Section>
     <Container class="flex flex-col gap-8">
       <header class="flex flex-col gap-3">
-        <h1 class="text-3xl text-gold font-display">{t(locale, 'legal.tokushoho.title')}</h1>
+        <h1 class="text-3xl text-text font-display">{t(locale, 'legal.tokushoho.title')}</h1>
         <p class="text-text-muted leading-relaxed">{t(locale, 'legal.tokushoho.intro')}</p>
       </header>
       <dl class="flex flex-col gap-5">
         {
           fields.map((f) => (
             <div class="grid grid-cols-1 md:grid-cols-[12rem_1fr] gap-2 md:gap-6 border-b border-border pb-4">
-              <dt class="font-display text-gold text-sm uppercase tracking-wider">
+              <dt class="font-display text-text-deep text-sm uppercase tracking-wider">
                 {f.label[locale]}
               </dt>
               <dd class="text-text-muted text-sm leading-relaxed">{f.value[locale]}</dd>

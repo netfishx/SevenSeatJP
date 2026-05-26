@@ -62,14 +62,14 @@ const sections: ReadonlyArray<{ heading: { ja: string; zh: string }; body: { ja:
   <Section>
     <Container class="flex flex-col gap-8">
       <header class="flex flex-col gap-3">
-        <h1 class="text-3xl text-gold font-display">{t(locale, 'legal.privacy.title')}</h1>
+        <h1 class="text-3xl text-text font-display">{t(locale, 'legal.privacy.title')}</h1>
         <p class="text-text-muted leading-relaxed">{t(locale, 'legal.privacy.intro')}</p>
       </header>
       <div class="flex flex-col gap-6">
         {
           sections.map((s) => (
             <section class="flex flex-col gap-2 border-b border-border pb-4">
-              <h2 class="font-display text-gold text-lg">{s.heading[locale]}</h2>
+              <h2 class="font-display text-text text-lg">{s.heading[locale]}</h2>
               <p class="text-text-muted text-sm leading-relaxed">{s.body[locale]}</p>
             </section>
           ))

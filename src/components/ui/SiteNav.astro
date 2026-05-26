@@ -29,7 +29,7 @@ const currentPath = Astro.url.pathname.replace(/^\/zh\//, '/').replace(/^\/zh$/,
             aria-current={isActive ? 'page' : undefined}
             class:list={[
               'inline-flex items-center min-h-11 px-3 text-[0.78rem] tracking-[0.15em] uppercase transition-colors',
-              isActive ? 'text-gold' : 'text-text-muted hover:text-text focus-visible:text-text',
+              isActive ? 'text-text' : 'text-text-muted hover:text-text focus-visible:text-text',
             ]}
           >
             {t(locale, l.key)}

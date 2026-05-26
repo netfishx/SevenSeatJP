@@ -35,7 +35,7 @@ const vehicleMap = new Map(vehicles.map((v) => [v.id, v.data.name[locale]]));
               <li class="flex justify-between gap-3">
                 <span class="text-text-muted">{vehicleMap.get(f.vehicle.id) ?? f.vehicle.id}</span>
                 <span class="tabular text-text">
-                  <span class="text-text-deep">¥</span><span class="font-display text-gold">{yen.format(f.jpy)}</span>
+                  <span class="text-text-deep">¥</span><span class="font-display">{yen.format(f.jpy)}</span>
                 </span>
               </li>
             ))}
@@ -50,7 +50,7 @@ const vehicleMap = new Map(vehicles.map((v) => [v.id, v.data.name[locale]]));
         <ul class="flex flex-col gap-2 text-sm text-text-muted leading-relaxed">
           {entry.data.inclusions.map((inc) => (
             <li class="flex gap-3">
-              <span aria-hidden="true" class="text-gold mt-1.5 flex-shrink-0">·</span>
+              <span aria-hidden="true" class="text-text-deep mt-1.5 flex-shrink-0">·</span>
               <span>{inc[locale]}</span>
             </li>
           ))}
