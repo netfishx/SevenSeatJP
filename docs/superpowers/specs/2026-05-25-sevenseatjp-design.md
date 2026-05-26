@@ -670,7 +670,7 @@ form.addEventListener('submit', async (e) => {
 // src/lib/schemas/inquiry.ts
 import { z } from 'zod';
 
-const Attr = z.object({
+const Attr = z.strictObject({
   source:   z.string().max(200),
   medium:   z.string().max(200),
   campaign: z.string().max(200),
@@ -681,7 +681,9 @@ const Attr = z.object({
   ts: z.number().int().nonnegative(),
 }).nullable();
 
-export const InquirySchema = z.object({
+// Zod 4 写法:用 z.strictObject 代替 z.object(...).strict()(后者 v4 已 deprecated);
+// 用 z.email() 顶层 schema 代替 z.string().email()
+export const InquirySchema = z.strictObject({
   serviceType: z.enum(['airport', 'charter', 'ski', 'rental']),
   from: z.string().min(1).max(200),
   to: z.string().min(1).max(200),
@@ -691,13 +693,13 @@ export const InquirySchema = z.object({
   luggage: z.number().int().min(0).max(15),
   notes: z.string().max(2000).optional(),
   name: z.string().min(1).max(100),
-  email: z.string().email(),
+  email: z.email(),
   lineId: z.string().max(100).optional(),
   wechat: z.string().max(100).optional(),
   phoneCountryCode: z.string().regex(/^\+\d{1,4}$/),
   phone: z.string().min(4).max(20),
   locale: z.enum(['ja', 'zh']),
-  utm: z.object({
+  utm: z.strictObject({
     firstTouch: Attr,
     lastTouch:  Attr,
     current:    Attr.unwrap(),
@@ -711,7 +713,9 @@ export type InquiryPayload = z.infer<typeof InquirySchema>;
 ```ts
 // functions/api/inquiry.ts
 import { Resend } from 'resend';
-import { render } from '@react-email/render';
+// React Email v6 (2026-04-16) 把所有子包合并到单一 `react-email`;render 仍是 async
+import { render } from 'react-email';
+import { z } from 'zod';
 import { InquirySchema, type InquiryPayload } from '../../src/lib/schemas/inquiry';
 import { InquiryInternalEmail } from '../../src/emails/InquiryInternal';
 import { InquiryCustomerEmail } from '../../src/emails/InquiryCustomer';
@@ -755,7 +759,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   catch { return jsonErr('invalid_payload', 400); }
   const parsed = InquirySchema.safeParse(payload);
   if (!parsed.success) {
-    return jsonErr('invalid_payload', 400, parsed.error.flatten());
+    // Zod 4:.flatten() 已 deprecated;改用顶层 z.flattenError(...)
+    return jsonErr('invalid_payload', 400, z.flattenError(parsed.error));
   }
   const data = parsed.data;
 
@@ -810,6 +815,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
 type SendResult = { data: { id: string } | null; error: unknown };
 
+// Resend SDK v6 行为:`emails.send` 返回 `{ data, error }`,API 错误填 error 字段、**不 reject**;
+// 只有真正的网络/runtime 异常(超时、DNS、React Email render 抛出)才会 throw。
+// 因此用一个 try/catch 包 render + send,**调用方只看返回值的 error 字段**——不要二次 `.catch()`,冗余。
 async function sendInternalEmail(
   resend: Resend, env: Env, data: InquiryPayload,
   safeFrom: string, safeTo: string, subjectPrefix: string,
@@ -824,6 +832,7 @@ async function sendInternalEmail(
       html,
     });
   } catch (e) {
+    // 只有 render 抛或网络层异常进这里;API 错误已经在 send 返回值的 error 字段
     return { data: null, error: e };
   }
 }

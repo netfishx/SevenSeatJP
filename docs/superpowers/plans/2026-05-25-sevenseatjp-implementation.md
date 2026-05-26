@@ -56,7 +56,7 @@
 
 ### 测试覆盖(影响 Task 15)
 
-- Playwright `playwright.config.ts` 必须含**两个 projects**:`chromium-desktop`(1280×720)+ `chromium-mobile`(`devices['iPhone 14']`,390×844)
+- Playwright `playwright.config.ts` 必须含**两个 projects**:`chromium-desktop`(1280×720)+ `chromium-mobile`(`devices['iPhone 16 Pro']`,viewport ≈ 402×874)
 - `pages.spec.ts` 在两个 project 都跑,确保 375-390px 与 1280px 都不破
 
 ---
@@ -132,8 +132,7 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
     "@astrojs/sitemap": "^3.7.2",
     "zod": "^4.4.3",
     "resend": "^6.12.4",
-    "@react-email/components": "^1.0.12",
-    "@react-email/render": "^2.0.8",
+    "react-email": "^6.3.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
@@ -144,14 +143,17 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
     "@tailwindcss/vite": "^4.3.0",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
-    "wrangler": "^4.94.0"
+    "wrangler": "4.46.0"
   }
 }
 ```
 
-> **若执行者发现 npm 上已经有更新版本**:用 `bun add <pkg>@latest` 升级单个依赖,确认 build 通过后**回填具体版本号到 plan 这段**,而不是留下 `^latest` 字面。
+> **几个关键依赖说明**(基于 2026-05-26 官方文档核对):
+> - **`react-email`(单包,^6.3.3)** —— React Email v6(2026-04-16)把 `@react-email/components` + `@react-email/render` 合并到单一包。新代码 `import { Html, Body, render, ... } from 'react-email'`,不再装两个老包。
+> - **`wrangler` 锁到 exact `4.46.0`** —— wrangler **4.47+ 存在 `.dev.vars` 被忽略的 regression**(GitHub workers-sdk #11264),会破坏本地 Function 链路。等 Cloudflare 修复后再放开 caret。**若执行者升级 wrangler,必须先验证 #11264 已 close 且实测 `.dev.vars` 仍被读取。**
+> - **Zod 4** 几个 API 变更已落到代码:`z.strictObject({...})` 代替 `z.object().strict()`;`z.email()` 代替 `z.string().email()`;`z.flattenError(err)` 代替 `err.flatten()`。
 
-> **注意几个 spec 时期就需注意的 major 跨越**:Biome 已是 v2(plan 之前提的 1.9.x 已过时)、wrangler v4、TypeScript 6、Resend SDK v6。`onRequestPost` API、Tailwind v4 `@theme`、Astro 6 静态 + Pages Functions 路径在这些版本下都已稳定。
+> **若执行者发现某个依赖有更新且需升级**:`bun add <pkg>@latest` → 确认 build/test 通过 → **回填新版本号到本 plan 此段**,保持 plan 与代码一致。不要留 `@latest` 字面。
 
 - [ ] **Step 2: 创建 `tsconfig.json`**
 
@@ -173,7 +175,7 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "includes": ["**", "!!dist", "!!.astro", "!!.wrangler", "!!node_modules"]
+    "includes": ["**", "!!dist/**", "!!.astro/**", "!!.wrangler/**", "!!node_modules/**"]
   },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2 },
   "linter": { "enabled": true, "rules": { "recommended": true } },
@@ -181,7 +183,7 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
 }
 ```
 
-> Biome v2 `files.ignore` 已废弃,改用 `files.includes` 配合 `!!` negation glob;`$schema` 用本地路径避免 schema 与 SDK 版本漂移。
+> Biome v2 `files.ignore` 已废弃,统一改用 `files.includes`。**glob 必须精确**:目录排除写 `!!<dir>/**`(末尾 `/**`),光写 `!!dist` 不匹配里面的文件。`!!`(force-ignore)适合构建产物 + 缓存(扫描器不索引);源码若要排除用单 `!`。`$schema` 用本地路径,避免 schema 与 SDK 版本漂移。
 
 - [ ] **Step 4: 创建 `astro.config.mjs`**
 
@@ -1326,7 +1328,7 @@ git commit -m "feat: add sitemap, JSON-LD, OG metadata for SEO"
 - [ ] `inquiry.spec.ts` UTM 归因 case 验证 `payload.utm.firstTouch.source === 'test'`
 - [ ] i18n.spec.ts 验证 LangSwitch 客户端 hash handler
 - [ ] **`pages.spec.ts` 每页两个 viewport 都跑** + 验证 `document.documentElement.scrollWidth === document.documentElement.clientWidth`(无横向滚动)
-- [ ] **mobile project 在 iPhone 14(390×844)模拟器跑**,所有 13 页通过
+- [ ] **mobile project 在 iPhone 16 Pro 模拟器(viewport ≈ 402×874)跑**,所有 13 页通过
 
 **playwright.config.ts 关键片段(两个 projects):**
 
@@ -1349,7 +1351,7 @@ export default defineConfig({
   use: { baseURL: 'http://127.0.0.1:4321' },
   projects: [
     { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'] } },
-    { name: 'chromium-mobile',  use: { ...devices['iPhone 14'] } },
+    { name: 'chromium-mobile',  use: { ...devices['iPhone 16 Pro'] } },
   ],
 });
 ```
