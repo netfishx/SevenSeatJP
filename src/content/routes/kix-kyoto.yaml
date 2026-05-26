@@ -1,0 +1,20 @@
+category: airport
+from: { ja: '関西国際空港', zh: '关西国际机场' }
+to: { ja: '京都市内', zh: '京都市内' }
+durationMin: 110
+distanceKm: 110
+fares:
+  - vehicle: alphard
+    jpy: 35000
+    includes:
+      ja: '高速代・駐車場代込み'
+      zh: '含高速费、停车费'
+    notes:
+      ja: 'インバウンド人気路線・要事前予約'
+      zh: '入境热门路线·建议提前预约'
+  - vehicle: vellfire
+    jpy: 38000
+    includes:
+      ja: '高速代・駐車場代込み'
+      zh: '含高速费、停车费'
+order: 4

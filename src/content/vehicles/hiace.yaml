@@ -1,0 +1,10 @@
+name: { ja: 'トヨタ・ハイエース グランドキャビン', zh: '丰田 HiAce Grand Cabin' }
+seatCount: 9
+luggageCount: 10
+features:
+  - { ja: '広々大型ラゲッジ', zh: '超大行李空间' }
+  - { ja: 'スキー機材積載対応', zh: '支持滑雪装备运输' }
+  - { ja: '長距離快適仕様', zh: '长途舒适配置' }
+photos:
+  - ../../assets/vehicles/hiace-1.jpg
+order: 3

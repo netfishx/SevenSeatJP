@@ -1,0 +1,20 @@
+category: airport
+from: { ja: '羽田空港', zh: '羽田机场' }
+to: { ja: '東京都内', zh: '东京都内' }
+durationMin: 45
+distanceKm: 25
+fares:
+  - vehicle: alphard
+    jpy: 18000
+    includes:
+      ja: '高速代・駐車場代・運転手チップ込み'
+      zh: '含高速费、停车费、司机服务费'
+    notes:
+      ja: '22:00〜翌5:00は深夜料金 +20%'
+      zh: '22:00 至次日 5:00 加收 20% 夜间费'
+  - vehicle: vellfire
+    jpy: 20000
+    includes:
+      ja: '高速代・駐車場代込み'
+      zh: '含高速费、停车费'
+order: 2

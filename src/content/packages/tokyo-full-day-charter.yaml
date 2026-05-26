@@ -1,0 +1,29 @@
+type: charter
+title: { ja: '東京1日チャーター', zh: '东京整日包车' }
+durations:
+  - label: { ja: '半日 (4時間)', zh: '半日 4 小时' }
+    hours: 4
+    fares:
+      - vehicle: alphard
+        jpy: 38000
+        includes: { ja: '市内100km以内', zh: '市内 100 公里以内' }
+      - vehicle: vellfire
+        jpy: 42000
+        includes: { ja: '市内100km以内', zh: '市内 100 公里以内' }
+  - label: { ja: '1日 (8時間)', zh: '整日 8 小时' }
+    hours: 8
+    fares:
+      - vehicle: alphard
+        jpy: 65000
+        includes: { ja: '市内200km以内', zh: '市内 200 公里以内' }
+      - vehicle: hiace
+        jpy: 72000
+        includes: { ja: '7名様まで・市内200km以内', zh: '最多 7 人·市内 200 公里以内' }
+inclusions:
+  - { ja: 'ガソリン代込み', zh: '含油费' }
+  - { ja: '高速代込み(東京都内)', zh: '含高速费(东京都内)' }
+  - { ja: 'プロドライバー', zh: '专业司机' }
+notes:
+  ja: '延長は1時間あたり 6,000 円(税込)'
+  zh: '超时每小时 6,000 日元(含税)'
+order: 1

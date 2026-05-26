@@ -1,0 +1,23 @@
+category: ski
+from: { ja: '東京都内', zh: '东京都内' }
+to: { ja: '白馬八方尾根', zh: '白马八方尾根' }
+durationMin: 300
+distanceKm: 280
+fares:
+  - vehicle: alphard
+    jpy: 95000
+    includes:
+      ja: '高速代込み・スキー機材積載対応'
+      zh: '含高速费·支持滑雪装备运输'
+    notes:
+      ja: 'スキーシーズン限定運行'
+      zh: '滑雪季限定运营'
+  - vehicle: hiace
+    jpy: 110000
+    includes:
+      ja: '7名様 + 機材フル積載'
+      zh: '7 人 + 全套装备装载'
+seasonal:
+  from: '12-01'
+  to: '03-31'
+order: 5

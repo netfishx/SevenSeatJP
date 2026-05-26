@@ -1,0 +1,8 @@
+category: payment
+question:
+  ja: '支払い方法は何がありますか？'
+  zh: '可以用什么方式付款？'
+answer:
+  ja: '銀行振込、PayPay、Alipay、WeChat Pay、現金(日本円)に対応しています。クレジットカード決済は別途手数料が発生します。'
+  zh: '支持银行转账、PayPay、Alipay、WeChat Pay、现金(日元)。信用卡支付需另收手续费。'
+order: 2

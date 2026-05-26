@@ -1,0 +1,10 @@
+name: { ja: 'トヨタ・ヴェルファイア', zh: '丰田 Vellfire' }
+seatCount: 6
+luggageCount: 5
+features:
+  - { ja: '本革オットマンシート', zh: '真皮 Ottoman 头等舱座椅' }
+  - { ja: 'JBLプレミアムサウンド', zh: 'JBL 高级音响' }
+  - { ja: 'デュアル電動ドア', zh: '电动双侧门' }
+photos:
+  - ../../assets/vehicles/vellfire-1.jpg
+order: 2

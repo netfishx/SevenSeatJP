@@ -1,0 +1,23 @@
+type: rental
+title: { ja: '富士山周辺2日レンタル', zh: '富士山周边 2 日租车' }
+durations:
+  - label: { ja: '2日 (24時間 × 2)', zh: '2 天 (24 小时 × 2)' }
+    hours: 48
+    fares:
+      - vehicle: alphard
+        jpy: 88000
+        includes: { ja: '保険・ETC込み', zh: '含保险·ETC' }
+      - vehicle: hiace
+        jpy: 96000
+        includes: { ja: '7名様まで', zh: '最多 7 人' }
+inclusions:
+  - { ja: '基本保険込み', zh: '含基本保险' }
+  - { ja: 'ETCカード付', zh: '附 ETC 卡' }
+  - { ja: 'チャイルドシート無料', zh: '免费儿童座椅' }
+excludeRegions:
+  ja: '北海道・沖縄エリアは対応不可'
+  zh: '北海道·冲绳地区不支持'
+notes:
+  ja: '国際免許またはオフィシャル翻訳が必要'
+  zh: '需国际驾照或官方翻译件'
+order: 2

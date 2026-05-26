@@ -1,0 +1,17 @@
+category: airport
+from: { ja: '関西国際空港', zh: '关西国际机场' }
+to: { ja: '大阪市内', zh: '大阪市内' }
+durationMin: 60
+distanceKm: 50
+fares:
+  - vehicle: alphard
+    jpy: 22000
+    includes:
+      ja: '高速代・駐車場代込み'
+      zh: '含高速费、停车费'
+  - vehicle: hiace
+    jpy: 26000
+    includes:
+      ja: '7名様まで・大型荷物対応'
+      zh: '最多 7 人、大件行李'
+order: 3

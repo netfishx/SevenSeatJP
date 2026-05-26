@@ -1,0 +1,25 @@
+category: airport
+from: { ja: '成田国際空港', zh: '成田国际机场' }
+to: { ja: '東京都内', zh: '东京都内' }
+durationMin: 75
+distanceKm: 70
+fares:
+  - vehicle: alphard
+    jpy: 28000
+    includes:
+      ja: '高速代・駐車場代・運転手チップ込み'
+      zh: '含高速费、停车费、司机服务费'
+    notes:
+      ja: '22:00〜翌5:00は深夜料金 +20%'
+      zh: '22:00 至次日 5:00 加收 20% 夜间费'
+  - vehicle: vellfire
+    jpy: 30000
+    includes:
+      ja: '高速代・駐車場代込み'
+      zh: '含高速费、停车费'
+  - vehicle: hiace
+    jpy: 32000
+    includes:
+      ja: '7名様まで・大型荷物対応'
+      zh: '最多 7 人、大件行李'
+order: 1
