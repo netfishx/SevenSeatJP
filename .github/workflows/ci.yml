@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+env:
+  PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+
+jobs:
+  build:
+    name: Lint + Typecheck + Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run build
+
+  e2e:
+    name: Playwright E2E
+    needs: build
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-e2e')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      # workerd does NOT auto-fallback to process.env; we must materialise
+      # .dev.vars before astro dev starts (see workerd docs).
+      - run: |
+          cat > .dev.vars <<EOF
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY_PREVIEW || 're_dev_test_key' }}
+          TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+          COMPANY_INBOX=delivered+internal@resend.dev
+          INQUIRY_FROM_EMAIL=onboarding@resend.dev
+          EOF
+      - run: bun run test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
