@@ -24,5 +24,6 @@ test-results/
 .vscode/
 .idea/
 .cursor/
-test-results/
-playwright-report/
+
+# 跑分报告下载到 root 时不进 git(归档请放 docs/launch/)
+/*.report.html
