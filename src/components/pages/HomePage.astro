@@ -4,7 +4,6 @@ import homeFujiImg from '@/assets/photos/home-fuji.jpg';
 import Hero from '@/components/home/Hero.astro';
 import TestimonialsList from '@/components/home/TestimonialsList.astro';
 import TripBrowse from '@/components/home/TripBrowse.astro';
-import TrustMetrics from '@/components/home/TrustMetrics.astro';
 import LocalBusinessJsonLd from '@/components/seo/LocalBusinessJsonLd.astro';
 import Button from '@/components/ui/Button.astro';
 import Container from '@/components/ui/Container.astro';
@@ -70,8 +69,7 @@ const leadParagraph =
       ></div>
       <div class="flex justify-center w-full pb-10 sm:pb-16">
         <div class="w-full max-w-7xl px-5 sm:px-8 grid grid-cols-12 gap-6 items-end">
-          <p class="col-span-12 md:col-span-2 caption">{locale === 'zh' ? '车内' : 'On board'}</p>
-          <h2 class="col-span-12 md:col-span-7 font-display text-2xl sm:text-4xl leading-[1.25] max-w-2xl">
+          <h2 class="col-span-12 md:col-span-9 font-display text-2xl sm:text-4xl leading-[1.25] max-w-2xl">
             {locale === 'zh'
               ? '七张座椅,各得其所。'
               : '七つの座席は、それぞれの居場所を。'}
@@ -85,8 +83,6 @@ const leadParagraph =
       </div>
     </div>
   </Section>
-
-  <TrustMetrics locale={locale} />
 
   <Section>
     <Container size="wide" class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
@@ -115,8 +111,13 @@ const leadParagraph =
           <li class="flex justify-between"><span>{locale === 'zh' ? '使用车型' : '車両'}</span><span class="text-text">Alphard / Vellfire</span></li>
           <li class="flex justify-between"><span>{locale === 'zh' ? '参考料金' : '参考料金'}</span><span class="tabular text-text">¥88,000〜</span></li>
         </ul>
-        <Button href={locale === 'zh' ? '/zh/charter' : '/charter'} variant="link">
-          {locale === 'zh' ? '查看チャーター全部套餐' : 'チャータープラン一覧'}
+        <Button
+          href={locale === 'zh'
+            ? '/zh/trip/tokyo-full-day-charter'
+            : '/trip/tokyo-full-day-charter'}
+          variant="link"
+        >
+          {locale === 'zh' ? '查看包车套餐' : 'チャータープランの詳細'}
         </Button>
       </div>
     </Container>
@@ -126,7 +127,6 @@ const leadParagraph =
 
   <Section spacing="loose">
     <Container size="wide" class="flex flex-col items-start gap-10">
-      <p class="caption">{locale === 'zh' ? '联系' : 'Get in touch'}</p>
       <h2 class="font-display text-4xl sm:text-6xl leading-[1.05] max-w-4xl">
         {locale === 'zh'
           ? '把行程交给我们，省下安排的力气。'
