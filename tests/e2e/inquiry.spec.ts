@@ -33,9 +33,20 @@ test('client-side guard: submitting without Turnstile token shows error', async 
   await page.fill('input[name="name"]', 'Test User');
   await page.fill('input[name="email"]', 'test@example.com');
   await page.fill('input[name="phone"]', '09012345678');
+
+  // Strip any Turnstile response token the dummy widget may have auto-filled
+  // so we exercise the client-side guard (token absent → turnstile_failed).
+  await page.evaluate(() => {
+    document
+      .querySelectorAll<HTMLInputElement>('input[name="cf-turnstile-response"]')
+      .forEach((el) => {
+        el.value = '';
+      });
+  });
+
   await page.locator('form#inquiry-form button[type="submit"]').click();
   await expect(page.locator('#inquiry-error')).toContainText(
-    /認証|verification/i,
+    /認証|认证|verification/i,
     {
       timeout: 5_000,
     },
