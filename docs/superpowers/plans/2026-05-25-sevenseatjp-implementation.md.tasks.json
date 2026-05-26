@@ -1,12 +1,12 @@
 {
   "planPath": "docs/superpowers/plans/2026-05-25-sevenseatjp-implementation.md",
   "specPath": "docs/superpowers/specs/2026-05-25-sevenseatjp-design.md",
-  "lastUpdated": "2026-05-26T00:00:00Z",
-  "notes": "Plan revised through 6 review rounds; spec finalized. Mobile responsive requirements added as global cross-cutting concerns. See plan §全局横切要求.",
+  "lastUpdated": "2026-05-26T12:00:00Z",
+  "notes": "Architecture pivoted from static-only + Pages Function to Astro 6 server runtime + @astrojs/cloudflare + Astro Actions (static-first / dynamic-ready). Plan Task 1/2/12/13/14/15 rewritten accordingly.",
   "tasks": [
     {
       "id": "1",
-      "subject": "Task 1: 项目骨架与工具链",
+      "subject": "Task 1: 项目骨架与工具链 (server + cloudflare adapter)",
       "status": "pending",
       "metadata": {
         "files": [
@@ -14,6 +14,8 @@
           "tsconfig.json",
           "biome.json",
           "astro.config.mjs",
+          "wrangler.jsonc",
+          "src/middleware.ts",
           "src/styles/globals.css",
           "src/pages/index.astro",
           ".gitignore",
@@ -21,19 +23,19 @@
           ".dev.vars.example",
           "bun.lock"
         ],
-        "verifyCommand": "bun install && bun run build && bun run lint && bun run typecheck",
-        "notes": "Pin concrete versions (no @latest in plan text). Biome v2 schema/format. bun.lock must be committed."
+        "verifyCommand": "bun install && bun run build && bun run lint && bun run typecheck && test -f dist/_worker.js",
+        "notes": "output: 'server' + adapter: cloudflare(); wrangler.jsonc with nodejs_compat; src/middleware.ts with CSP + placeholder X-Robots-Tag noindex; index.astro has 'export const prerender = true'. @astrojs/cloudflare ^13.5.4."
       }
     },
     {
       "id": "2",
-      "subject": "Task 2: CF Pages 部署配置 + 首次部署(仅 *.pages.dev)",
+      "subject": "Task 2: Cloudflare Workers 部署配置 + 首次部署(仅 *.workers.dev)",
       "status": "pending",
       "blockedBy": ["1"],
       "metadata": {
-        "files": ["public/_headers", "public/robots.txt", "public/favicon.svg", "src/pages/index.astro"],
-        "verifyCommand": "curl -sI https://<project>.pages.dev/ | grep -i x-robots-tag && curl -s https://<project>.pages.dev/robots.txt | grep Disallow",
-        "notes": "No custom domain; X-Robots-Tag noindex + robots.txt Disallow until Task 14. Custom domain switch in Task 16."
+        "files": ["public/robots.txt", "public/favicon.svg", "src/pages/index.astro"],
+        "verifyCommand": "curl -sI https://<worker>.workers.dev/ | grep -i x-robots-tag && curl -s https://<worker>.workers.dev/robots.txt | grep Disallow",
+        "notes": "Workers Builds GitHub integration (not Pages); no custom domain until Task 16; X-Robots-Tag noindex via src/middleware.ts (set in Task 1); robots.txt Disallow: /."
       }
     },
     {
@@ -54,7 +56,7 @@
       "metadata": {
         "files": ["src/content.config.ts", "src/content/routes/", "src/content/packages/", "src/content/vehicles/", "src/content/faq/", "src/content/testimonials/", "src/assets/vehicles/"],
         "verifyCommand": "bun run build",
-        "notes": "5 routes: narita-tokyo, haneda-tokyo, kix-osaka, kix-kyoto, tokyo-hakuba (no nrt-tokyo-hiace; multi-vehicle goes in fares[])."
+        "notes": "5 routes: narita-tokyo, haneda-tokyo, kix-osaka, kix-kyoto, tokyo-hakuba (multi-vehicle in fares[])."
       }
     },
     {
@@ -74,8 +76,7 @@
       "blockedBy": ["5"],
       "metadata": {
         "files": ["src/components/ui/Section.astro", "src/components/ui/Container.astro", "src/components/ui/Card.astro", "src/components/ui/Button.astro", "src/components/ui/LangSwitch.astro"],
-        "verifyCommand": "bun run build && bun run typecheck",
-        "notes": "LangSwitch (Task 5) requires min-h-11 + min-w-11 + flex-center wrapper; verify in this task."
+        "verifyCommand": "bun run build && bun run typecheck"
       }
     },
     {
@@ -130,35 +131,35 @@
     },
     {
       "id": "12",
-      "subject": "Task 12: 询价表单 - Schema + 前端 + Turnstile",
+      "subject": "Task 12: 询价表单 - Schema + 前端(调 Astro Action)+ Turnstile",
       "status": "pending",
       "blockedBy": ["6"],
       "metadata": {
-        "files": ["src/lib/schemas/inquiry.ts", "src/components/inquiry/InquiryForm.astro", "src/components/inquiry/inquiry-form.client.ts", "src/components/pages/InquiryPage.astro", "src/pages/inquiry.astro", "src/pages/zh/inquiry.astro"],
-        "verifyCommand": "bun run build && grep -q 'inputmode' dist/inquiry/index.html && grep -q 'autocomplete' dist/inquiry/index.html && grep -q 'data-size=\"flexible\"' dist/inquiry/index.html",
-        "notes": "Mobile keyboard via input type/inputmode/autocomplete; Turnstile data-size=flexible; aria-busy on submit; 375px no-overflow."
+        "files": ["src/lib/schemas/inquiry.ts", "src/actions/index.ts", "src/components/inquiry/InquiryForm.astro", "src/components/inquiry/inquiry-form.client.ts", "src/components/pages/InquiryPage.astro", "src/pages/inquiry.astro", "src/pages/zh/inquiry.astro"],
+        "verifyCommand": "bun run build && grep -q 'inputmode' dist/inquiry/index.html && grep -q 'data-size=\"flexible\"' dist/inquiry/index.html",
+        "notes": "Client calls actions.inquiry(input) from 'astro:actions'; Task 13 fills the real handler. This task ships a stub server.inquiry returning { ok: true }."
       }
     },
     {
       "id": "13",
-      "subject": "Task 13: 询价表单 - Pages Function + 邮件模板 + 本地链路调通",
+      "subject": "Task 13: 询价表单 - Astro Action handler + 邮件模板 + 本地链路调通",
       "status": "pending",
       "blockedBy": ["12"],
       "metadata": {
-        "files": ["functions/api/inquiry.ts", "src/emails/InquiryInternal.tsx", "src/emails/InquiryCustomer.tsx"],
+        "files": ["src/actions/index.ts", "src/emails/InquiryInternal.tsx", "src/emails/InquiryCustomer.tsx"],
         "verifyCommand": "bun run typecheck (Resend dashboard 验收手动)",
-        "notes": "delivered@resend.dev is test address (API success, no real inbox). Real 5-inbox delivery test = Task 16."
+        "notes": "Action handler uses import { env } from 'cloudflare:workers'; ctx.locals.cfContext.waitUntil; ActionError({ code, message }). delivered+*@resend.dev tests API only; real 5-inbox delivery = Task 16."
       }
     },
     {
       "id": "14",
-      "subject": "Task 14: SEO 完整化 (sitemap + JSON-LD + OG) + 解除占位反索引",
+      "subject": "Task 14: SEO 完整化 + 解除占位反索引",
       "status": "pending",
       "blockedBy": ["7", "8", "9", "10", "11", "13"],
       "metadata": {
-        "files": ["astro.config.mjs", "src/layouts/BaseLayout.astro", "src/components/seo/LocalBusinessJsonLd.astro", "src/components/pages/HomePage.astro", "public/og-default.png", "public/robots.txt", "public/_headers"],
-        "verifyCommand": "bun run build && test -f dist/sitemap-index.xml && grep -q '/zh/' dist/sitemap-index.xml && ! grep -q 'X-Robots-Tag' dist/_headers && grep -q 'Allow: /' dist/robots.txt",
-        "notes": "Flip robots.txt Disallow→Allow + remove X-Robots-Tag noindex from _headers; both verified in prod response headers."
+        "files": ["astro.config.mjs", "src/layouts/BaseLayout.astro", "src/components/seo/LocalBusinessJsonLd.astro", "src/components/pages/HomePage.astro", "public/og-default.png", "public/robots.txt", "src/middleware.ts"],
+        "verifyCommand": "bun run build && test -f dist/sitemap-index.xml && grep -q '/zh/' dist/sitemap-index.xml && ! grep -q 'X-Robots-Tag' src/middleware.ts && grep -q 'Allow: /' dist/robots.txt",
+        "notes": "Flip robots.txt Disallow→Allow + remove X-Robots-Tag header set in src/middleware.ts (not _headers)."
       }
     },
     {
@@ -169,7 +170,7 @@
       "metadata": {
         "files": ["playwright.config.ts", "tests/e2e/pages.spec.ts", "tests/e2e/i18n.spec.ts", "tests/e2e/inquiry.spec.ts", ".github/workflows/ci.yml", ".github/workflows/README.md"],
         "verifyCommand": "bun run test:e2e --reporter=line",
-        "notes": "Two projects: chromium-desktop + chromium-mobile (iPhone 14). pull_request.types must include labeled."
+        "notes": "webServer = 'bun run dev' (astro dev takes over workerd); two projects: Desktop Chrome + iPhone 16 Pro. CI secrets via process.env (no --binding bridge needed)."
       }
     },
     {
@@ -189,14 +190,14 @@
           "Lighthouse 5 页 perf/a11y >=95 SEO=100 截图存档",
           "mail-tester >=9/10 截图",
           "5 真实邮箱(Gmail/Outlook/QQ/163/iCloud)测试结果记录",
-          "6 项跨设备记录 (iPhone Safari, Android Chrome, macOS Chrome/Safari/Firefox, Windows Edge)",
+          "6 项跨设备记录",
           "双语无残留验证",
           "13 个 URL 全部 200",
           "CTA 语言匹配 grep",
-          "Turnstile 真实通过 (用真实 site key)",
+          "Turnstile 真实通过(真实 site key)",
           "内部邮件归因完整",
           "CSP 无 violation",
-          "生产域名 DNS + SSL 颁发完成",
+          "生产域名 DNS + SSL 颁发完成(custom domain 绑到 Worker)",
           "v1.0.0 tag 已推"
         ]
       }
