@@ -1,0 +1,46 @@
+---
+import LangSwitch from '@/components/ui/LangSwitch.astro';
+import { type Locale, t } from '@/i18n/t';
+import { getCanonicalUrl } from '@/lib/alternate';
+import '@/styles/globals.css';
+
+interface Props {
+  locale: Locale;
+  title?: string;
+  description?: string;
+}
+
+const { locale, title, description } = Astro.props;
+const fullTitle = title ? `${title} | ${t(locale, 'site.name')}` : t(locale, 'site.name');
+const canonical = new URL(getCanonicalUrl(Astro.url, locale), Astro.site);
+const jaUrl = new URL(getCanonicalUrl(Astro.url, 'ja'), Astro.site);
+const zhUrl = new URL(getCanonicalUrl(Astro.url, 'zh'), Astro.site);
+---
+<!doctype html>
+<html lang={locale === 'ja' ? 'ja' : 'zh-CN'}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{fullTitle}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="ja" href={jaUrl} />
+    <link rel="alternate" hreflang="zh" href={zhUrl} />
+    <link rel="alternate" hreflang="x-default" href={jaUrl} />
+    <script>
+      import '@/lib/attribution.client';
+    </script>
+  </head>
+  <body class="min-h-screen bg-bg text-text font-body">
+    <header class="flex items-center justify-between p-6">
+      <a
+        href={locale === 'zh' ? '/zh/' : '/'}
+        class="font-display text-xl text-gold"
+      >{t(locale, 'site.name')}</a>
+      <LangSwitch />
+    </header>
+    <main><slot /></main>
+    <footer class="p-6 text-center text-text-muted text-sm">© SevenSeatJP</footer>
+  </body>
+</html>

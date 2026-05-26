@@ -1,0 +1,42 @@
+---
+import { getLocaleFromUrl } from '@/i18n/t';
+import { getLanguageSwitchUrl } from '@/lib/alternate';
+
+const locale = getLocaleFromUrl(Astro.url);
+const jaHref = getLanguageSwitchUrl(Astro.url, 'ja');
+const zhHref = getLanguageSwitchUrl(Astro.url, 'zh');
+---
+<div class="flex items-center gap-3 text-sm">
+  <a
+    data-lang-switch
+    href={jaHref}
+    class:list={[
+      'inline-flex items-center justify-center min-h-11 min-w-11 px-3 underline-offset-4',
+      locale === 'ja' && 'underline text-gold',
+    ]}
+  >日本語</a>
+  <span class="text-text-muted" aria-hidden="true">/</span>
+  <a
+    data-lang-switch
+    href={zhHref}
+    class:list={[
+      'inline-flex items-center justify-center min-h-11 min-w-11 px-3 underline-offset-4',
+      locale === 'zh' && 'underline text-gold',
+    ]}
+  >中文</a>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('[data-lang-switch]').forEach((a) => {
+    a.addEventListener('click', () => {
+      try {
+        if (location.hash) {
+          const href = a.getAttribute('href') ?? '';
+          a.setAttribute('href', href + location.hash);
+        }
+      } catch {
+        /* swallow */
+      }
+    });
+  });
+</script>
