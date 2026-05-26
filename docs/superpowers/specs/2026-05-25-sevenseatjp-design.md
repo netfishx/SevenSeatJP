@@ -30,34 +30,41 @@ authors: cricket
 
 ## 2. 技术决策
 
+### 2.0 架构定位:static-first / dynamic-ready
+
+**不是纯静态站,而是**:Astro 6 server runtime + 营销页 page-level prerender(`export const prerender = true`)。营销页 build 时输出 HTML,与纯静态加载速度等价;询价 / 未来 admin / D1 / 鉴权等动态能力直接在同一个 Astro/Cloudflare runtime 长出来,v2 不需要重拆部署模型。
+
 ### 2.1 技术栈
 
 | 层 | 选型 | 理由 |
 |---|---|---|
-| 框架 | Astro 6(TS) | 默认 SSG、零运行时 JS、岛屿水合按需;纯 static + 独立 Pages Functions 路径,不依赖 @astrojs/cloudflare adapter |
-| 输出模式 | `output: 'static'`(纯静态) | 与 CF Pages 最佳契合;无 Astro adapter |
+| 框架 | Astro 6(TS) | 默认 SSG、零运行时 JS、岛屿水合按需 |
+| 输出模式 | `output: 'server'` + 营销页显式 `prerender = true` | 静态优先、动态能力按需;为 v2(admin/D1/支付/鉴权)留路径 |
+| Adapter | `@astrojs/cloudflare ^13.5.4` | Astro 6 官方;部署目标 = Cloudflare Workers + Static Assets |
+| 表单后端 | **Astro Actions**(`src/actions/index.ts`) | 类型安全 RPC、自动校验同源、复用 `InquirySchema`、与前端 island 共用类型 |
 | 样式 | Tailwind v4(CSS-first,Vite plugin) | token 写在 `globals.css` 的 `@theme {}` |
-| 内容 | Astro Content Collections + Zod(`astro/zod`) | YAML 数据 + 编译期校验 |
+| 内容 | Astro Content Collections + Zod 4(`astro/zod`) | YAML 数据 + 编译期校验 |
 | i18n | Astro 原生 i18n + 自写 `t()` helper | 默认 `ja` 用根路径,`zh` 用 `/zh/` 子路径 |
-| 表单后端 | **Cloudflare Pages Functions**(独立 `functions/api/inquiry.ts`) | 同仓库部署、`context.env`、`context.waitUntil` |
-| 邮件 | Resend(免费 100/日、3000/月) | React Email 模板,中日双语 |
-| 防滥用 | Cloudflare Turnstile(必须 server-side siteverify) | 免费、无 cookie、E2E 用 dummy keys |
-| 部署 | Cloudflare Pages,GitHub 直连 | 免费、全球 CDN、PR preview |
+| 邮件 | Resend(免费 100/日、3000/月) | React Email v6 模板,中日双语 |
+| 防滥用 | Cloudflare Turnstile(server-side siteverify 在 Action 内) | 免费、无 cookie、E2E 用 dummy keys |
+| HTTP headers | `src/middleware.ts` 注入(CSP / X-Robots-Tag 等) | server 模式下 `public/_headers` 只对静态资源生效;middleware 才能覆盖动态响应 |
+| 部署 | Cloudflare Workers,GitHub 直连 | 免费层、全球 edge、PR preview;`wrangler deploy`(不是 `pages deploy`) |
 | 包管理 | Bun(与工作区一致) | — |
-| 代码质量 | Biome(lint+format) + `astro check`(类型) | 与工作区一致 |
-| 测试 | Playwright(关键路径 E2E) | 工期紧,不写单测 |
+| 代码质量 | Biome v2(lint+format) + `astro check`(类型) | — |
+| 测试 | Playwright(关键路径 E2E) | 工期紧,不写单测;`astro dev` 直接跑(adapter 接管 workerd) |
 
-### 2.2 不引入的东西
+### 2.2 不引入的东西(v1)
 
-- **不引 UI 组件库**(shadcn / HeroUI / 等)——黑金高端商务调性靠手写 Tailwind 组件
-- **不引 i18n 第三方库**(next-intl / paraglide / 等)——Astro 原生 + 自写 helper 足够
-- **不接 CMS**——公司无后台,内容直接写 YAML/MD
-- **不引数据库**(D1 不接)——询价仅靠邮件,Gmail 即 CRM
+- **不引 UI 组件库**——黑金商务调性靠手写 Tailwind
+- **不引 i18n 第三方库**——Astro 原生 + 自写 helper 足够
+- **不接 CMS**——公司无后台,内容直接写 YAML / MD
+- **不接数据库**(D1 不接)——v1 询价仅靠邮件,Gmail 即 CRM(为 v2 预留 binding 位)
+- **不上 admin / 鉴权 / 支付**——v2 范围,但**架构已不挡路**
 - **不写单测/快照**——只跑 Playwright E2E
 
 ### 2.3 准确性约束
 
-> 报价单营销话术里的"零攻击面 / 无 cookies"在 spec 层修订为:**静态页面攻击面极小,仅 `/api/inquiry` 一处动态入口;Turnstile 默认无 cookie,不开 pre-clearance**。
+报价单营销话术里的"零攻击面 / 无 cookies"在 spec 层修订为:**静态优先 + 动态能力最小化开放**——营销页全部 prerender 输出 HTML(零运行时 JS),只有 `/_actions/inquiry` 一处动态入口,Turnstile 默认无 cookie 且未开 pre-clearance。Workers 免费层(100k req/day)对营销站流量绰绰有余。
 
 ## 3. 架构总览
 
@@ -66,29 +73,35 @@ authors: cricket
 ```
 浏览者
   │
-  │ ① 浏览(纯静态 HTML,CF CDN 边缘命中)
+  │ ① 浏览(prerendered HTML,Workers Static Assets 边缘命中)
   ▼
-[Astro 生成的 9+4 个静态页]    ← build 时从 YAML 渲染
+[Astro 生成的 9+4 个 prerendered 页]    ← build 时从 YAML 渲染
   │
-  │ ② 询价提交(JS island fetch POST → /api/inquiry)
+  │ ② 询价提交(JS island → import { actions } from 'astro:actions' → await actions.inquiry(input))
   ▼
-[CF Pages Function: /api/inquiry]   ← 由 functions/api/inquiry.ts 提供
-  ├─ Zod 校验 payload
-  ├─ Turnstile server-side siteverify(必须)
-  ├─ Resend 串行发邮件:
-  │    1) 公司 Gmail(失败 = 整体失败 502)
-  │    2) 客户确认邮件(失败仅 console.error,走 context.waitUntil)
-  └─ 返回 { ok: true } / 错误码
+[Astro Action: src/actions/index.ts → server.inquiry]   ← 走 Astro server runtime (Workers)
+  ├─ Zod 校验 input(defineAction({ input: InquirySchema, handler }))
+  ├─ Turnstile server-side siteverify(必须;失败 throw new ActionError({ code: 'FORBIDDEN' }))
+  ├─ Resend 邮件:
+  │    1) 公司邮件(失败 throw new ActionError({ code: 'INTERNAL_SERVER_ERROR' }))
+  │    2) 客户确认邮件 via ctx.locals.cfContext.waitUntil(失败仅 console.error,不阻断)
+  └─ return { ok: true }(自动 Devalue 序列化)
   │
   ▼
-[前端 island] 显示中日双语感谢卡片
+[前端 island] 拿到 { data, error } → 显示中日双语感谢卡片 / 本地化错误
 ```
+
+**关键 API 选择**:
+- 不用手写 endpoint(`src/pages/api/inquiry.ts`)+ `fetch`,改用 **Astro Actions**:类型从 schema 自动推导到客户端 island,无需 JSON serialize/deserialize 样板
+- 不用 `Astro.locals.runtime.env`(Astro 6 移除),改用 `import { env } from 'cloudflare:workers'`(模块级)
+- `waitUntil` 路径 `ctx.locals.cfContext.waitUntil(promise)`
 
 ### 3.2 仓库结构
 
 ```
 servenSeatJP/
-├── astro.config.mjs                 # i18n 配置,无 adapter
+├── astro.config.mjs                 # output: 'server' + adapter: cloudflare()
+├── wrangler.jsonc                   # Workers 配置(name / compat date / nodejs_compat / assets / vars)
 ├── biome.json
 ├── package.json                     # bun
 ├── tsconfig.json
@@ -96,12 +109,13 @@ servenSeatJP/
 ├── public/
 │   ├── favicon.svg
 │   ├── og-image.png
-│   ├── robots.txt
-│   └── _headers                     # CF Pages 头部规则(CSP/cache)
-├── functions/
-│   └── api/
-│       └── inquiry.ts               # CF Pages Function(独立,非 Astro 路由)
+│   └── robots.txt
+│   # 注:public/_headers 只对静态资源生效,不覆盖 Worker 动态响应;
+│   #     CSP / X-Robots-Tag 等头改在 src/middleware.ts 注入
 ├── src/
+│   ├── middleware.ts                # 注入 CSP / X-Robots-Tag / X-Frame-Options 等全站响应头
+│   ├── actions/
+│   │   └── index.ts                 # export const server = { inquiry: defineAction({...}) }
 │   ├── content.config.ts            # Collections schema
 │   ├── content/
 │   │   ├── routes/*.yaml            # 机场/白马 点到点
@@ -121,7 +135,7 @@ servenSeatJP/
 │   │   ├── home/                    # Hero / ServiceGrid / Testimonials
 │   │   ├── inquiry/
 │   │   │   ├── InquiryForm.astro
-│   │   │   └── inquiry-form.client.ts   # JS island(submit + Turnstile)
+│   │   │   └── inquiry-form.client.ts   # JS island(call astro:actions)
 │   │   ├── route/PriceTable.astro
 │   │   └── pages/                   # 各页面真正内容,locale 由父页传入
 │   │       ├── HomePage.astro
@@ -157,7 +171,7 @@ servenSeatJP/
 │   │   ├── attribution.client.ts    # UTM 持久化 island
 │   │   ├── alternate.ts             # SEO/UI 链接 helper
 │   │   └── schemas/
-│   │       └── inquiry.ts           # Astro 与 Function 共享的 Zod schema
+│   │       └── inquiry.ts           # Astro Action 与前端 island 共享的 Zod schema
 │   ├── emails/
 │   │   ├── InquiryInternal.tsx      # React Email
 │   │   └── InquiryCustomer.tsx
@@ -618,18 +632,19 @@ payload.utm = { firstTouch, lastTouch, current };
 ### 7.2 客户端 island(`inquiry-form.client.ts`)
 
 ```ts
+import { actions } from 'astro:actions';
 import { readAttribution } from '@/lib/attribution.client';
 
 const form = document.getElementById('inquiry-form') as HTMLFormElement;
-const status = document.getElementById('inquiry-status') as HTMLElement;
+const submitBtn = form.querySelector('[type="submit"]') as HTMLButtonElement;
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(form);
   const turnstileToken = (form.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement)?.value;
-  if (!turnstileToken) { /* show t('form.error.turnstile') */ return; }
+  if (!turnstileToken) { /* show t('form.error.turnstile_failed') */ return; }
 
-  const payload = {
+  const input = {
     serviceType: fd.get('serviceType'),
     from: fd.get('from'), to: fd.get('to'),
     date: fd.get('date'), time: fd.get('time'),
@@ -646,25 +661,29 @@ form.addEventListener('submit', async (e) => {
     turnstileToken,
   };
 
-  status.textContent = '...';
-  const res = await fetch('/api/inquiry', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const json = await res.json();
-  if (json.ok) {
+  submitBtn.disabled = true;
+  submitBtn.setAttribute('aria-busy', 'true');
+
+  // Astro Actions:类型从 server 端 schema 推导,无需手 serialize/parse JSON
+  const { data, error } = await actions.inquiry(input);
+
+  if (data?.ok) {
     form.replaceWith(/* 感谢卡片 */);
-  } else {
-    // 按 json.code 显示本地化错误,reset Turnstile
-    (window as any).turnstile?.reset();
+    return;
   }
+
+  // error 是 ActionError 形式:{ code: 'BAD_REQUEST' | 'FORBIDDEN' | ..., message: string, fields?: ... }
+  // code 映射到 form.error.<code> 本地化 key(由 BAD_REQUEST 转 invalid_payload 等)
+  showLocalizedError(error);
+  (window as Window & { turnstile?: { reset: () => void } }).turnstile?.reset();
+  submitBtn.disabled = false;
+  submitBtn.removeAttribute('aria-busy');
 });
 ```
 
-### 7.3 Cloudflare Pages Function(`functions/api/inquiry.ts`)
+### 7.3 Astro Action(`src/actions/index.ts`)
 
-**Schema 共享**:Inquiry payload schema 抽到 `src/lib/schemas/inquiry.ts`,由 Astro 端(客户端类型推导)与 Function(运行时校验)共同 import,避免漂移。Pages Function 通过相对路径引用即可——Pages 构建会把依赖打包进 Function bundle。
+**Schema 复用**:Inquiry payload schema 抽到 `src/lib/schemas/inquiry.ts`,Astro Action `input` 字段直接引用,客户端通过 `astro:actions` 自动拿到推导出的输入类型——无 JSON serialize 样板。
 
 ```ts
 // src/lib/schemas/inquiry.ts
@@ -711,141 +730,114 @@ export type InquiryPayload = z.infer<typeof InquirySchema>;
 ```
 
 ```ts
-// functions/api/inquiry.ts
+// src/actions/index.ts
+import { defineAction, ActionError } from 'astro:actions';
 import { Resend } from 'resend';
-// React Email v6 (2026-04-16) 把所有子包合并到单一 `react-email`;render 仍是 async
-import { render } from 'react-email';
-import { z } from 'zod';
-import { InquirySchema, type InquiryPayload } from '../../src/lib/schemas/inquiry';
-import { InquiryInternalEmail } from '../../src/emails/InquiryInternal';
-import { InquiryCustomerEmail } from '../../src/emails/InquiryCustomer';
+import { render } from 'react-email';            // React Email v6 单包
+import { env } from 'cloudflare:workers';        // Astro 6 + cloudflare adapter:模块级 env(替代已删除的 Astro.locals.runtime.env)
+import { InquirySchema } from '@/lib/schemas/inquiry';
+import { InquiryInternalEmail } from '@/emails/InquiryInternal';
+import { InquiryCustomerEmail } from '@/emails/InquiryCustomer';
 
-interface Env {
-  RESEND_API_KEY: string;
-  TURNSTILE_SECRET_KEY: string;
-  COMPANY_INBOX: string;
-  INQUIRY_FROM_EMAIL: string;
+// Workers env binding 的 TS 类型(astro/cloudflare 不会自动生成,推荐手写或用 wrangler types 生成)
+declare module 'cloudflare:workers' {
+  interface Env {
+    RESEND_API_KEY: string;
+    TURNSTILE_SECRET_KEY: string;
+    COMPANY_INBOX: string;
+    INQUIRY_FROM_EMAIL: string;
+  }
 }
 
-const MAX_BODY_BYTES = 100_000;
+export const server = {
+  inquiry: defineAction({
+    accept: 'json',
+    input: InquirySchema,                        // Zod 4 schema 复用;输入类型自动推导到前端 island
+    handler: async (input, ctx) => {
+      // 1. Turnstile server-side siteverify(必须)
+      // ActionError code 用 HTTP-status-style 字符串;'FORBIDDEN' 对应 token 不通过;
+      // 'SERVICE_UNAVAILABLE' 对应 siteverify 不可达——前端按 code 映射本地化文案
+      let verifyOk = false;
+      try {
+        const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            secret:   env.TURNSTILE_SECRET_KEY,
+            response: input.turnstileToken,
+            remoteip: ctx.request.headers.get('CF-Connecting-IP') ?? '',
+          }),
+        });
+        const verify = await verifyRes.json() as { success: boolean };
+        verifyOk = verify.success === true;
+      } catch (e) {
+        console.error('turnstile_verify_unreachable', e);
+        throw new ActionError({ code: 'SERVICE_UNAVAILABLE', message: 'turnstile_unavailable' });
+      }
+      if (!verifyOk) {
+        throw new ActionError({ code: 'FORBIDDEN', message: 'turnstile_failed' });
+      }
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { request, env, waitUntil } = context;
+      // 2. 串行发邮件:内部(必须成功)→ 客户(后台 fire-and-forget)
+      const resend = new Resend(env.RESEND_API_KEY);
+      const lastSrc = sanitizeHeader(input.utm.lastTouch?.source || 'direct');
+      const subjectPrefix = `[${lastSrc}] `;
+      const safeFrom = sanitizeHeader(input.from);
+      const safeTo   = sanitizeHeader(input.to);
 
-  // 0. 入口 guard:content-type 必须 JSON
-  const contentType = (request.headers.get('content-type') ?? '').toLowerCase();
-  if (!contentType.startsWith('application/json')) {
-    return jsonErr('invalid_payload', 415);
-  }
+      // 2a. 内部邮件(必须成功)
+      // 注意 1:`await render(...)` 可能抛(模板异常),所以 render + send 必须包在同一个 try
+      // 注意 2:Resend SDK v6 在 API 错误时返回 { data, error } 而**不 throw**,显式检查 error 字段
+      const internal = await sendInternalEmail(resend, input, safeFrom, safeTo, subjectPrefix);
+      if (internal.error) {
+        console.error('inquiry_internal_send_failed', internal.error);
+        throw new ActionError({ code: 'INTERNAL_SERVER_ERROR', message: 'email_send_failed' });
+      }
 
-  // 1. content-length 早拒(若 client 诚实声明) + 实际字节数兜底(若 header 缺失/撒谎)
-  const declaredLength = Number(request.headers.get('content-length') ?? '');
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
-    return jsonErr('payload_too_large', 413);
-  }
-  let text: string;
-  try { text = await request.text(); }
-  catch { return jsonErr('invalid_payload', 400); }
-  // text.length 是 UTF-16 code unit 数量,不是字节数;中文 1 字符 ≈ UTF-8 3 字节
-  // 必须按真实字节数判定,与 MAX_BODY_BYTES 语义一致
-  const actualBytes = new TextEncoder().encode(text).byteLength;
-  if (actualBytes > MAX_BODY_BYTES) {
-    return jsonErr('payload_too_large', 413);
-  }
+      // 2b. 客户确认邮件(失败仅记日志,不阻断成功;走 cfContext.waitUntil 后台跑)
+      // cfContext 是 Cloudflare Worker ExecutionContext,Astro 6 + cloudflare adapter 在 locals 暴露
+      ctx.locals.cfContext.waitUntil((async () => {
+        const customer = await sendCustomerEmail(resend, input);
+        if (customer.error) {
+          console.error('inquiry_customer_send_failed', customer.error, {
+            internalEmailId: internal.data?.id,
+          });
+        }
+      })());
 
-  // 2. JSON 解析 + Zod 校验
-  let payload: unknown;
-  try { payload = JSON.parse(text); }
-  catch { return jsonErr('invalid_payload', 400); }
-  const parsed = InquirySchema.safeParse(payload);
-  if (!parsed.success) {
-    // Zod 4:.flatten() 已 deprecated;改用顶层 z.flattenError(...)
-    return jsonErr('invalid_payload', 400, z.flattenError(parsed.error));
-  }
-  const data = parsed.data;
-
-  // 3. Turnstile server-side siteverify(必须)
-  // 网络异常 / 非 JSON 响应单独走 turnstile_unavailable(503),与 token 不通过(403)区分
-  let verify: { success: boolean; 'error-codes'?: string[] };
-  try {
-    const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        secret:   env.TURNSTILE_SECRET_KEY,
-        response: data.turnstileToken,
-        remoteip: request.headers.get('CF-Connecting-IP') ?? '',
-      }),
-    });
-    verify = await verifyRes.json() as { success: boolean; 'error-codes'?: string[] };
-  } catch (e) {
-    console.error('turnstile_verify_unreachable', e);
-    return jsonErr('turnstile_unavailable', 503);
-  }
-  if (!verify.success) return jsonErr('turnstile_failed', 403);
-
-  // 4. 串行发邮件:内部 → 客户
-  const resend = new Resend(env.RESEND_API_KEY);
-  const lastSrc = sanitizeHeader(data.utm.lastTouch?.source || 'direct');
-  const subjectPrefix = `[${lastSrc}] `;
-  const safeFrom = sanitizeHeader(data.from);
-  const safeTo   = sanitizeHeader(data.to);
-
-  // 4a. 内部邮件(必须成功)
-  // 注意 1:`await render(...)` 可能抛(模板异常),所以 render + send 必须包在同一个 try
-  // 注意 2:Resend SDK 在 API 错误时返回 { data, error } 而不 throw,必须再显式检查 error 字段
-  const internal = await sendInternalEmail(resend, env, data, safeFrom, safeTo, subjectPrefix);
-  if (internal.error) {
-    console.error('inquiry_internal_send_failed', internal.error);
-    return jsonErr('email_send_failed', 502);
-  }
-
-  // 4b. 客户确认邮件(失败仅记日志,不阻断响应;走 waitUntil 后台跑)
-  waitUntil((async () => {
-    const customer = await sendCustomerEmail(resend, env, data);
-    if (customer.error) {
-      console.error('inquiry_customer_send_failed', customer.error, {
-        internalEmailId: internal.data?.id,
-      });
-    }
-  })());
-
-  return Response.json({ ok: true });
+      return { ok: true as const };               // Devalue 自动序列化到客户端
+    },
+  }),
 };
 
+type Input = typeof InquirySchema._output;
 type SendResult = { data: { id: string } | null; error: unknown };
 
-// Resend SDK v6 行为:`emails.send` 返回 `{ data, error }`,API 错误填 error 字段、**不 reject**;
-// 只有真正的网络/runtime 异常(超时、DNS、React Email render 抛出)才会 throw。
-// 因此用一个 try/catch 包 render + send,**调用方只看返回值的 error 字段**——不要二次 `.catch()`,冗余。
 async function sendInternalEmail(
-  resend: Resend, env: Env, data: InquiryPayload,
+  resend: Resend, input: Input,
   safeFrom: string, safeTo: string, subjectPrefix: string,
 ): Promise<SendResult> {
   try {
-    const html = await render(InquiryInternalEmail({ ...data }));
+    const html = await render(InquiryInternalEmail({ ...input }));
     return await resend.emails.send({
       from: `SevenSeatJP <${env.INQUIRY_FROM_EMAIL}>`,
       to:   env.COMPANY_INBOX,
-      replyTo: data.email,
-      subject: `${subjectPrefix}新询价 ${safeFrom}→${safeTo} ${data.date}`,
+      replyTo: input.email,
+      subject: `${subjectPrefix}新询价 ${safeFrom}→${safeTo} ${input.date}`,
       html,
     });
   } catch (e) {
-    // 只有 render 抛或网络层异常进这里;API 错误已经在 send 返回值的 error 字段
     return { data: null, error: e };
   }
 }
 
-async function sendCustomerEmail(
-  resend: Resend, env: Env, data: InquiryPayload,
-): Promise<SendResult> {
+async function sendCustomerEmail(resend: Resend, input: Input): Promise<SendResult> {
   try {
-    const html = await render(InquiryCustomerEmail({ ...data }));
+    const html = await render(InquiryCustomerEmail({ ...input }));
     return await resend.emails.send({
       from: `SevenSeatJP <${env.INQUIRY_FROM_EMAIL}>`,
-      to:   data.email,
-      subject: data.locale === 'zh'
+      to:   input.email,
+      subject: input.locale === 'zh'
         ? '【SevenSeatJP】您的询价已收到'
         : '【SevenSeatJP】お問合せを受け付けました',
       html,
@@ -855,29 +847,34 @@ async function sendCustomerEmail(
   }
 }
 
-function jsonErr(code: string, status: number, errors?: unknown) {
-  return Response.json({ ok: false, code, ...(errors ? { errors } : {}) }, { status });
-}
-
 // 邮件 subject 防 CRLF / header 注入:换行折叠为空格,首尾去空白,长度兜底
 function sanitizeHeader(s: string): string {
   return s.replace(/[\r\n\t]+/g, ' ').trim().slice(0, 200);
 }
 ```
 
+**说明**:
+- **payload 校验**:Action `input: InquirySchema` 由 Astro Actions 自动 safeParse;校验失败客户端收到 `{ error: { code: 'BAD_REQUEST', fields: { ... } } }`,无需手写 `safeParse` + `flattenError` 块。
+- **body size guard**:Astro Actions 在 server 边读 body 边校验 schema,本身有上限;额外限制可在 middleware 里 reject `Content-Length > 100KB`(可选,若 v1 不必要可略)。
+- **同源校验**:Astro 全局 `security.checkOrigin: true`(server 模式默认)拒绝跨站 POST。`/_actions/inquiry` endpoint 仍是公开的,但 origin check + Turnstile 双层防护足够 v1。
+- **runtime env**:`import { env } from 'cloudflare:workers'`(Astro 6 + adapter v13 推荐)。**不要**用 `Astro.locals.runtime.env`——已删除。
+- **waitUntil**:`ctx.locals.cfContext.waitUntil(promise)`——`cfContext` 是 Worker ExecutionContext。
+
 ### 7.4 错误码与本地化
 
-| code | HTTP | zh | ja |
+ActionError 的 `code` 字段是 HTTP-status-style 字符串(`'BAD_REQUEST'`、`'FORBIDDEN'`、`'INTERNAL_SERVER_ERROR'` 等);`message` 字段携带我们的语义化错误 key(`turnstile_failed`、`email_send_failed` 等),前端按 message 映射到 i18n key `form.error.<message>`。
+
+| ActionError `code` | message key (→ `form.error.<key>`) | zh | ja |
 |---|---|---|---|
-| `invalid_payload` | 400 / 415 | 请检查表单字段 | 入力内容をご確認ください |
-| `payload_too_large` | 413 | 请求过大,请精简备注后重试 | リクエストサイズが大きすぎます |
-| `turnstile_failed` | 403 | 人机验证失败,请刷新重试 | 認証に失敗しました。再度お試しください |
-| `turnstile_unavailable` | 503 | 验证服务暂时不可用,请稍后重试或通过 LINE 联系 | 認証サービスに一時的に接続できません。LINE からご連絡ください |
-| `email_send_failed` | 502 | 提交失败,请通过 LINE 或微信联系 | 送信に失敗しました。LINE からご連絡ください |
+| `BAD_REQUEST` | `invalid_payload`(自动,schema 校验失败时由 Astro Actions 抛出) | 请检查表单字段 | 入力内容をご確認ください |
+| `FORBIDDEN` | `turnstile_failed` | 人机验证失败,请刷新重试 | 認証に失敗しました。再度お試しください |
+| `SERVICE_UNAVAILABLE` | `turnstile_unavailable` | 验证服务暂时不可用,请稍后重试或通过 LINE 联系 | 認証サービスに一時的に接続できません。LINE からご連絡ください |
+| `INTERNAL_SERVER_ERROR` | `email_send_failed` | 提交失败,请通过 LINE 或微信联系 | 送信に失敗しました。LINE からご連絡ください |
+| `PAYLOAD_TOO_LARGE` | `payload_too_large`(可选;若用 middleware 拦) | 请求过大,请精简备注后重试 | リクエストサイズが大きすぎます |
 
 ### 7.5 邮件模板(`src/emails/InquiryInternal.tsx`、`InquiryCustomer.tsx`)
 
-- 用 `@react-email/components`(`Html` / `Head` / `Body` / `Container` / `Section` / `Heading` / `Text` / `Hr`)
+- 从 `react-email` 单包 import:`Html` / `Head` / `Body` / `Container` / `Section` / `Heading` / `Text` / `Hr`(v6 已合并子包)
 - 内部模板:摘要表 + 完整字段 + 归因块(见 §6.4 示意)
 - 客户模板:**单语**,匹配 `data.locale`;含询价摘要 + 24h 回复承诺 + 客服 LINE/WeChat 二维码图(走 Resend 内嵌图片)
 
@@ -892,39 +889,62 @@ function sanitizeHeader(s: string): string {
 
 ## 8. 部署 / CI / 环境
 
-### 8.1 Cloudflare Pages 配置
+### 8.1 Cloudflare Workers 配置
+
+部署目标 = **Cloudflare Workers + Static Assets**(@astrojs/cloudflare v13 只支持 Workers,Pages 已不支持)。构建后 `dist/_worker.js` 是 Worker 入口,`dist/*` 静态资源通过 Workers Static Assets binding 服务。
 
 | 项 | 值 |
 |---|---|
-| Build command | `bun run build` |
-| Build output | `dist/` |
-| Production branch | `main` |
-| Functions dir | `functions/`(自动识别) |
-| 兼容性 flags | `nodejs_compat`(Resend / `@react-email/render` 需要) |
-| 自定义域 | `sevenseatjp.com`(待最终确认) |
+| Build command | `bun run build`(Astro adapter 生成 `dist/_worker.js` + 静态资源) |
+| Deploy command | `wrangler deploy`(**不是** `wrangler pages deploy`) |
+| Worker 入口 | `dist/_worker.js`(adapter 生成) |
+| 静态资源目录 | `dist/`(Workers Static Assets binding) |
+| Production branch | `main`(Workers Builds 监听 GitHub) |
+| 兼容性 flags | `nodejs_compat`(Resend / `react-email` 需要) |
+| Compatibility date | 编写当日(2026-05-26)固定 |
+| 自定义域 | `sevenseatjp.com`(Task 16 才绑,占位阶段只用 `<worker>.workers.dev` + PR preview) |
 
 **依赖**:
-- `devDependency`:`@cloudflare/workers-types`(提供 `PagesFunction<Env>` 类型)、`wrangler`(本地与 E2E 用 `wrangler pages dev dist` 启动包含 Functions 的完整运行环境;`astro dev` 不服务 `functions/`)
-- `dependency`:`zod`、`resend`、`@react-email/components`、`@react-email/render`(Function bundle 打包)
+- `dependency`:`astro`、`@astrojs/cloudflare`、`zod`、`resend`、`react-email`、`react`、`react-dom`、`@astrojs/sitemap`
+- `devDependency`:`@cloudflare/workers-types`(env 类型 + Worker 类型)、`wrangler`(本地 dev + CI deploy)、Tailwind、Biome、Playwright、TypeScript
+
+### 8.1.1 `wrangler.jsonc`(Workers 配置)
+
+```jsonc
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sevenseatjp",
+  "compatibility_date": "2026-05-26",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./dist/_worker.js",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "observability": { "enabled": true }
+  // secrets 不写在这里;走 `wrangler secret put` / Workers dashboard
+  // vars(非密文)可加 [vars] 段;本项目所有 server 端值都是 secret,不需要
+}
+```
 
 ### 8.2 环境变量
 
-**单一 binding 名,在 CF Pages Dashboard 按 Production / Preview scope 分别填值**——Function 代码无需感知环境,代码里只读固定名称。
+**两层 env,单一 binding 名**:Astro build-time `PUBLIC_*`(`import.meta.env`)读 `.env.local`(本地)/ workflow env(CI);Worker runtime secret 走 `cloudflare:workers` 模块的 `env`,值由 wrangler/dashboard 注入。**Workers dashboard 按 Production / Preview scope 分别填值**。代码里只读固定名称,无环境分支逻辑。
 
-| Key | 用途 | 类型 |
-|---|---|---|
-| `RESEND_API_KEY` | Resend API key | secret |
-| `COMPANY_INBOX` | 公司 Gmail / 收件邮箱 | env |
-| `TURNSTILE_SECRET_KEY` | Turnstile server siteverify | secret |
-| `PUBLIC_TURNSTILE_SITE_KEY` | Turnstile widget(build 时注入) | env(public) |
-| `INQUIRY_FROM_EMAIL` | Resend 验证域内的发件地址 | env |
+| Key | 用途 | 类型 | 谁读 |
+|---|---|---|---|
+| `RESEND_API_KEY` | Resend API key | secret | server (Action) |
+| `COMPANY_INBOX` | 公司 Gmail / 收件邮箱 | env | server (Action) |
+| `TURNSTILE_SECRET_KEY` | Turnstile server siteverify | secret | server (Action) |
+| `INQUIRY_FROM_EMAIL` | Resend 验证域内的发件地址 | env | server (Action) |
+| `PUBLIC_TURNSTILE_SITE_KEY` | Turnstile widget(build 时注入到客户端) | env(public) | Astro build-time → `import.meta.env` → prerendered HTML |
 
 各 scope 填值约定:
 
 | Scope | RESEND_API_KEY | COMPANY_INBOX | TURNSTILE_SECRET_KEY | PUBLIC_TURNSTILE_SITE_KEY | INQUIRY_FROM_EMAIL |
 |---|---|---|---|---|---|
 | **Production** | 真实 key | 客户 Gmail | 真实 secret | 真实 site key | `inquiry@sevenseatjp.com` |
-| **Preview** | Resend test key 或同 prod | `delivered@resend.dev` | `1x0000000000000000000000000000000AA` | `1x00000000000000000000AA` | `onboarding@resend.dev` |
+| **Preview** | Resend test key 或同 prod | `delivered+internal@resend.dev` | `1x0000000000000000000000000000000AA` | `1x00000000000000000000AA` | `onboarding@resend.dev` |
 
 ### 8.3 Resend 配置
 
@@ -936,7 +956,9 @@ function sanitizeHeader(s: string): string {
 
 ### 8.4 GitHub Actions(`.github/workflows/ci.yml`)
 
-**关键:`PUBLIC_TURNSTILE_SITE_KEY` 是 build-time 注入**(Astro `import.meta.env`),build 步骤就必须有值——否则 `dist/` 里的 widget data-sitekey 是空字符串。CI build job 也用 Turnstile dummy site key,保证 CI build 与 E2E build 行为一致。
+**关键:`PUBLIC_TURNSTILE_SITE_KEY` 是 build-time 注入**(Astro `import.meta.env`),build 步骤就必须有值——否则 prerendered HTML 里 widget data-sitekey 是空字符串。CI build job 用 Turnstile dummy site key,保证 CI build 与 E2E build 行为一致。
+
+部署职责由 **Cloudflare Workers Builds**(dashboard 直接监听 GitHub)处理——GitHub Actions 只跑 lint/typecheck/build/e2e,不调 `wrangler deploy`。
 
 ```yaml
 name: CI
@@ -944,12 +966,10 @@ on:
   push:
     branches: [main]
   pull_request:
-    # 必须明确 types 含 `labeled`,否则给 PR 加 run-e2e 标签时 workflow 不会重新触发
-    # (默认 types = [opened, synchronize, reopened],不含 labeled)
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened, labeled]   # `labeled` 必须明确,见 plan §Task 15
 
 env:
-  PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA   # dummy,build 时注入到 dist/
+  PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA   # dummy,build 时注入到 prerendered HTML
 
 jobs:
   build:
@@ -958,9 +978,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run lint                       # Biome
+      - run: bun run lint                       # Biome v2
       - run: bun run typecheck                  # astro check
-      - run: bun run build                      # 校验 collections schema + 构建(含 PUBLIC_TURNSTILE_SITE_KEY)
+      - run: bun run build                      # 产出 dist/_worker.js + 静态资源
 
   e2e:
     runs-on: ubuntu-latest
@@ -970,30 +990,31 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run build                      # 同样的 dummy site key 注入 dist/
       - run: bunx playwright install --with-deps chromium
-      - run: bun run test:e2e                   # webServer 通过 --binding 把 secrets 注入 Function context.env
+      - run: bun run test:e2e                   # webServer = astro dev(adapter 接管 workerd)
         env:
           TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
           RESEND_API_KEY:       ${{ secrets.RESEND_API_KEY_PREVIEW }}
-          COMPANY_INBOX:        delivered@resend.dev
+          COMPANY_INBOX:        delivered+internal@resend.dev
           INQUIRY_FROM_EMAIL:   onboarding@resend.dev
 ```
 
 E2E 仅在 PR 上加 `run-e2e` 标签触发,日常 PR 不阻塞。
 
+> **Workers Builds**(Cloudflare dashboard 自带的 GitHub 集成)处理实际部署:推 main → 触发 `bun install && bun run build && wrangler deploy`;开 PR → preview Worker URL。secrets 在 Workers dashboard 按 Production/Preview scope 配置,**不经过 GitHub Actions secrets**(避免双管理)。
+
 ### 8.5 本地与 E2E 运行方式
 
-`astro dev` 不服务 `functions/`,所以**任何涉及 `/api/inquiry` 的开发或测试都必须经 wrangler**。
+Astro 6 + `@astrojs/cloudflare` v13 的 dev server **直接跑 workerd**(Cloudflare Vite plugin),`astro dev` 同时服务营销页 + Action,无需 wrangler 桥接。
 
 env 注入分**两层**,职责不同,文件也不同:
 
 | 层 | 谁读 | 文件 | 暴露给 |
 |---|---|---|---|
-| **Astro build-time** | `bun run build` → `import.meta.env.PUBLIC_*` | `.env.local`(本地)/ CI workflow env | `dist/` 里的 widget data-sitekey 等 public 值 |
-| **Pages Function runtime** | `wrangler pages dev` → `context.env.*` | `.dev.vars`(本地)/ `--binding=` (CI) | Function 里读到的 `env.RESEND_API_KEY` 等 secret |
+| **Astro build-time** | `bun run build` → `import.meta.env.PUBLIC_*` | `.env.local`(本地)/ CI workflow env | prerendered HTML 里的 widget data-sitekey 等 public 值 |
+| **Worker runtime** | `cloudflare:workers` 模块的 `env` | `.dev.vars`(本地;wrangler 标准)/ Workers dashboard scope(生产) | Action handler 里 `env.RESEND_API_KEY` 等 secret |
 
-**两个文件互不替代**:`.dev.vars` 在 Astro build 时根本不会被读;`.env.local` 在 wrangler runtime 也不会暴露到 `context.env`。**本地开发要同时配两份**(同样的值复制两次,接受这点冗余)。
+**两个文件互不替代**:`.dev.vars` 在 build 时不被 Astro 读;`.env.local` 在 workerd runtime 也不会暴露到 `cloudflare:workers` 的 `env`。**本地开发要同时配两份**——同样的值复制两次,接受这点冗余。
 
 ```
 # .env.local (本地,被 .gitignore 排除;Astro build 时读)
@@ -1001,68 +1022,81 @@ PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA
 ```
 
 ```
-# .dev.vars (本地,被 .gitignore 排除;wrangler pages dev 时读)
+# .dev.vars (本地,被 .gitignore 排除;astro dev/workerd 时读)
 RESEND_API_KEY=re_dev_...
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
-COMPANY_INBOX=your-dev-email@example.com
+COMPANY_INBOX=delivered+internal@resend.dev
 INQUIRY_FROM_EMAIL=onboarding@resend.dev
 ```
 
-`.gitignore` 必须包含:`.env.local`、`.env.*.local`、`.dev.vars`、`.dev.vars.*`、`dist/`、`.wrangler/`、`node_modules/`。
-
-CI 不用文件,直接 `process.env`(`PUBLIC_TURNSTILE_SITE_KEY` 在 workflow 顶层 env,build 时可见;runtime secrets 通过 `--binding` 注入 wrangler)。
+`.gitignore` 必须含:`.env.local`、`.env.*.local`、`.dev.vars`、`.dev.vars.*`、`dist/`、`.wrangler/`、`node_modules/`。
 
 ```jsonc
-// package.json scripts
-// 所有走 wrangler 的命令必须带 --compatibility-flag=nodejs_compat,
-// 否则 Resend / @react-email/render 在本地 Function runtime 中报错(与 §8.1 生产配置保持一致)
+// package.json scripts(Astro 6 + cloudflare adapter 下大幅简化)
 {
-  "dev:web":   "astro dev",                                                                                // 只调营销页;/api/inquiry 不可用
-  "dev":       "bun run build && wrangler pages dev dist --port 4321 --compatibility-flag=nodejs_compat", // 调表单完整链路;走 .dev.vars
-  "build":     "astro check && astro build",
-  "preview":   "wrangler pages dev dist --port 4321 --compatibility-flag=nodejs_compat",
+  "dev":       "astro dev",                  // 直接跑 workerd;`.dev.vars` 自动加载
+  "build":     "astro check && astro build", // 产出 dist/_worker.js + 静态资源
+  "preview":   "astro preview",              // workerd runtime preview
+  "deploy":    "wrangler deploy",            // 手动部署;日常用 Workers Builds 自动触发
+  "lint":      "biome check .",
+  "format":    "biome check --write .",
+  "typecheck": "astro check",
   "test:e2e":  "playwright test"
 }
 ```
 
 ```ts
-// playwright.config.ts(关键片段)
-// 仅把"在 process.env 中真正存在的" secret 拼成 --binding;若都不存在(本地 bun run test:e2e),
-// 不传任何 --binding,wrangler 仍会自动加载 .dev.vars。这样不会用空字符串覆盖本地配置。
-const SECRET_KEYS = ['RESEND_API_KEY', 'TURNSTILE_SECRET_KEY', 'COMPANY_INBOX', 'INQUIRY_FROM_EMAIL'] as const;
-const bindings = SECRET_KEYS
-  .filter((k) => typeof process.env[k] === 'string' && process.env[k] !== '')
-  .map((k) => `--binding=${k}=${process.env[k]}`)
-  .join(' ');
-
+// playwright.config.ts(简化)
 export default defineConfig({
   webServer: {
-    command: `wrangler pages dev dist --port 4321 --compatibility-flag=nodejs_compat ${bindings}`.trim(),
+    command: 'bun run dev',                       // astro dev 接管;无需 wrangler --binding
     url: 'http://127.0.0.1:4321',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
   use: { baseURL: 'http://127.0.0.1:4321' },
+  projects: [
+    { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium-mobile',  use: { ...devices['iPhone 16 Pro'] } },
+  ],
 });
 ```
 
-**本地跑 E2E 的两种方式**:
+> CI E2E 时 secrets 由 GitHub Actions `env` 注入到 process.env;Cloudflare Vite plugin 在缺 `.dev.vars` 时**会读 process.env**作为 fallback。本地用户走 `.dev.vars`,CI 走 env。无须 `--binding=` 桥接。
 
-- 用 `.dev.vars`:直接 `bun run test:e2e`(`bindings` 为空,wrangler 自动加载 `.dev.vars`)
-- 用 env exports:`RESEND_API_KEY=... bun run test:e2e`(`--binding` 注入,跳过 `.dev.vars`)
+### 8.6 全站响应头(`src/middleware.ts`)
 
-### 8.6 `public/_headers`
+`output: 'server'` 模式下,`public/_headers` **只对静态资源生效**——Worker 动态响应不经过它。CSP / X-Robots-Tag / X-Frame-Options 等头**改在 Astro middleware 注入**,可按路径细分(占位阶段全站 `noindex`,Task 14 解除)。
 
+```ts
+// src/middleware.ts
+import { defineMiddleware } from 'astro:middleware';
+
+const STATIC_HEADERS: Record<string, string> = {
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+  // 占位阶段(Task 2 之前生产域未绑定时);Task 14 在 SEO 完整化时移除此行
+  'X-Robots-Tag': import.meta.env.LAUNCH_READY === 'true' ? '' : 'noindex, nofollow',
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "script-src 'self' https://challenges.cloudflare.com",
+    "img-src 'self' data: https:",
+    "style-src 'self' 'unsafe-inline'",
+    "connect-src 'self' https://challenges.cloudflare.com",
+    "frame-src https://challenges.cloudflare.com",
+  ].join('; '),
+};
+
+export const onRequest = defineMiddleware(async (ctx, next) => {
+  const response = await next();
+  for (const [k, v] of Object.entries(STATIC_HEADERS)) {
+    if (v) response.headers.set(k, v);
+  }
+  return response;
+});
 ```
-/*
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: geolocation=(), microphone=(), camera=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com;
-```
-
-(询价页加 `https://challenges.cloudflare.com`,营销页可以更严格——若有时间分页加;否则统一)
 
 ## 9. 视觉与设计系统
 
@@ -1193,14 +1227,18 @@ export default defineConfig({
 
 ## 附录 A:技术参考链接
 
-- Astro 静态输出 / on-demand:https://docs.astro.build/en/guides/on-demand-rendering/
-- Astro Cloudflare 集成现状:https://docs.astro.build/en/guides/integrations-guide/cloudflare/
+- Astro 6 升级指南:https://docs.astro.build/en/guides/upgrade-to/v6/
+- Astro Actions:https://docs.astro.build/en/guides/actions/
+- Astro Actions API:https://docs.astro.build/en/reference/modules/astro-actions/
+- Astro on-demand rendering / `prerender`:https://docs.astro.build/en/guides/on-demand-rendering/
+- Astro `@astrojs/cloudflare`(Workers only):https://docs.astro.build/en/guides/integrations-guide/cloudflare/
 - Astro `astro/zod` 模块:https://docs.astro.build/en/reference/modules/astro-zod/
 - Tailwind v4 升级指南:https://tailwindcss.com/docs/upgrade-guide
-- Cloudflare Pages Functions:https://developers.cloudflare.com/pages/functions/
-- Cloudflare Pages Functions API:https://developers.cloudflare.com/pages/functions/api-reference/
+- Cloudflare Workers Static Assets:https://developers.cloudflare.com/workers/static-assets/
+- Cloudflare Workers wrangler.jsonc:https://developers.cloudflare.com/workers/wrangler/configuration/
 - Cloudflare Turnstile:https://developers.cloudflare.com/cloudflare-challenges/challenge-types/turnstile/
 - Turnstile 测试(dummy keys):https://developers.cloudflare.com/turnstile/troubleshooting/testing/
 - Turnstile pre-clearance(本期不启用):https://developers.cloudflare.com/turnstile/get-started/pre-clearance/
 - Resend 发送限额:https://resend.com/docs/knowledge-base/resend-sending-limits
+- React Email v6(单包合并):https://resend.com/blog/react-email-6
 - Zod 4 API:https://zod.dev/api

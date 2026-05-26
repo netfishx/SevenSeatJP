@@ -4,9 +4,9 @@
 
 **Goal:** 按 spec `docs/superpowers/specs/2026-05-25-sevenseatjp-design.md` 实现日本 7 座出行预约网站(中日双语、9 + 1 + 3 页、Cloudflare Pages 部署、询价表单 → Resend 双邮件 + Turnstile + UTM 归因)。
 
-**Architecture:** Astro 6 纯静态构建 + Cloudflare Pages,询价表单走独立 Pages Function(`functions/api/inquiry.ts`)。内容用 Content Collections + Zod schema,翻译 inline 双语 YAML。Tailwind v4 CSS-first(@theme tokens)。i18n 默认 ja + `/zh/` 子路径,每页只写一份组件、镜像页两行引用。E2E 用 Playwright 走 `wrangler pages dev` 真实 Function。
+**Architecture (static-first / dynamic-ready):** Astro 6 server runtime + `@astrojs/cloudflare` adapter,部署到 **Cloudflare Workers + Static Assets**。营销页 `export const prerender = true` build 时输出 HTML(加载与纯静态等价);询价走 **Astro Actions**(`src/actions/index.ts`,类型从 schema 推到客户端),为 v2 加 D1/admin/支付/鉴权留好路径——不需要重拆部署模型。内容用 Content Collections + Zod 4 schema,翻译 inline 双语 YAML。Tailwind v4 CSS-first(@theme tokens)。i18n 默认 ja + `/zh/` 子路径,每页只写一份组件、镜像页两行引用。E2E 用 Playwright 跑 `astro dev`(adapter 接管 workerd)。
 
-**Tech Stack:** Astro 6 · Tailwind v4 · Cloudflare Pages + Functions · Resend · @react-email · Cloudflare Turnstile · Bun · Biome · Playwright · Zod 4
+**Tech Stack:** Astro 6 · `@astrojs/cloudflare` · Astro Actions · Tailwind v4 · Cloudflare Workers + Static Assets · Resend · `react-email` v6 · Cloudflare Turnstile · Bun · Biome v2 · Playwright · Zod 4
 
 **版本策略:plan 编写当日(2026-05-26)的具体最新版本**——package.json 用 caret(`^x.y.z`)允许 minor 升级,lockfile 锁定确切版本。执行者若发现 plan 已过时(npm view 显示更高 major),先确认是否安全升级再改 plan。
 
@@ -86,27 +86,32 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
 
 ### Task 1: 项目骨架与工具链
 
-**Goal:** 仓库可 `bun install` + `bun run lint` + `astro check`,环境变量样例齐全,`.gitignore` 完整。
+**Goal:** Astro 6 server runtime + cloudflare adapter 骨架可运行;`astro dev` 直接跑 workerd;`astro build` 产出 `dist/_worker.js` + 静态资源;middleware 注入响应头;wrangler.jsonc 就绪;env 样例齐全。
 
 **Files:**
-- Create: `package.json`
-- Create: `tsconfig.json`
-- Create: `biome.json`
-- Create: `astro.config.mjs`
-- Create: `src/styles/globals.css`
-- Create: `.gitignore`
-- Create: `.env.local.example`
-- Create: `.dev.vars.example`
-- Create: `src/pages/index.astro`(临时占位,验证 build)
+- Create: `package.json`(含 `@astrojs/cloudflare`)
+- Create: `tsconfig.json`、`biome.json`(v2 格式)
+- Create: `astro.config.mjs`(`output: 'server'` + `adapter: cloudflare()`)
+- Create: `wrangler.jsonc`(Workers 配置 + `nodejs_compat`)
+- Create: `src/middleware.ts`(CSP / X-Robots-Tag noindex 占位)
+- Create: `src/styles/globals.css`(Tailwind v4 + @theme)
+- Create: `src/pages/index.astro`(临时占位,**显式 `export const prerender = true`**)
+- Create: `.gitignore`、`.env.local.example`、`.dev.vars.example`
 
 **Acceptance Criteria:**
-- [ ] `bun install` 无错误
-- [ ] `bun run build` 输出 `dist/index.html` 含 "SevenSeatJP" 字样
-- [ ] `bun run lint` 通过(Biome,空跑也算 pass)
-- [ ] `bun run typecheck` 通过(`astro check`)
-- [ ] `.gitignore` 含 `node_modules`、`dist`、`.wrangler`、`.env.local`、`.env.*.local`、`.dev.vars`、`.dev.vars.*`
+- [ ] `bun install` 无错误 + 生成 `bun.lock`
+- [ ] `bun run build` 产出 `dist/_worker.js` + `dist/index.html`(prerendered)含 "SevenSeatJP"
+- [ ] `bun run lint` 通过(Biome v2,纯检查)
+- [ ] `bun run typecheck` 通过
+- [ ] `astro.config.mjs` 中 `output: 'server'` + `adapter: cloudflare()`
+- [ ] `wrangler.jsonc` 含 `compatibility_flags: ["nodejs_compat"]` + `main: "./dist/_worker.js"` + `assets.directory: "./dist"`
+- [ ] `src/middleware.ts` 注入 CSP + `X-Robots-Tag: noindex, nofollow`
+- [ ] `src/pages/index.astro` 含 `export const prerender = true`
+- [ ] `.dev.vars.example` 中 `COMPANY_INBOX=delivered+internal@resend.dev`
+- [ ] `package.json` 版本号具体(无 `@latest`);含 `@astrojs/cloudflare ^13.5.4`
+- [ ] `bun.lock` 已 commit
 
-**Verify:** `bun install && bun run build && bun run lint && bun run typecheck` → 4 命令全部 exit 0
+**Verify:** `bun install && bun run build && bun run lint && bun run typecheck` → 4 命令全部 exit 0;`test -f dist/_worker.js && test -f dist/index.html`
 
 **Steps:**
 
@@ -118,10 +123,10 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
   "type": "module",
   "private": true,
   "scripts": {
-    "dev:web":   "astro dev",
-    "dev":       "bun run build && wrangler pages dev dist --port 4321 --compatibility-flag=nodejs_compat",
+    "dev":       "astro dev",
     "build":     "astro check && astro build",
-    "preview":   "wrangler pages dev dist --port 4321 --compatibility-flag=nodejs_compat",
+    "preview":   "astro preview",
+    "deploy":    "wrangler deploy",
     "lint":      "biome check .",
     "format":    "biome check --write .",
     "typecheck": "astro check",
@@ -129,6 +134,7 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
   },
   "dependencies": {
     "astro": "^6.3.7",
+    "@astrojs/cloudflare": "^13.5.4",
     "@astrojs/sitemap": "^3.7.2",
     "zod": "^4.4.3",
     "resend": "^6.12.4",
@@ -185,14 +191,16 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
 
 > Biome v2 `files.ignore` 已废弃,统一改用 `files.includes`。**glob 必须精确**:目录排除写 `!!<dir>/**`(末尾 `/**`),光写 `!!dist` 不匹配里面的文件。`!!`(force-ignore)适合构建产物 + 缓存(扫描器不索引);源码若要排除用单 `!`。`$schema` 用本地路径,避免 schema 与 SDK 版本漂移。
 
-- [ ] **Step 4: 创建 `astro.config.mjs`**
+- [ ] **Step 4: 创建 `astro.config.mjs`(server + cloudflare adapter)**
 
 ```js
 import { defineConfig } from 'astro/config';
+import cloudflare from '@astrojs/cloudflare';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  output: 'static',
+  output: 'server',                       // server runtime;营销页用 page-level prerender opt-in
+  adapter: cloudflare(),                  // 部署目标:Cloudflare Workers + Static Assets
   site: 'https://sevenseatjp.com',
   i18n: {
     defaultLocale: 'ja',
@@ -200,6 +208,49 @@ export default defineConfig({
     routing: { prefixDefaultLocale: false },
   },
   vite: { plugins: [tailwindcss()] },
+  // security.checkOrigin: true 是 server 模式默认,拒绝跨站 POST(Actions 受益)
+});
+```
+
+- [ ] **Step 4b: 创建 `wrangler.jsonc`**
+
+```jsonc
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sevenseatjp",
+  "compatibility_date": "2026-05-26",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./dist/_worker.js",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "observability": { "enabled": true }
+}
+```
+
+- [ ] **Step 4c: 创建 `src/middleware.ts`(全站响应头注入)**
+
+```ts
+import { defineMiddleware } from 'astro:middleware';
+
+export const onRequest = defineMiddleware(async (_ctx, next) => {
+  const res = await next();
+  res.headers.set('X-Frame-Options', 'DENY');
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  // 占位阶段反索引(Task 14 SEO 完整化时移除此行)
+  res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  res.headers.set('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self' https://challenges.cloudflare.com",
+    "img-src 'self' data: https:",
+    "style-src 'self' 'unsafe-inline'",
+    "connect-src 'self' https://challenges.cloudflare.com",
+    "frame-src https://challenges.cloudflare.com",
+  ].join('; '));
+  return res;
 });
 ```
 
@@ -224,10 +275,11 @@ export default defineConfig({
 }
 ```
 
-- [ ] **Step 6: 创建 `src/pages/index.astro` 临时占位**
+- [ ] **Step 6: 创建 `src/pages/index.astro` 临时占位(显式 prerender opt-in)**
 
 ```astro
 ---
+export const prerender = true;     // server 模式下营销页必须 opt-in 预渲染
 import '@/styles/globals.css';
 ---
 <!doctype html>
@@ -236,6 +288,8 @@ import '@/styles/globals.css';
   <body><h1>SevenSeatJP</h1></body>
 </html>
 ```
+
+> **所有营销页**(`/`、`/about`、`/airport-transfer` 等及其 zh 镜像)都要写 `export const prerender = true`。**Action 路由不要写**(默认 server)。
 
 - [ ] **Step 7: 创建 `.gitignore`**
 
@@ -286,80 +340,63 @@ bun run typecheck
 2. 看 Astro 官方迁移指南
 3. 修复后**回填新版本号到 package.json + 本 plan Step 1 的 JSON 块**(保持 plan 与代码一致)
 
-- [ ] **Step 10: 提交(必须含 `bun.lock`,否则 lockfile 承诺落空)**
+- [ ] **Step 10: 提交(必须含 `bun.lock` + `wrangler.jsonc` + `src/middleware.ts`)**
 
 ```bash
 git add package.json bun.lock tsconfig.json biome.json astro.config.mjs \
+  wrangler.jsonc src/middleware.ts \
   src/styles/globals.css src/pages/index.astro \
   .gitignore .env.local.example .dev.vars.example
-git commit -m "feat: bootstrap Astro 6 + Tailwind v4 + Biome v2 toolchain"
+git commit -m "feat: bootstrap Astro 6 server + cloudflare adapter + middleware"
 ```
 
 > `bun.lock` 是 Bun 1.2+ 的**文本 JSON 锁文件**(取代旧版二进制 `bun.lockb`),可 diff、CI 友好。确保跨机器/CI 装出来的 transitive deps 与本机一致。CI 跑 `bun install --frozen-lockfile` 时会校验。
 
 ---
 
-### Task 2: CF Pages 部署配置 + 首次部署(仅 `*.pages.dev`)
+### Task 2: Cloudflare Workers 部署配置 + 首次部署(仅 `*.workers.dev`)
 
-**Goal:** 仓库连到 Cloudflare Pages,生产 + Preview 部署链路打通,占位首页**仅在 `<project>.pages.dev` 默认子域 + PR preview** 可访问。**不绑定 custom domain `sevenseatjp.com`**——避免占位首页暴露给搜索引擎与潜在客户;custom domain 切换放到 Task 16。
+**Goal:** 仓库连到 **Cloudflare Workers**(Workers Builds GitHub 集成),生产 + Preview 部署链路打通,占位首页仅在 `<worker>.workers.dev` + PR preview Worker 可访问。**不绑定 custom domain** + **反索引保护**(middleware `X-Robots-Tag: noindex` + `robots.txt Disallow: /`)。custom domain 切换 + 解除反索引 = Task 14/16。
 
 **Files:**
-- Create: `public/_headers`
-- Create: `public/robots.txt`
-- Create: `public/favicon.svg`(临时纯色 SVG 占位)
-- Modify: `src/pages/index.astro`(加少量 Tailwind class 验证样式生效)
+- Create: `public/robots.txt`(占位阶段 `Disallow: /`)
+- Create: `public/favicon.svg`(临时纯色占位)
+- Modify: `src/pages/index.astro`(加 Tailwind class 验证,保留 `export const prerender = true`)
 
 **Acceptance Criteria:**
-- [ ] CF Pages dashboard 已创建项目,Build cmd = `bun run build`,Output = `dist/`,Functions dir 自动识别,兼容性 flag 含 `nodejs_compat`
-- [ ] Production env 已配 `PUBLIC_TURNSTILE_SITE_KEY`(可先填 dummy,真实 key 由 Task 16 替换);Preview env 配 dummy
-- [ ] 推 main → 部署到 `<project>.pages.dev`,占位首页可访问
-- [ ] 开一个 throwaway PR → 生成 preview URL,占位首页可访问
-- [ ] curl `<project>.pages.dev/robots.txt` 返回 200
-- [ ] **未绑定 custom domain**(Settings → Custom domains 应为空,直到 Task 16)
+- [ ] Cloudflare Workers dashboard 创建 Worker(连 GitHub via Workers Builds)
+- [ ] Build command = `bun install && bun run build`;dashboard 自动读取 `wrangler.jsonc`(`nodejs_compat` 已在内)
+- [ ] Production + Preview env 均配 `PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA`(占位 dummy;Task 16 切真实)
+- [ ] 推 main → 部署到 `<worker>.workers.dev` 默认子域,占位首页可访问
+- [ ] PR preview Worker URL 可访问
+- [ ] **`curl -I https://<worker>.workers.dev/` 响应头含 `X-Robots-Tag: noindex, nofollow`**(来自 src/middleware.ts)
+- [ ] **`curl https://<worker>.workers.dev/robots.txt` 返回 `Disallow: /`**
+- [ ] 未绑定 custom domain(Settings → Domains & Routes 应为空,直到 Task 16)
 
-**Verify:** 浏览器打开 `<project>.pages.dev` + preview URL,看到 "SevenSeatJP" + 深色背景;`curl -I https://<project>.pages.dev/robots.txt` 200
+**Verify:** 浏览器打开 prod + preview Worker URL 看到 "SevenSeatJP" + 深色背景;`curl -I` 含 `X-Robots-Tag`;`curl /robots.txt` 含 `Disallow`
 
 **Steps:**
 
-- [ ] **Step 1: `public/_headers`(含临时 `X-Robots-Tag: noindex` —— Task 14 SEO 完整化时移除)**
-
-```
-/*
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: geolocation=(), microphone=(), camera=()
-  X-Robots-Tag: noindex, nofollow
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com;
-```
-
-> `X-Robots-Tag: noindex` 是占位阶段双保险:即使 robots.txt 被忽略、即使 pages.dev 子域被外链发现,搜索引擎也不会索引。Task 14 替换为正式 robots.txt + 移除此行。
-
-- [ ] **Step 2: `public/robots.txt`(占位阶段全 Disallow,Task 14 切回正式)**
+- [ ] **Step 1: `public/robots.txt`(占位阶段全 Disallow)**
 
 ```
 User-agent: *
 Disallow: /
 ```
 
-> 占位阶段不放出 `Allow: /` 和 sitemap URL——避免占位首页 + 待完成结构被索引。Task 14 SEO 完整化时改为:
-> ```
-> User-agent: *
-> Allow: /
->
-> Sitemap: https://sevenseatjp.com/sitemap-index.xml
-> ```
+> 不放 `Allow: /` 或 sitemap URL——避免占位首页 + 待完成结构被索引。Task 14 SEO 完整化时改为正式版本。
 
-- [ ] **Step 3: 占位 `public/favicon.svg`**
+- [ ] **Step 2: 占位 `public/favicon.svg`**
 
 ```xml
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#0a0a0b"/><text x="16" y="22" font-size="18" text-anchor="middle" fill="#c9a96e" font-family="serif">7S</text></svg>
 ```
 
-- [ ] **Step 4: `src/pages/index.astro` 加 Tailwind class 验证**
+- [ ] **Step 3: `src/pages/index.astro` 加 Tailwind class 验证**
 
 ```astro
 ---
+export const prerender = true;
 import '@/styles/globals.css';
 ---
 <!doctype html>
@@ -371,29 +408,31 @@ import '@/styles/globals.css';
 </html>
 ```
 
-- [ ] **Step 5: 提交并推送**
+- [ ] **Step 4: 提交并推送**
 
 ```bash
-git add public/_headers public/robots.txt public/favicon.svg src/pages/index.astro
-git commit -m "feat: add CF Pages headers, robots, placeholder home"
+git add public/robots.txt public/favicon.svg src/pages/index.astro
+git commit -m "feat: add Workers robots, favicon, styled placeholder home"
 git remote add origin <github-url-tbd-by-user>
 git push -u origin main
 ```
 
-(若 `<github-url-tbd-by-user>` 未提供,停下询问用户;不要假设 URL)
+(若 `<github-url-tbd-by-user>` 未提供,停下询问用户;不要假设)
 
-- [ ] **Step 6: CF Pages dashboard 配置(手动 + 截图验证)**
+- [ ] **Step 5: Cloudflare Workers dashboard 配置(手动 GUI)**
 
-dashboard 步骤:Create project → Connect to Git → 选仓库 → Framework preset = Astro → Build cmd `bun run build` → Output `dist` → Environment variables: 加 `PUBLIC_TURNSTILE_SITE_KEY`(**Production 和 Preview 都先用 dummy `1x00000000000000000000AA`**,真实 site key 由 Task 16 替换)→ Settings → Functions → Compatibility flags 加 `nodejs_compat`(Production + Preview)→ **不绑定 custom domain**(留给 Task 16)
+dashboard 步骤:Workers & Pages → **Create Worker** → **Connect to Git** → 选仓库 → Framework = Astro → Build cmd `bun install && bun run build` → Deploy 命令依 `wrangler.jsonc` → Environment Variables(Production + Preview 都加 `PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA`)→ Secrets 留空(Task 13 才需要 `RESEND_API_KEY` 等)→ Domains & Routes 不绑 custom(留给 Task 16)
 
-- [ ] **Step 7: 验证部署**
+注:**不需要手动配 nodejs_compat**——已在仓库 `wrangler.jsonc` 里,dashboard 会读取。
+
+- [ ] **Step 6: 验证部署**
 
 ```bash
-curl -sI https://<your-project>.pages.dev/ | head -5
-curl -sI https://<your-project>.pages.dev/robots.txt | head -5
+curl -sI https://<worker>.workers.dev/ | head -10
+curl -s  https://<worker>.workers.dev/robots.txt
 ```
 
-期望:两者均 200。
+期望:首页 200 + `X-Robots-Tag: noindex, nofollow` 头;robots.txt 返回 `Disallow: /`。
 
 ---
 
@@ -1177,16 +1216,17 @@ git commit -m "feat: add legal pages (tokushoho, privacy, cancel-policy)"
 
 ---
 
-### Task 12: 询价表单 — Schema + 前端 + Turnstile
+### Task 12: 询价表单 — Schema + 前端(调 Astro Action)+ Turnstile
 
-**Goal:** `src/lib/schemas/inquiry.ts` 完整;`InquiryForm.astro` + `inquiry-form.client.ts` 完整;Turnstile widget 只在询价页加载;无 JS 时显示 LINE/微信兜底联系方式。**本任务不动 Function**,但表单提交链路要能在 Task 13 完成后即时跑通。
+**Goal:** `src/lib/schemas/inquiry.ts` 完整;`InquiryForm.astro` + `inquiry-form.client.ts` 完整(**调用 `astro:actions`**,不再手写 fetch);Turnstile widget 只在询价页加载;无 JS 时显示 LINE/微信兜底联系方式。**本任务不动 Action handler**(由 Task 13 实现),但 Action 调用接口要先 stub 跑通编译。
 
 **Files:**
-- Create: `src/lib/schemas/inquiry.ts`(spec §7.3 完整 `InquirySchema` + `Attr` 含 `.max`)
+- Create: `src/lib/schemas/inquiry.ts`(spec §7.3 完整 `InquirySchema` + `Attr`)
+- Create: `src/actions/index.ts`(空 stub:`export const server = { inquiry: defineAction({ input: InquirySchema, handler: async () => ({ ok: true as const }) }) }`,Task 13 才填真逻辑)
 - Create: `src/components/inquiry/InquiryForm.astro`
-- Create: `src/components/inquiry/inquiry-form.client.ts`
-- Create: `src/components/pages/InquiryPage.astro`(包含 form + 标题 + 隐私说明 + `<noscript>` 兜底)
-- Create: `src/pages/inquiry.astro`、`src/pages/zh/inquiry.astro`
+- Create: `src/components/inquiry/inquiry-form.client.ts`(import `actions` from `astro:actions`)
+- Create: `src/components/pages/InquiryPage.astro`(form + 隐私 + `<noscript>` 兜底)
+- Create: `src/pages/inquiry.astro`、`src/pages/zh/inquiry.astro`(**省略 `prerender = true` 让其走 server**——表单页要在 server 渲染才能注入 Turnstile token / dynamic 元素;或者保留 prerender,Turnstile widget 通过客户端 island 加载也可,本任务用后者:保留 `prerender = true`,Turnstile 完全走客户端)
 
 **Acceptance Criteria:**
 - [ ] `bun run build && bun run typecheck` 通过
@@ -1226,45 +1266,45 @@ git commit -m "feat: add inquiry form with Turnstile widget and shared schema"
 
 ---
 
-### Task 13: 询价表单 — Pages Function + 邮件模板 + 本地链路调通
+### Task 13: 询价表单 — Astro Action handler + 邮件模板 + 本地链路调通
 
-**Goal:** `functions/api/inquiry.ts` 与 React Email 模板完整;**本地 `bun run dev` 起 wrangler,真实填表 → Resend API 调用成功 + Resend dashboard 显示 sent event**,跑通完整代码链路。**真实邮箱送达测试**(Gmail/Outlook/QQ/163/iCloud 5 个)**留到 Task 16**,在生产 Resend 域名 + DNS 配置完成后做。
+**Goal:** `src/actions/index.ts` 中 `inquiry` Action 完整实现 + React Email v6 模板;**本地 `astro dev` 跑 workerd(adapter 接管),真实填表 → Resend API 调用成功 + Resend dashboard 显示 sent event**。**真实邮箱送达测试**(5 真实邮箱)**留到 Task 16**。
 
-> **重要:** `delivered@resend.dev` 是 Resend 的**测试地址**,API 调用会返回成功且在 dashboard 留下 sent event,但**不会真实送达任何 inbox**。本任务用这个地址验证 API + 代码链路;`onboarding@resend.dev` 测试发件域对任意客户邮箱有限制,只能发到 `delivered+*@resend.dev` 这类测试地址。生产域名 + 真实送达验证由 Task 16 负责。
+> **重要:** `delivered@resend.dev` / `delivered+*@resend.dev` 是 Resend **测试地址**——API 调用成功 + dashboard 有 sent event,但不会真实送达 inbox。`onboarding@resend.dev` 发件域对真实客户邮箱有限制,只能发到测试地址。本任务用这两类地址验证代码 + API 集成。生产域名 + 真实送达 = Task 16。
 
 **Files:**
-- Create: `functions/api/inquiry.ts`(spec §7.3 完整 + 包含 `sendInternalEmail` / `sendCustomerEmail` helper + content-type/byteLength guard + Turnstile try/catch 503 兜底)
-- Create: `src/emails/InquiryInternal.tsx`、`src/emails/InquiryCustomer.tsx`(React Email)
-- Create: `.dev.vars`(本地复制 `.dev.vars.example` + 真值;**不提交**)
-- Create: `.env.local`(本地复制 `.env.local.example`;**不提交**)
+- Modify: `src/actions/index.ts`(填入 spec §7.3 完整 handler:Turnstile siteverify + Resend 双邮件 + `cfContext.waitUntil` + ActionError 错误码)
+- Create: `src/emails/InquiryInternal.tsx`、`src/emails/InquiryCustomer.tsx`(从 `react-email` 单包 import)
+- Create: 本地 `.dev.vars`(复制 example + 真值;不提交)
+- Create: 本地 `.env.local`(复制 example;不提交)
 
 **Acceptance Criteria:**
-- [ ] `bun run dev`(wrangler pages dev)起后,浏览器访问 `http://localhost:4321/inquiry`,填完整表单(客户邮箱填 `delivered+customer@resend.dev`)+ Turnstile dummy 通过 → 提交 → 浏览器显示 `form.success` 文案
-- [ ] **Resend dashboard 显示 2 个 sent event**:1 个发往 `delivered+internal@resend.dev`(模拟公司邮箱)+ 1 个发往 `delivered+customer@resend.dev`(客户确认)
-- [ ] **内部邮件 event 的 subject** 含 `[direct]` 前缀(无 UTM 时)或 utm source 前缀(带 `?utm_source=test` 访问首页再走到 inquiry)
-- [ ] **反向 1:** 改 Turnstile siteverify URL 为 `https://nonexistent.example/` → 提交后浏览器显示 `form.error.turnstile_unavailable`(503),Resend dashboard 无新 event
-- [ ] **反向 2:** notes 字段填 >100KB 文本 → 浏览器显示 `form.error.payload_too_large`(413),Resend dashboard 无新 event
-- [ ] **反向 3:** 临时把 `RESEND_API_KEY` 换成无效值 → 浏览器显示 `form.error.email_send_failed`(502)
-- [ ] 内部邮件正文 HTML(在 Resend dashboard event 详情里查看)含完整 UTM 归因块(首触 / 末触 / 本次三段)
+- [ ] `bun run dev` 启动后浏览器访问 `http://localhost:4321/inquiry`,填完整表单(客户邮箱填 `delivered+customer@resend.dev`)+ Turnstile dummy 通过 → 提交 → 浏览器显示 `form.success`
+- [ ] **Resend dashboard 显示 2 个 sent event**:`delivered+internal@resend.dev`(模拟公司收件)+ `delivered+customer@resend.dev`(客户确认)
+- [ ] 内部邮件 event subject 含 `[direct]` 前缀(无 UTM)或 utm source 前缀
+- [ ] **反向 1**:改 Turnstile siteverify URL 为 `https://nonexistent.example/` → 客户端 `error.code === 'SERVICE_UNAVAILABLE'`,UI 显示 `form.error.turnstile_unavailable`;Resend dashboard 无新 event
+- [ ] **反向 2**:Turnstile dummy 用 **always-fail** key(`2x00000000000000000000AB` / secret `2x0000000000000000000000000000000AA`)→ `error.code === 'FORBIDDEN'`,UI 显示 `form.error.turnstile_failed`
+- [ ] **反向 3**:临时改 `RESEND_API_KEY` 为无效值 → `error.code === 'INTERNAL_SERVER_ERROR'`,UI 显示 `form.error.email_send_failed`
+- [ ] **反向 4**:故意发非法 input(如 `email: 'not-an-email'`)→ `error.code === 'BAD_REQUEST'`(Astro Actions 自动 schema 校验),UI 显示 `form.error.invalid_payload`
+- [ ] 内部邮件正文 HTML(Resend dashboard event 详情)含完整 UTM 归因块(首触/末触/本次)
 - [ ] `bun run typecheck` 通过
 
-**Verify:** 上述 7 条 + Resend dashboard 截图/事件 ID 记录在 commit message 或 PR description 中。
+**Verify:** 上述 8 条 + Resend dashboard 截图/事件 ID 记录在 commit message。
 
-**注意:`COMPANY_INBOX` 在本地 `.dev.vars` 必须设为 `delivered+internal@resend.dev`**(不是真实邮箱),否则 onboarding 发件域被限制无法发送。
+**注意:本地 `.dev.vars` 中 `COMPANY_INBOX=delivered+internal@resend.dev`**(测试地址)。
 
 **Steps:**
 
-- [ ] Step 1: 实现 `src/lib/schemas/inquiry.ts`(若 Task 12 未实现完整)
-- [ ] Step 2: `functions/api/inquiry.ts` 整段从 spec §7.3 复制
-- [ ] Step 3: 两个 React Email 模板(内部模板含归因块,客户模板按 `data.locale` 单语)
-- [ ] Step 4: 本地 `.dev.vars` + `.env.local` 配 Turnstile dummy + Resend 测试 key
-- [ ] Step 5: `bun run dev` 本地跑流程
-- [ ] Step 6: 测 4 个反向场景(Turnstile 失败 / 不可用 / payload 过大 / 邮件成功)
-- [ ] Step 7: 提交
+- [ ] Step 1: 完善 `src/lib/schemas/inquiry.ts`(若 Task 12 仅写部分)
+- [ ] Step 2: 重写 `src/actions/index.ts` 整段 handler(从 spec §7.3 复制 Astro Action 代码)
+- [ ] Step 3: 写 React Email v6 模板 2 个:`InquiryInternal.tsx`(归因块) + `InquiryCustomer.tsx`(按 `locale` 单语)
+- [ ] Step 4: 本地 `.dev.vars` + `.env.local` 配 Turnstile dummy + Resend test key
+- [ ] Step 5: `bun run dev` 启动,手测成功 + 4 个反向场景
+- [ ] Step 6: 提交
 
 ```bash
-git add functions src/lib/schemas src/emails src/components/inquiry
-git commit -m "feat: implement inquiry Pages Function with Resend dual emails"
+git add src/actions src/lib/schemas src/emails
+git commit -m "feat: implement inquiry Astro Action with Resend dual emails"
 ```
 
 ---
@@ -1279,16 +1319,16 @@ git commit -m "feat: implement inquiry Pages Function with Resend dual emails"
 - Create: `src/components/seo/LocalBusinessJsonLd.astro`(JSON-LD)
 - Modify: `src/components/pages/HomePage.astro`(注入 JSON-LD)
 - Create: `public/og-default.png`(占位 1200×630)
-- **Modify: `public/robots.txt`(从 `Disallow: /` 改为 `Allow: /` + Sitemap 行)**
-- **Modify: `public/_headers`(删除 `X-Robots-Tag: noindex, nofollow` 行)**
+- **Modify: `public/robots.txt`(`Disallow: /` → `Allow: /` + Sitemap 行)**
+- **Modify: `src/middleware.ts`(删除 `res.headers.set('X-Robots-Tag', ...)` 整行)**
 
 **Acceptance Criteria:**
 - [ ] `dist/sitemap-index.xml` 存在,包含 `/zh/` 路由
-- [ ] `dist/index.html` 含 `application/ld+json` 含 `"@type": "LocalBusiness"`
+- [ ] HomePage prerendered HTML 含 `<script type="application/ld+json">` 含 `"@type":"LocalBusiness"`
 - [ ] 所有页面 `<head>` 含 `og:title` `og:description` `og:image` `og:locale`(ja → `ja_JP`,zh → `zh_CN`)+ `twitter:card`
 - [ ] **`dist/robots.txt`** = `User-agent: *\nAllow: /\n\nSitemap: https://sevenseatjp.com/sitemap-index.xml`
-- [ ] **`dist/_headers` 中无 `X-Robots-Tag: noindex` 行**:`! grep -q 'X-Robots-Tag' dist/_headers`
-- [ ] 部署后 `curl -I https://<prod>/` 响应头无 `X-Robots-Tag`
+- [ ] **`src/middleware.ts` 中无 `X-Robots-Tag` 引用**:`! grep -q 'X-Robots-Tag' src/middleware.ts`
+- [ ] 部署后 `curl -I https://<prod>/` 响应头无 `X-Robots-Tag`(middleware 不再注入)
 
 **Verify:**
 
@@ -1330,21 +1370,15 @@ git commit -m "feat: add sitemap, JSON-LD, OG metadata for SEO"
 - [ ] **`pages.spec.ts` 每页两个 viewport 都跑** + 验证 `document.documentElement.scrollWidth === document.documentElement.clientWidth`(无横向滚动)
 - [ ] **mobile project 在 iPhone 16 Pro 模拟器(viewport ≈ 402×874)跑**,所有 13 页通过
 
-**playwright.config.ts 关键片段(两个 projects):**
+**playwright.config.ts 关键片段(`astro dev` 接管 workerd,不再桥接 wrangler):**
 
 ```ts
 import { defineConfig, devices } from '@playwright/test';
 
-const SECRET_KEYS = ['RESEND_API_KEY', 'TURNSTILE_SECRET_KEY', 'COMPANY_INBOX', 'INQUIRY_FROM_EMAIL'] as const;
-const bindings = SECRET_KEYS
-  .filter((k) => typeof process.env[k] === 'string' && process.env[k] !== '')
-  .map((k) => `--binding=${k}=${process.env[k]}`)
-  .join(' ');
-
 export default defineConfig({
   webServer: {
-    command: `wrangler pages dev dist --port 4321 --compatibility-flag=nodejs_compat ${bindings}`.trim(),
-    url: 'http://127.0.0.1:4321',
+    command: 'bun run dev',           // astro dev;Cloudflare Vite plugin 接管 workerd
+    url: 'http://127.0.0.1:4321',     // astro dev 默认端口
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
@@ -1355,6 +1389,8 @@ export default defineConfig({
   ],
 });
 ```
+
+> CI 时 secrets 由 GitHub Actions workflow `env` 注入到 `process.env`;Cloudflare Vite plugin 缺 `.dev.vars` 时**会读 `process.env`** fallback,无需 `--binding=` 桥接(Pages Function 模式特有的痛点已不存在)。本地用户走 `.dev.vars`。
 
 **Verify:** `bun run test:e2e --reporter=line` 全 PASS;GitHub Actions PR run 显示 `build` job 绿 + `e2e` job 在加标签后绿
 
