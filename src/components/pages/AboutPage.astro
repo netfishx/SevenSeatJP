@@ -1,0 +1,59 @@
+---
+import Card from '@/components/ui/Card.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { type Locale, t } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const prefix = locale === 'zh' ? '/zh' : '';
+
+const sections = [
+  { titleKey: 'about.section.fleet.title', descKey: 'about.section.fleet.desc' },
+  { titleKey: 'about.section.area.title', descKey: 'about.section.area.desc' },
+] as const;
+
+const policyLinks = [
+  { href: `${prefix}/legal/tokushoho`, key: 'about.section.policy.tokushoho' },
+  { href: `${prefix}/legal/privacy`, key: 'about.section.policy.privacy' },
+  { href: `${prefix}/legal/cancel-policy`, key: 'about.section.policy.cancel' },
+] as const;
+---
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'about.title')}
+  description={t(locale, 'about.lead')}
+>
+  <Section>
+    <Container class="flex flex-col gap-12">
+      <header class="flex flex-col gap-4">
+        <h1 class="text-4xl text-gold font-display">{t(locale, 'about.title')}</h1>
+        <p class="text-text-muted text-lg leading-relaxed">{t(locale, 'about.lead')}</p>
+      </header>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {sections.map((s) => (
+          <Card class="flex flex-col gap-3">
+            <h2 class="text-xl text-gold font-display">{t(locale, s.titleKey)}</h2>
+            <p class="text-text-muted text-sm leading-relaxed">{t(locale, s.descKey)}</p>
+          </Card>
+        ))}
+      </div>
+      <section class="flex flex-col gap-4">
+        <h2 class="text-xl text-gold font-display">{t(locale, 'about.section.policy.title')}</h2>
+        <ul class="flex flex-col gap-2">
+          {policyLinks.map((p) => (
+            <li>
+              <a
+                href={p.href}
+                class="inline-flex items-center min-h-11 text-text underline underline-offset-4 hover:text-gold"
+              >{t(locale, p.key)}</a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </Container>
+  </Section>
+</BaseLayout>

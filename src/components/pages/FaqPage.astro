@@ -1,0 +1,59 @@
+---
+import Card from '@/components/ui/Card.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { type Locale, type I18nKey, t } from '@/i18n/t';
+import { getCollection } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+
+const entries = await getCollection('faq');
+const categories: ReadonlyArray<{ id: string; titleKey: I18nKey }> = [
+  { id: 'booking', titleKey: 'faq.cat.booking' },
+  { id: 'payment', titleKey: 'faq.cat.payment' },
+  { id: 'cancel', titleKey: 'faq.cat.cancel' },
+  { id: 'service', titleKey: 'faq.cat.service' },
+  { id: 'vehicle', titleKey: 'faq.cat.vehicle' },
+];
+const grouped = categories.map((c) => ({
+  ...c,
+  items: entries
+    .filter((e) => e.data.category === c.id)
+    .sort((a, b) => a.data.order - b.data.order),
+}));
+---
+<BaseLayout locale={locale} title={t(locale, 'faq.title')}>
+  <Section>
+    <Container class="flex flex-col gap-10">
+      <h1 class="text-4xl text-gold font-display">{t(locale, 'faq.title')}</h1>
+      {grouped.map(
+        (g) =>
+          g.items.length > 0 && (
+            <section class="flex flex-col gap-4">
+              <h2 class="text-xl text-gold font-display border-b border-border pb-2">
+                {t(locale, g.titleKey)}
+              </h2>
+              <ul class="flex flex-col gap-3">
+                {g.items.map((entry) => (
+                  <li>
+                    <details class="bg-surface border border-border rounded-[var(--radius-card)]">
+                      <summary class="cursor-pointer min-h-11 px-5 py-3 text-text font-medium hover:text-gold focus-visible:text-gold">
+                        {entry.data.question[locale]}
+                      </summary>
+                      <p class="px-5 pb-4 text-text-muted text-sm leading-relaxed">
+                        {entry.data.answer[locale]}
+                      </p>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ),
+      )}
+    </Container>
+  </Section>
+</BaseLayout>
