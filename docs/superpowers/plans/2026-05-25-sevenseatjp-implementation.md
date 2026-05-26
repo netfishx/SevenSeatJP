@@ -12,6 +12,55 @@
 
 ---
 
+## 全局横切要求(每个 task 都必须遵守)
+
+这些是 plan 通用硬规则,**不需要在每个 task 重复列出**,但执行任一 task 时都受这些约束。Task acceptance 不写,但 Task 16 上线验收会逐项核对。
+
+### 响应式 / 移动端
+
+- **mobile-first**:Tailwind v4 默认 mobile;`sm:` (640px+) / `md:` (768px+) / `lg:` (1024px+) 渐进增强,**不要桌面思维倒推**
+- **viewport meta** 已在 BaseLayout 内(`width=device-width, initial-scale=1`),所有页面继承
+- **横向不溢出**:任何 page 在 `375px`(iPhone SE)宽度下都不能出现横向滚动条;任何 page 在 `768px`(平板)宽度下都不能出现内容贴边/挤压
+- **触摸目标 ≥ 44×44px**(WCAG 2.5.5):所有可点击元素至少 `min-h-11 min-w-11`(Tailwind v4 中 `h-11` = 44px),含按钮、链接、表单控件、LangSwitch、卡片整体可点击区域
+- **避免 hover-only 信息暴露**:任何 hover 才显示的内容也必须在 tap 或聚焦时可见(用 `focus-visible:`、`active:`)
+- **图片响应式**:用 Astro `<Image>` 组件自动 srcset + webp;`sizes` 按容器宽度配(e.g. `sizes="(min-width: 768px) 33vw, 100vw"`)
+- **字体子集化**:Noto Serif/Sans JP woff2 子集到日中文常用字符(Task 16),避免移动 4G 加载完整字体集
+- **避免横向 scroll-snap 大转盘**:首屏轮播限制到一屏可见数量,小屏直接堆叠
+
+### 表单专项(影响 Task 12)
+
+- 数字字段:`<input type="number" inputmode="numeric">`(人数/行李)
+- 电话:`<input type="tel" inputmode="tel" autocomplete="tel-national">`
+- 邮箱:`<input type="email" inputmode="email" autocomplete="email">`
+- 姓名:`autocomplete="name"`
+- 日期:`<input type="date">`(原生 picker)
+- 时间:`<input type="time">`(原生)
+- 备注:`<textarea>` 默认 `rows="4"`,移动端不要 `rows="10"` 顶满屏
+- 提交按钮 `disabled` 状态加 `aria-busy="true"` + 视觉 spinner
+- Turnstile widget 用 `data-size="flexible"`(或 normal),避免在 320-360px 宽度溢出
+
+### 可访问性(a11y)
+
+- 所有图片 `alt`(装饰图用 `alt=""`)
+- form `<label for=>` 关联或 `<label>` 包裹;`aria-describedby` 关联错误信息
+- 颜色对比度:文本对背景 ≥ 4.5:1(`#ede9d8` on `#0a0a0b` ≈ 15:1 ✓;金色 `#c9a96e` on `#0a0a0b` ≈ 8:1 ✓)
+- 键盘可达:Tab 顺序合理,`:focus-visible` 可见焦点环
+- `prefers-reduced-motion`:任何 transition / 动画 ≥ 200ms 的都要在 `@media (prefers-reduced-motion: reduce)` 下置零
+
+### 性能预算
+
+- 营销页 JS:**< 30 KB gzipped**(不算 Turnstile,Turnstile 只在询价页加载)
+- 单页 CSS:**< 50 KB gzipped**(Tailwind v4 + 自定义 token)
+- LCP(`/`、`/zh/`):**< 2.5s** on Slow 4G(Lighthouse mobile)
+- Hero 图(若有):预压缩 + AVIF/WebP + 关键尺寸 srcset
+
+### 测试覆盖(影响 Task 15)
+
+- Playwright `playwright.config.ts` 必须含**两个 projects**:`chromium-desktop`(1280×720)+ `chromium-mobile`(`devices['iPhone 14']`,390×844)
+- `pages.spec.ts` 在两个 project 都跑,确保 375-390px 与 1280px 都不破
+
+---
+
 ## 任务依赖图
 
 ```
@@ -781,10 +830,14 @@ const locale = getLocaleFromUrl(Astro.url);
 const jaHref = getLanguageSwitchUrl(Astro.url, 'ja');
 const zhHref = getLanguageSwitchUrl(Astro.url, 'zh');
 ---
-<div class="flex gap-3 text-sm">
-  <a data-lang-switch href={jaHref} class:list={['underline-offset-4', locale === 'ja' && 'underline text-gold']}>日本語</a>
-  <span class="text-text-muted">/</span>
-  <a data-lang-switch href={zhHref} class:list={['underline-offset-4', locale === 'zh' && 'underline text-gold']}>中文</a>
+<div class="flex items-center gap-3 text-sm">
+  <a data-lang-switch href={jaHref}
+     class:list={['inline-flex items-center justify-center min-h-11 min-w-11 px-3 underline-offset-4',
+                  locale === 'ja' && 'underline text-gold']}>日本語</a>
+  <span class="text-text-muted" aria-hidden="true">/</span>
+  <a data-lang-switch href={zhHref}
+     class:list={['inline-flex items-center justify-center min-h-11 min-w-11 px-3 underline-offset-4',
+                  locale === 'zh' && 'underline text-gold']}>中文</a>
 </div>
 
 <script>
@@ -1133,10 +1186,20 @@ git commit -m "feat: add legal pages (tokushoho, privacy, cancel-policy)"
 
 **Acceptance Criteria:**
 - [ ] `bun run build && bun run typecheck` 通过
-- [ ] `/inquiry`、`/zh/inquiry` 渲染表单 + Turnstile widget(data-sitekey 来自 `import.meta.env.PUBLIC_TURNSTILE_SITE_KEY`)
+- [ ] `/inquiry`、`/zh/inquiry` 渲染表单 + Turnstile widget
+- [ ] Turnstile widget `data-sitekey={import.meta.env.PUBLIC_TURNSTILE_SITE_KEY}` + **`data-size="flexible"`**(适应移动端窄屏)
+- [ ] **input 移动端键盘类型正确**(grep 验证):
+  - `<input type="email" inputmode="email" autocomplete="email">`(email)
+  - `<input type="tel" inputmode="tel" autocomplete="tel-national">`(phone)
+  - `<input type="number" inputmode="numeric">`(passengers / luggage)
+  - `<input type="date">` / `<input type="time">`(原生 picker)
+  - `<input autocomplete="name">`(name)
+- [ ] 所有 input/textarea/select 通过 `<label for=>` 关联;`aria-describedby` 关联错误信息
 - [ ] 其他营销页 grep 不到 `challenges.cloudflare.com`(只询价页加载)
 - [ ] `<noscript>` 区域显示 LINE/微信/邮箱兜底
 - [ ] 客户端 island 在提交前若 turnstileToken 为空,显示 `form.error.turnstile_failed` 文案
+- [ ] **375px viewport 表单不溢出**:`bunx playwright screenshot` 在 iPhone SE 尺寸下截图,form 完整可见无横向滚动
+- [ ] Submit 按钮 loading 状态 `disabled` + `aria-busy="true"`
 
 **Verify:**
 
@@ -1144,10 +1207,14 @@ git commit -m "feat: add legal pages (tokushoho, privacy, cancel-policy)"
 bun run build
 grep -q 'challenges.cloudflare.com' dist/inquiry/index.html
 ! grep -q 'challenges.cloudflare.com' dist/index.html
-grep -q 'noscript' dist/inquiry/index.html
+grep -q '<noscript' dist/inquiry/index.html
+grep -q 'inputmode="email"' dist/inquiry/index.html
+grep -q 'inputmode="tel"' dist/inquiry/index.html
+grep -q 'autocomplete="email"' dist/inquiry/index.html
+grep -q 'data-size="flexible"' dist/inquiry/index.html
 ```
 
-**Steps:** schema → form astro → client island → InquiryPage 组装 → 镜像 → build → commit。
+**Steps:** schema → form astro(全字段含 inputmode/autocomplete/aria,Turnstile div `data-size="flexible"`)→ client island(disabled + aria-busy)→ InquiryPage 组装 → 镜像 → build → 移动端 375px 截图验证 → commit。
 
 ```bash
 git commit -m "feat: add inquiry form with Turnstile widget and shared schema"
@@ -1242,20 +1309,48 @@ git commit -m "feat: add sitemap, JSON-LD, OG metadata for SEO"
 **Goal:** Playwright config 用 `wrangler pages dev` 走真实 Function;3 个 spec 覆盖关键路径;CI workflow 跑 lint+typecheck+build,PR 加 `run-e2e` 标签时跑 E2E。
 
 **Files:**
-- Create: `playwright.config.ts`(spec §8.5 完整片段含 `SECRET_KEYS.filter`)
-- Create: `tests/e2e/pages.spec.ts`(13 个页面 × 2 语言 = 26 cases)
+- Create: `playwright.config.ts`(spec §8.5 完整片段含 `SECRET_KEYS.filter` + **两个 projects:`chromium-desktop` 与 `chromium-mobile`**)
+- Create: `tests/e2e/pages.spec.ts`(13 页 × 2 语言 = 26 cases × 2 projects = 52 cases:每个 URL 200 + h1 文案 + 无横向滚动)
 - Create: `tests/e2e/i18n.spec.ts`(语言切换 + hreflang + 保留 query + 客户端 hash handler)
-- Create: `tests/e2e/inquiry.spec.ts`(成功 / 客户端校验 / 服务端 400 / UTM 归因 4 个 case)
-- Create: `.github/workflows/ci.yml`(workflow `on.pull_request.types` 必须明确含 `labeled` —— 默认 types 不含,labeled event 不会触发 PR workflow re-run)
-- Create: `.github/workflows/README.md`(说明 `run-e2e` 标签触发)
+- Create: `tests/e2e/inquiry.spec.ts`(成功 / 客户端校验 / 服务端 400 / UTM 归因 4 case)
+- Create: `.github/workflows/ci.yml`(`on.pull_request.types` 含 `labeled`)
+- Create: `.github/workflows/README.md`
 
 **Acceptance Criteria:**
-- [ ] 本地 `bun run test:e2e` 通过(`.dev.vars` 已配)
-- [ ] 推 PR 到 main 不触发 e2e job,但触发 build/lint/typecheck 通过
-- [ ] **给 PR 加 `run-e2e` 标签 → workflow 重新触发(因为 `types: [..., labeled]`)→ e2e job 通过**
-- [ ] **去掉 `run-e2e` 标签再加回去 → workflow 再次触发**(验证 labeled event 真正生效,不是 push 顺路跑的)
-- [ ] `inquiry.spec.ts` 的 UTM 归因 case 验证 `payload.utm.firstTouch.source === 'test'`
-- [ ] i18n.spec.ts 验证 LangSwitch 客户端 hash handler:带 `#section` 点切换 → 目标 URL 含 hash
+- [ ] 本地 `bun run test:e2e` 通过(`.dev.vars` 已配)——**desktop + mobile 两个 projects 都跑**
+- [ ] 推 PR 不触发 e2e job;build/lint/typecheck 通过
+- [ ] **加 `run-e2e` 标签 → workflow 重新触发 → e2e job 通过**
+- [ ] 去掉再加标签 → workflow 再次触发(验证 labeled event 生效)
+- [ ] `inquiry.spec.ts` UTM 归因 case 验证 `payload.utm.firstTouch.source === 'test'`
+- [ ] i18n.spec.ts 验证 LangSwitch 客户端 hash handler
+- [ ] **`pages.spec.ts` 每页两个 viewport 都跑** + 验证 `document.documentElement.scrollWidth === document.documentElement.clientWidth`(无横向滚动)
+- [ ] **mobile project 在 iPhone 14(390×844)模拟器跑**,所有 13 页通过
+
+**playwright.config.ts 关键片段(两个 projects):**
+
+```ts
+import { defineConfig, devices } from '@playwright/test';
+
+const SECRET_KEYS = ['RESEND_API_KEY', 'TURNSTILE_SECRET_KEY', 'COMPANY_INBOX', 'INQUIRY_FROM_EMAIL'] as const;
+const bindings = SECRET_KEYS
+  .filter((k) => typeof process.env[k] === 'string' && process.env[k] !== '')
+  .map((k) => `--binding=${k}=${process.env[k]}`)
+  .join(' ');
+
+export default defineConfig({
+  webServer: {
+    command: `wrangler pages dev dist --port 4321 --compatibility-flag=nodejs_compat ${bindings}`.trim(),
+    url: 'http://127.0.0.1:4321',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
+  use: { baseURL: 'http://127.0.0.1:4321' },
+  projects: [
+    { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium-mobile',  use: { ...devices['iPhone 14'] } },
+  ],
+});
+```
 
 **Verify:** `bun run test:e2e --reporter=line` 全 PASS;GitHub Actions PR run 显示 `build` job 绿 + `e2e` job 在加标签后绿
 
