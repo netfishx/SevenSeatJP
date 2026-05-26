@@ -9,7 +9,6 @@ const { locale, variant = 'header' } = Astro.props;
 const prefix = locale === 'zh' ? '/zh' : '';
 
 const links: ReadonlyArray<{ slug: string; key: I18nKey }> = [
-  { slug: '', key: 'nav.home' },
   { slug: '/airport-transfer', key: 'nav.airport' },
   { slug: '/charter', key: 'nav.charter' },
   { slug: '/ski-hakuba', key: 'nav.ski' },
@@ -26,16 +25,16 @@ const currentPath = Astro.url.pathname.replace(/^\/zh\//, '/').replace(/^\/zh$/,
 {
   variant === 'header' && (
     <nav aria-label="Primary" class="hidden lg:flex items-center gap-1">
-      {links.map((l) => {
-        const href = `${prefix}${l.slug || '/'}`;
-        const isActive = (l.slug || '/') === (currentPath || '/');
+      {links.slice(0, 6).map((l) => {
+        const href = `${prefix}${l.slug}`;
+        const isActive = l.slug === currentPath;
         return (
           <a
             href={href}
             aria-current={isActive ? 'page' : undefined}
             class:list={[
-              'inline-flex items-center min-h-11 px-3 text-sm transition-colors',
-              isActive ? 'text-gold' : 'text-text hover:text-gold focus-visible:text-gold',
+              'inline-flex items-center min-h-11 px-3 text-[0.78rem] tracking-[0.15em] uppercase transition-colors',
+              isActive ? 'text-gold' : 'text-text-muted hover:text-text focus-visible:text-text',
             ]}
           >
             {t(locale, l.key)}
@@ -48,18 +47,18 @@ const currentPath = Astro.url.pathname.replace(/^\/zh\//, '/').replace(/^\/zh$/,
 
 {
   variant === 'footer' && (
-    <nav aria-label="Footer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+    <ul class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
       {links.map((l) => {
-        const href = `${prefix}${l.slug || '/'}`;
+        const href = `${prefix}${l.slug}`;
         return (
-          <a
-            href={href}
-            class="inline-flex items-center min-h-11 text-sm text-text-muted hover:text-gold focus-visible:text-gold"
-          >
-            {t(locale, l.key)}
-          </a>
+          <li>
+            <a
+              href={href}
+              class="inline-flex items-center min-h-11 text-sm text-text-muted hover:text-text"
+            >{t(locale, l.key)}</a>
+          </li>
         );
       })}
-    </nav>
+    </ul>
   )
 }

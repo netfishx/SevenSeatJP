@@ -1,5 +1,4 @@
 ---
-import Card from '@/components/ui/Card.astro';
 import Container from '@/components/ui/Container.astro';
 import Section from '@/components/ui/Section.astro';
 import { type Locale, t } from '@/i18n/t';
@@ -13,36 +12,54 @@ const { locale } = Astro.props;
 const all = await getCollection('testimonials');
 const sorted = all
   .slice()
-  .sort((a, b) => (a.data.date < b.data.date ? 1 : -1))
-  .slice(0, 3);
+  .sort((a, b) => (a.data.date < b.data.date ? 1 : -1));
+const featured = sorted[0];
+const supporting = sorted.slice(1, 3);
 ---
 <Section>
-  <Container class="flex flex-col gap-10">
-    <h2 class="text-3xl text-gold font-display text-center">
-      {t(locale, 'home.testimonials.title')}
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {sorted.map((entry) => (
-        <article data-testimonial class="flex">
-          <Card class="flex flex-col gap-4 w-full">
-            <div class="flex items-center gap-3">
-              <span
-                class="inline-flex items-center justify-center min-w-11 min-h-11 rounded-full bg-gold text-bg font-display"
-              >{entry.data.customerInitials}</span>
-              <div class="flex flex-col">
-                <span class="text-xs text-text-muted uppercase tracking-wider">
-                  {entry.data.sourceChannel}
-                </span>
-                <span class="text-xs text-text-muted">{entry.data.date}</span>
-              </div>
-            </div>
-            <p class="text-sm text-text leading-relaxed">{entry.data.content[locale]}</p>
-            <div class="flex gap-1 text-gold" aria-label={`${entry.data.rating} / 5`}>
-              {Array.from({ length: entry.data.rating }).map(() => <span>★</span>)}
-            </div>
-          </Card>
-        </article>
-      ))}
-    </div>
+  <Container size="wide" class="flex flex-col gap-16">
+    <header class="flex flex-col gap-3 max-w-xl">
+      <p class="caption">{locale === 'zh' ? '客户评价' : 'お客様の声'}</p>
+      <h2 class="font-display text-3xl sm:text-4xl">
+        {t(locale, 'home.testimonials.title')}
+      </h2>
+    </header>
+
+    {featured && (
+      <article data-testimonial class="grid grid-cols-12 gap-6 sm:gap-10">
+        <span aria-hidden="true" class="col-span-12 sm:col-span-1 font-display text-6xl sm:text-7xl text-gold leading-none">“</span>
+        <div class="col-span-12 sm:col-span-10 flex flex-col gap-8">
+          <blockquote class="font-display text-2xl sm:text-4xl leading-[1.35] max-w-4xl">
+            {featured.data.content[locale]}
+          </blockquote>
+          <footer class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-text-muted">
+            <span class="text-text">{featured.data.customerInitials}</span>
+            <span aria-hidden="true">·</span>
+            <span class="caption">{featured.data.sourceChannel}</span>
+            <span aria-hidden="true">·</span>
+            <time class="tabular">{featured.data.date}</time>
+          </footer>
+        </div>
+      </article>
+    )}
+
+    {supporting.length > 0 && (
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-14 border-t border-border pt-12">
+        {supporting.map((entry) => (
+          <article data-testimonial class="flex flex-col gap-5">
+            <p class="text-base sm:text-lg leading-relaxed text-text">
+              {entry.data.content[locale]}
+            </p>
+            <footer class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-muted">
+              <span class="text-text-muted">{entry.data.customerInitials}</span>
+              <span aria-hidden="true">·</span>
+              <span class="caption">{entry.data.sourceChannel}</span>
+              <span aria-hidden="true">·</span>
+              <time class="tabular">{entry.data.date}</time>
+            </footer>
+          </article>
+        ))}
+      </div>
+    )}
   </Container>
 </Section>

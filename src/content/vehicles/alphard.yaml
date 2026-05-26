@@ -6,5 +6,5 @@ features:
   - { ja: '革張りキャプテンシート', zh: '真皮独立座椅' }
   - { ja: '空気清浄機搭載', zh: '车内空气净化器' }
 photos:
-  - ../../assets/vehicles/alphard-1.jpg
+  - ../../assets/vehicles/alphard-1.png
 order: 1

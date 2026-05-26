@@ -62,11 +62,11 @@ test('mobile menu button fits in viewport on /zh/', async ({
   await pw.goto('/zh/');
   const menu = await pw.evaluate(() => {
     const r = document
-      .querySelector('[data-mobile-menu] summary')
+      .querySelector('[data-mobile-menu] [data-mobile-toggle]')
       ?.getBoundingClientRect();
     return r ? { left: r.left, right: r.right, width: r.width } : null;
   });
-  if (!menu) throw new Error('mobile menu summary not found in DOM');
+  if (!menu) throw new Error('mobile menu toggle not found in DOM');
   expect(menu.right).toBeLessThanOrEqual(viewport.width);
   expect(menu.left).toBeGreaterThanOrEqual(0);
 });

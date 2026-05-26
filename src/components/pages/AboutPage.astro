@@ -1,59 +1,118 @@
 ---
-import Card from '@/components/ui/Card.astro';
+import aboutImg from '@/assets/photos/about-hero.jpg';
+import RouteHero from '@/components/route/RouteHero.astro';
 import Container from '@/components/ui/Container.astro';
 import Section from '@/components/ui/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { type Locale, t } from '@/i18n/t';
+import { photoCredits } from '@/lib/credits';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
 const prefix = locale === 'zh' ? '/zh' : '';
+const alt = photoCredits.find((c) => c.file === 'about-hero.jpg')?.alt[locale] ?? '';
 
-const sections = [
-  { titleKey: 'about.section.fleet.title', descKey: 'about.section.fleet.desc' },
-  { titleKey: 'about.section.area.title', descKey: 'about.section.area.desc' },
-] as const;
+const titleJa = { primary: '会社概要、', secondary: 'そして、はじまり。' };
+const titleZh = { primary: '关于我们,', secondary: '与一段日常的开始。' };
+const sublineJa = '東京を拠点に、空港送迎・チャーター・スキー送迎を提供する 7 座ハイヤー専門サービス。中国語・日本語ドライバーが、訪日のご家族・ご友人の旅をお支えします。';
+const sublineZh = '总部位于东京,专营 7 座专车的空港送迎・チャーター・滑雪送迎服务。中日双语司机,陪伴你与家人朋友的日本之旅。';
 
 const policyLinks = [
-  { href: `${prefix}/legal/tokushoho`, key: 'about.section.policy.tokushoho' },
-  { href: `${prefix}/legal/privacy`, key: 'about.section.policy.privacy' },
-  { href: `${prefix}/legal/cancel-policy`, key: 'about.section.policy.cancel' },
-] as const;
+  { href: `${prefix}/legal/tokushoho`, key: 'about.section.policy.tokushoho' as const },
+  { href: `${prefix}/legal/privacy`, key: 'about.section.policy.privacy' as const },
+  { href: `${prefix}/legal/cancel-policy`, key: 'about.section.policy.cancel' as const },
+];
 ---
 <BaseLayout
   locale={locale}
   title={t(locale, 'about.title')}
   description={t(locale, 'about.lead')}
+  immersiveHeader
 >
+  <RouteHero
+    image={aboutImg}
+    alt={alt}
+    eyebrow={locale === 'zh' ? '关于 / About' : 'About / 会社概要'}
+    title={locale === 'ja' ? titleJa : titleZh}
+    srOnlyTitle={t(locale, 'about.title')}
+    subline={locale === 'ja' ? sublineJa : sublineZh}
+    family={locale === 'ja' ? 'display-jp' : 'display'}
+  />
+
   <Section>
-    <Container class="flex flex-col gap-12">
-      <header class="flex flex-col gap-4">
-        <h1 class="text-4xl text-gold font-display">{t(locale, 'about.title')}</h1>
-        <p class="text-text-muted text-lg leading-relaxed">{t(locale, 'about.lead')}</p>
-      </header>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {sections.map((s) => (
-          <Card class="flex flex-col gap-3">
-            <h2 class="text-xl text-gold font-display">{t(locale, s.titleKey)}</h2>
-            <p class="text-text-muted text-sm leading-relaxed">{t(locale, s.descKey)}</p>
-          </Card>
-        ))}
+    <Container size="wide" class="grid grid-cols-12 gap-6 sm:gap-12">
+      <p class="col-span-12 md:col-span-2 caption md:pt-2">
+        {locale === 'zh' ? '车辆' : '車両'}
+      </p>
+      <div class="col-span-12 md:col-span-7 flex flex-col gap-5">
+        <h2 class="font-display text-3xl sm:text-4xl text-text">{t(locale, 'about.section.fleet.title')}</h2>
+        <p class="text-text-muted leading-relaxed">{t(locale, 'about.section.fleet.desc')}</p>
       </div>
-      <section class="flex flex-col gap-4">
-        <h2 class="text-xl text-gold font-display">{t(locale, 'about.section.policy.title')}</h2>
-        <ul class="flex flex-col gap-2">
+      <ul class="col-span-12 md:col-span-3 flex flex-col text-sm border-y border-border">
+        {[
+          { name: 'Alphard', seat: '4+1' },
+          { name: 'Vellfire', seat: '4+1' },
+          { name: 'Hiace GC', seat: '7+2' },
+        ].map((v) => (
+          <li class="flex justify-between py-3 border-b border-border last:border-b-0">
+            <span class="text-text">{v.name}</span>
+            <span class="text-text-muted tabular">{v.seat}</span>
+          </li>
+        ))}
+      </ul>
+    </Container>
+  </Section>
+
+  <Section>
+    <Container size="wide" class="grid grid-cols-12 gap-6 sm:gap-12">
+      <p class="col-span-12 md:col-span-2 caption md:pt-2">
+        {locale === 'zh' ? '区域' : 'エリア'}
+      </p>
+      <div class="col-span-12 md:col-span-7 flex flex-col gap-5">
+        <h2 class="font-display text-3xl sm:text-4xl text-text">{t(locale, 'about.section.area.title')}</h2>
+        <p class="text-text-muted leading-relaxed">{t(locale, 'about.section.area.desc')}</p>
+      </div>
+      <ul class="col-span-12 md:col-span-3 flex flex-col text-sm border-y border-border">
+        {[
+          { area: locale === 'zh' ? '关东' : '関東', cities: '東京・横浜・千葉' },
+          { area: locale === 'zh' ? '关西' : '関西', cities: '京都・大阪・奈良' },
+          { area: locale === 'zh' ? '长野' : '長野', cities: locale === 'zh' ? '白马 (冬季)' : '白馬 (冬季)' },
+        ].map((a) => (
+          <li class="flex justify-between gap-2 py-3 border-b border-border last:border-b-0">
+            <span class="text-text">{a.area}</span>
+            <span class="text-text-muted text-end">{a.cities}</span>
+          </li>
+        ))}
+      </ul>
+    </Container>
+  </Section>
+
+  <Section spacing="tight">
+    <Container size="wide" class="grid grid-cols-12 gap-6 sm:gap-12">
+      <p class="col-span-12 md:col-span-2 caption md:pt-2">
+        {locale === 'zh' ? '条款' : 'Policy'}
+      </p>
+      <div class="col-span-12 md:col-span-7 flex flex-col">
+        <h2 class="font-display text-3xl sm:text-4xl text-text mb-5">{t(locale, 'about.section.policy.title')}</h2>
+        <ul class="flex flex-col">
           {policyLinks.map((p) => (
-            <li>
+            <li class="border-t border-border last:border-b">
               <a
                 href={p.href}
-                class="inline-flex items-center min-h-11 text-text underline underline-offset-4 hover:text-gold"
-              >{t(locale, p.key)}</a>
+                class="group flex items-center justify-between gap-4 py-5 text-text hover:text-gold"
+              >
+                <span class="font-display text-lg">{t(locale, p.key)}</span>
+                <span aria-hidden="true" class="text-text-muted group-hover:text-gold group-hover:translate-x-1 transition-transform">→</span>
+              </a>
             </li>
           ))}
         </ul>
-      </section>
+      </div>
+      <div class="col-span-12 md:col-span-3 flex flex-col gap-2 text-sm text-text-muted md:pt-2">
+        <p class="caption text-text-deep">{t(locale, 'legal.last_updated')}</p>
+      </div>
     </Container>
   </Section>
 </BaseLayout>

@@ -1,7 +1,11 @@
 ---
 interface Props {
+  /** Max-width preset. `wide` for hero-aligned content, `default` (max-w-6xl) for body, `narrow` for prose. */
+  size?: 'narrow' | 'default' | 'wide';
   class?: string;
 }
-const { class: extra = '' } = Astro.props;
+const { size = 'default', class: extra = '' } = Astro.props;
+const sizeCls =
+  size === 'narrow' ? 'max-w-3xl' : size === 'wide' ? 'max-w-7xl' : 'max-w-6xl';
 ---
-<div class:list={['w-full max-w-6xl px-6', extra]}><slot /></div>
+<div class:list={['w-full px-5 sm:px-8', sizeCls, extra]}><slot /></div>

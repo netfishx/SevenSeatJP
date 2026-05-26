@@ -1,7 +1,21 @@
 ---
 interface Props {
+  /**
+   * Vertical rhythm preset. `default` for editorial body sections,
+   * `tight` for transition strips, `loose` for marquee / hero-adjacent.
+   */
+  spacing?: 'default' | 'tight' | 'loose' | 'flush';
   class?: string;
+  id?: string;
 }
-const { class: extra = '' } = Astro.props;
+const { spacing = 'default', class: extra = '', id } = Astro.props;
+const pad =
+  spacing === 'tight'
+    ? 'py-[clamp(2.5rem,2rem+1.5vw,4rem)]'
+    : spacing === 'loose'
+      ? 'py-[clamp(7rem,5rem+5vw,14rem)]'
+      : spacing === 'flush'
+        ? ''
+        : 'py-[clamp(5rem,4rem+3vw,9rem)]';
 ---
-<section class:list={['flex justify-center py-16', extra]}><slot /></section>
+<section id={id} class:list={['flex justify-center', pad, extra]}><slot /></section>

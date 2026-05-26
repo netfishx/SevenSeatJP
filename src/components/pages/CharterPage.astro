@@ -1,10 +1,13 @@
 ---
+import charterImg from '@/assets/photos/charter-hero.jpg';
 import PackageCard from '@/components/route/PackageCard.astro';
+import RouteHero from '@/components/route/RouteHero.astro';
 import Button from '@/components/ui/Button.astro';
 import Container from '@/components/ui/Container.astro';
 import Section from '@/components/ui/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { type Locale, t } from '@/i18n/t';
+import { photoCredits } from '@/lib/credits';
 import { getCollection } from 'astro:content';
 
 interface Props {
@@ -12,31 +15,71 @@ interface Props {
 }
 const { locale } = Astro.props;
 const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
+const alt = photoCredits.find((c) => c.file === 'charter-hero.jpg')?.alt[locale] ?? '';
 
 const all = await getCollection('packages');
 const charterPkgs = all
   .filter((p) => p.data.type === 'charter')
   .sort((a, b) => a.data.order - b.data.order);
+
+const titleJa = { primary: 'プライベート', secondary: 'チャーター。' };
+const titleZh = { primary: '私享专车', secondary: '半日,一日,任尔安排。' };
+const sublineJa = 'ドライバー付き専属チャーター。半日 4 時間〜 1 日 8 時間のプランで東京近郊・京都・大阪まで対応。';
+const sublineZh = '司机随行的专属包车。半日 4 小时到一日 8 小时多种方案,覆盖东京近郊・京都・大阪。';
 ---
 <BaseLayout
   locale={locale}
   title={t(locale, 'charter.title')}
   description={t(locale, 'charter.lead')}
+  immersiveHeader
 >
+  <RouteHero
+    image={charterImg}
+    alt={alt}
+    eyebrow={locale === 'zh' ? '专车包车 / Charter' : 'Charter / プライベート'}
+    title={locale === 'ja' ? titleJa : titleZh}
+    srOnlyTitle={t(locale, 'charter.title')}
+    subline={locale === 'ja' ? sublineJa : sublineZh}
+    family={locale === 'ja' ? 'display-jp' : 'display'}
+  />
+
   <Section>
-    <Container class="flex flex-col gap-8">
-      <header class="flex flex-col gap-4">
-        <h1 class="text-4xl text-gold font-display">{t(locale, 'charter.title')}</h1>
-        <p class="text-text-muted text-lg leading-relaxed max-w-3xl">
-          {t(locale, 'charter.lead')}
-        </p>
+    <Container size="wide" class="grid grid-cols-12 gap-6 sm:gap-12">
+      <p class="col-span-12 md:col-span-2 caption md:pt-2">
+        {locale === 'zh' ? '可去之处' : 'Destinations'}
+      </p>
+      <p class="col-span-12 md:col-span-7 font-display text-xl sm:text-2xl leading-[1.5] text-text">
+        {locale === 'zh'
+          ? '富士山・河口湖、箱根温泉、镰仓江之岛、日光中禅寺湖、京都市内、大阪难波、奈良东大寺——常规一日往返均可对应。'
+          : '富士山・河口湖、箱根温泉、鎌倉・江ノ島、日光中禅寺湖、京都市内、大阪難波、奈良東大寺——日帰り対応可能。'}
+      </p>
+      <div class="col-span-12 md:col-span-3 flex flex-col gap-3 text-sm border-y border-border py-5">
+        <p><span class="text-text-muted">{locale === 'zh' ? '最少时长' : '最短'}</span> · <span class="text-text">4h</span></p>
+        <p><span class="text-text-muted">{locale === 'zh' ? '最大时长' : '最長'}</span> · <span class="text-text">10h</span></p>
+        <p><span class="text-text-muted">{locale === 'zh' ? '可超时' : '延長'}</span> · <span class="text-text">+¥8,000/h</span></p>
+      </div>
+    </Container>
+  </Section>
+
+  <Section spacing="tight">
+    <Container size="wide" class="flex flex-col gap-2">
+      <header class="flex items-end justify-between gap-4 border-b border-border-strong pb-4 mb-4">
+        <h2 class="font-display text-2xl sm:text-3xl">
+          {locale === 'zh' ? '套餐一览' : 'プランラインナップ'}
+        </h2>
+        <p class="caption">{locale === 'zh' ? '消费税・燃油・过路费全含' : 'incl. fuel · tolls · tax'}</p>
       </header>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {charterPkgs.map((p) => <PackageCard entry={p} locale={locale} />)}
-      </div>
-      <div class="flex justify-center pt-4">
-        <Button href={inquiryHref} variant="primary">{t(locale, 'cta.inquire')}</Button>
-      </div>
+      {charterPkgs.map((p) => <PackageCard entry={p} locale={locale} />)}
+    </Container>
+  </Section>
+
+  <Section spacing="loose">
+    <Container size="wide" class="flex flex-col items-start gap-8">
+      <p class="caption">{locale === 'zh' ? '预约' : 'Reserve'}</p>
+      <h2 class="font-display text-3xl sm:text-5xl max-w-3xl">
+        {locale === 'zh' ? '说出你想去的地方,我们替你画好路线。' : '行きたい場所をお知らせください。ルートはこちらで。'}
+      </h2>
+      <Button href={inquiryHref} variant="solid">{t(locale, 'cta.inquire')}</Button>
     </Container>
   </Section>
 </BaseLayout>

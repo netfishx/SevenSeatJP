@@ -1,11 +1,14 @@
 ---
+import pricingImg from '@/assets/photos/pricing-hero.jpg';
 import PackageCard from '@/components/route/PackageCard.astro';
 import PriceTable from '@/components/route/PriceTable.astro';
+import RouteHero from '@/components/route/RouteHero.astro';
 import Button from '@/components/ui/Button.astro';
 import Container from '@/components/ui/Container.astro';
 import Section from '@/components/ui/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { type Locale, t } from '@/i18n/t';
+import { photoCredits } from '@/lib/credits';
 import { getCollection } from 'astro:content';
 
 interface Props {
@@ -13,6 +16,7 @@ interface Props {
 }
 const { locale } = Astro.props;
 const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
+const alt = photoCredits.find((c) => c.file === 'pricing-hero.jpg')?.alt[locale] ?? '';
 
 const [allRoutes, allPackages] = await Promise.all([
   getCollection('routes'),
@@ -30,56 +34,76 @@ const charterPkgs = allPackages
 const rentalPkgs = allPackages
   .filter((p) => p.data.type === 'rental')
   .sort((a, b) => a.data.order - b.data.order);
+
+const titleJa = { primary: '料金一覧。', secondary: '横断で見比べる。' };
+const titleZh = { primary: '料金一览。', secondary: '横向对比, 一目了然。' };
+const sublineJa = '全プランの価格を一覧で。空港送迎・スキー・チャーター・レンタル を横断比較できます。';
+const sublineZh = '所有方案的价格汇总。空港送迎・スキー・チャーター・レンタル 一处横向比对。';
+
+const sections = [
+  { key: 'airport' as const, label: t(locale, 'pricing.section.airport'), routes: airportRoutes, packages: null },
+  { key: 'ski' as const, label: t(locale, 'pricing.section.ski'), routes: skiRoutes, packages: null },
+  { key: 'charter' as const, label: t(locale, 'pricing.section.charter'), routes: null, packages: charterPkgs },
+  { key: 'rental' as const, label: t(locale, 'pricing.section.rental'), routes: null, packages: rentalPkgs },
+];
 ---
 <BaseLayout
   locale={locale}
   title={t(locale, 'pricing.title')}
   description={t(locale, 'pricing.lead')}
+  immersiveHeader
 >
-  <Section>
-    <Container class="flex flex-col gap-12">
-      <header class="flex flex-col gap-4">
-        <h1 class="text-4xl text-gold font-display">{t(locale, 'pricing.title')}</h1>
-        <p class="text-text-muted text-lg leading-relaxed max-w-3xl">
-          {t(locale, 'pricing.lead')}
-        </p>
-      </header>
+  <RouteHero
+    image={pricingImg}
+    alt={alt}
+    eyebrow={locale === 'zh' ? '料金一览 / Pricing' : 'Pricing / 料金'}
+    title={locale === 'ja' ? titleJa : titleZh}
+    srOnlyTitle={t(locale, 'pricing.title')}
+    subline={locale === 'ja' ? sublineJa : sublineZh}
+    family={locale === 'ja' ? 'display-jp' : 'display'}
+  />
 
-      <section class="flex flex-col gap-4">
-        <h2 class="text-2xl text-gold font-display border-b border-border pb-2">
-          {t(locale, 'pricing.section.airport')}
-        </h2>
-        <PriceTable routes={airportRoutes} locale={locale} />
-      </section>
+  <Section spacing="tight">
+    <Container size="wide" class="flex flex-col gap-3">
+      <p class="caption">{locale === 'zh' ? '快速跳转' : 'Jump to'}</p>
+      <ul class="flex flex-wrap gap-x-6 gap-y-3 border-y border-border py-5">
+        {sections.map((s, i) => (
+          <li>
+            <a
+              href={`#${s.key}`}
+              class="inline-flex items-baseline gap-2 text-text-muted hover:text-text"
+            >
+              <span class="ordinal text-xs tabular text-text-deep">{String(i + 1).padStart(2, '0')}</span>
+              <span class="text-sm">{s.label}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </Container>
+  </Section>
 
-      <section class="flex flex-col gap-4">
-        <h2 class="text-2xl text-gold font-display border-b border-border pb-2">
-          {t(locale, 'pricing.section.ski')}
-        </h2>
-        <PriceTable routes={skiRoutes} locale={locale} />
-      </section>
+  {sections.map((s, i) => (
+    <Section spacing="tight" id={s.key}>
+      <Container size="wide" class="flex flex-col gap-6">
+        <header class="flex items-end justify-between gap-4 border-b border-border-strong pb-4">
+          <div class="flex items-baseline gap-4">
+            <span class="ordinal text-xl text-text-muted tabular">{String(i + 1).padStart(2, '0')}</span>
+            <h2 class="font-display text-2xl sm:text-3xl">{s.label}</h2>
+          </div>
+        </header>
+        {s.routes && <PriceTable routes={s.routes} locale={locale} />}
+        {s.packages && s.packages.map((p) => <PackageCard entry={p} locale={locale} />)}
+      </Container>
+    </Section>
+  ))}
 
-      <section class="flex flex-col gap-4">
-        <h2 class="text-2xl text-gold font-display border-b border-border pb-2">
-          {t(locale, 'pricing.section.charter')}
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {charterPkgs.map((p) => <PackageCard entry={p} locale={locale} />)}
-        </div>
-      </section>
-
-      <section class="flex flex-col gap-4">
-        <h2 class="text-2xl text-gold font-display border-b border-border pb-2">
-          {t(locale, 'pricing.section.rental')}
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {rentalPkgs.map((p) => <PackageCard entry={p} locale={locale} />)}
-        </div>
-      </section>
-
-      <div class="flex justify-center pt-4">
-        <Button href={inquiryHref} variant="primary">{t(locale, 'cta.inquire')}</Button>
-      </div>
+  <Section spacing="loose">
+    <Container size="wide" class="flex flex-col items-start gap-8">
+      <p class="caption">{locale === 'zh' ? '咨询' : 'Inquire'}</p>
+      <h2 class="font-display text-3xl sm:text-5xl max-w-3xl">
+        {locale === 'zh' ? '看好的方案,直接告诉我们。' : '気になるプランを、ぜひお知らせください。'}
+      </h2>
+      <Button href={inquiryHref} variant="solid">{t(locale, 'cta.inquire')}</Button>
     </Container>
   </Section>
 </BaseLayout>

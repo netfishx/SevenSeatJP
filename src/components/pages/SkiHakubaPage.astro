@@ -1,10 +1,15 @@
 ---
+import skiAlpsImg from '@/assets/photos/ski-alps.jpg';
+import skiImg from '@/assets/photos/ski-hero.jpg';
 import PriceTable from '@/components/route/PriceTable.astro';
+import RouteHero from '@/components/route/RouteHero.astro';
 import Button from '@/components/ui/Button.astro';
 import Container from '@/components/ui/Container.astro';
 import Section from '@/components/ui/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { type Locale, t } from '@/i18n/t';
+import { photoCredits } from '@/lib/credits';
+import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 
 interface Props {
@@ -12,6 +17,8 @@ interface Props {
 }
 const { locale } = Astro.props;
 const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
+const alt = photoCredits.find((c) => c.file === 'ski-hero.jpg')?.alt[locale] ?? '';
+const alpsAlt = photoCredits.find((c) => c.file === 'ski-alps.jpg')?.alt[locale] ?? '';
 
 const all = await getCollection('routes');
 const skiRoutes = all
@@ -19,29 +26,114 @@ const skiRoutes = all
   .sort((a, b) => a.data.order - b.data.order);
 
 const seasonal = skiRoutes[0]?.data.seasonal;
+
+const titleJa = { primary: '白馬八方尾根', secondary: 'まで、まっすぐに。' };
+const titleZh = { primary: '直送白马', secondary: '八方尾根 · 全装备同乘。' };
+const sublineJa = '東京から白馬八方尾根エリアへの直行送迎。スキー機材積載対応、12 月から 3 月まで季節限定で運行。';
+const sublineZh = '从东京直达白马八方尾根。滑雪装备整套装载，12 月至 3 月雪季限定运行。';
+const badge = seasonal ? `${locale === 'zh' ? '冬季限定' : 'シーズン限定'} · ${seasonal.from} – ${seasonal.to}` : undefined;
 ---
 <BaseLayout
   locale={locale}
   title={t(locale, 'ski.title')}
   description={t(locale, 'ski.lead')}
+  immersiveHeader
 >
+  <RouteHero
+    image={skiImg}
+    alt={alt}
+    eyebrow={locale === 'zh' ? '白马雪场 / Hakuba' : 'Hakuba / 白馬'}
+    title={locale === 'ja' ? titleJa : titleZh}
+    srOnlyTitle={t(locale, 'ski.title')}
+    subline={locale === 'ja' ? sublineJa : sublineZh}
+    badge={badge}
+    family={locale === 'ja' ? 'display-jp' : 'display'}
+  />
+
   <Section>
-    <Container class="flex flex-col gap-8">
-      <header class="flex flex-col gap-4">
-        <div class="flex flex-wrap items-center gap-3">
-          <h1 class="text-4xl text-gold font-display">{t(locale, 'ski.title')}</h1>
-          {seasonal && (
-            <span class="inline-flex items-center min-h-8 px-3 rounded-full bg-gold/10 text-gold text-xs font-display border border-gold/30">
-              {t(locale, 'ski.seasonal.badge')} · {seasonal.from} – {seasonal.to}
+    <Container size="wide" class="grid grid-cols-12 gap-6 sm:gap-12">
+      <p class="col-span-12 md:col-span-2 caption md:pt-2">
+        {locale === 'zh' ? '行程' : 'Itinerary'}
+      </p>
+      <ol class="col-span-12 md:col-span-7 flex flex-col">
+        {[
+          { ja: '東京都内のホテル出発（早朝）', zh: '清晨自东京市内酒店出发' },
+          { ja: '関越自動車道 → 上信越自動車道、約 4 〜 5 時間', zh: '关越自动车道 → 上信越自动车道，约 4–5 小时' },
+          { ja: '白馬八方尾根エリア到着、リフト乗り場まで送迎', zh: '抵达白马八方尾根，送至索道乗り場' },
+          { ja: 'お帰りも同じ車両でホテルまで', zh: '回程同车同司机直送酒店' },
+        ].map((step, i) => (
+          <li class="grid grid-cols-12 gap-3 py-5 border-t border-border last:border-b items-baseline">
+            <span class="ordinal col-span-2 text-xl text-text-muted tabular">
+              {String(i + 1).padStart(2, '0')}
             </span>
-          )}
-        </div>
-        <p class="text-text-muted text-lg leading-relaxed max-w-3xl">{t(locale, 'ski.lead')}</p>
+            <span class="col-span-10 text-text leading-relaxed">
+              {locale === 'zh' ? step.zh : step.ja}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <ul class="col-span-12 md:col-span-3 flex flex-col gap-3 text-sm border-y border-border py-5">
+        <li class="flex justify-between"><span class="text-text-muted">{locale === 'zh' ? '总时长' : '所要時間'}</span><span class="text-text tabular">4–5h</span></li>
+        <li class="flex justify-between"><span class="text-text-muted">{locale === 'zh' ? '装备' : '装備'}</span><span class="text-text">{locale === 'zh' ? '滑雪板·靴·杖' : 'ski / boot / pole'}</span></li>
+        <li class="flex justify-between"><span class="text-text-muted">{locale === 'zh' ? '车型' : '車両'}</span><span class="text-text">Hiace GC</span></li>
+      </ul>
+    </Container>
+  </Section>
+
+  <Section spacing="tight">
+    <Container size="wide" class="flex flex-col gap-8">
+      <header class="flex items-end justify-between gap-4 border-b border-border-strong pb-4">
+        <h2 class="font-display text-2xl sm:text-3xl">
+          {locale === 'zh' ? '料金' : '料金'}
+        </h2>
+        <p class="caption">{locale === 'zh' ? '消费税·装备装载·过路费全含' : 'incl. tax · gear · tolls'}</p>
       </header>
       <PriceTable routes={skiRoutes} locale={locale} />
-      <div class="flex justify-center pt-4">
-        <Button href={inquiryHref} variant="primary">{t(locale, 'cta.inquire')}</Button>
+    </Container>
+  </Section>
+
+  <Section>
+    <Container size="wide" class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+      <div class="lg:col-span-7 relative">
+        <Image
+          src={skiAlpsImg}
+          alt={alpsAlt}
+          widths={[640, 1024, 1400]}
+          sizes="(min-width: 1024px) 58vw, 100vw"
+          quality={80}
+          class="w-full aspect-[5/3] object-cover"
+        />
       </div>
+      <div class="lg:col-span-5 flex flex-col gap-6">
+        <p class="caption">{locale === 'zh' ? '注意事项' : 'Good to know'}</p>
+        <h2 class="font-display text-3xl sm:text-4xl leading-[1.15]">
+          {locale === 'zh' ? '雪季常见情形' : 'シーズン中のご案内'}
+        </h2>
+        <ul class="flex flex-col gap-4 text-text-muted leading-relaxed text-sm">
+          <li class="flex gap-3 border-t border-border pt-4">
+            <span class="text-gold flex-shrink-0">·</span>
+            <span>{locale === 'zh' ? '大雪日东京 → 白马时间可能延长 1–2 小时,司机会提前致电。' : '大雪日、東京 → 白馬は 1〜2 時間延長することがあり、事前にご連絡します。'}</span>
+          </li>
+          <li class="flex gap-3 border-t border-border pt-4">
+            <span class="text-gold flex-shrink-0">·</span>
+            <span>{locale === 'zh' ? '车辆配备雪胎+雪链,无需额外费用。' : 'スタッドレスタイヤ＋チェーン装備、追加料金なし。'}</span>
+          </li>
+          <li class="flex gap-3 border-t border-border pt-4">
+            <span class="text-gold flex-shrink-0">·</span>
+            <span>{locale === 'zh' ? '可中途绕道安昙野・松本观景。' : '安曇野・松本へのご立寄もご相談ください。'}</span>
+          </li>
+        </ul>
+      </div>
+    </Container>
+  </Section>
+
+  <Section spacing="loose">
+    <Container size="wide" class="flex flex-col items-start gap-8">
+      <p class="caption">{locale === 'zh' ? '预约' : 'Reserve'}</p>
+      <h2 class="font-display text-3xl sm:text-5xl max-w-3xl">
+        {locale === 'zh' ? '雪季档期紧张,请尽早预约。' : '冬季は枠が早く埋まります。お早めにご予約を。'}
+      </h2>
+      <Button href={inquiryHref} variant="solid">{t(locale, 'cta.inquire')}</Button>
     </Container>
   </Section>
 </BaseLayout>

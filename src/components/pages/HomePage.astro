@@ -1,33 +1,145 @@
 ---
+import cabinImg from '@/assets/photos/cabin-detail.png';
+import homeFujiImg from '@/assets/photos/home-fuji.jpg';
 import Hero from '@/components/home/Hero.astro';
 import ServiceGrid from '@/components/home/ServiceGrid.astro';
 import TestimonialsList from '@/components/home/TestimonialsList.astro';
+import TrustMetrics from '@/components/home/TrustMetrics.astro';
 import LocalBusinessJsonLd from '@/components/seo/LocalBusinessJsonLd.astro';
 import Button from '@/components/ui/Button.astro';
 import Container from '@/components/ui/Container.astro';
 import Section from '@/components/ui/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { type Locale, t } from '@/i18n/t';
+import { photoCredits } from '@/lib/credits';
+import { Image } from 'astro:assets';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
 const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
+const fujiAlt = photoCredits.find((c) => c.file === 'home-fuji.jpg')?.alt[locale] ?? '';
+const cabinAlt = photoCredits.find((c) => c.file === 'cabin-detail.png')?.alt[locale] ?? '';
+
+const leadParagraph =
+  locale === 'zh'
+    ? '我们不是网约车，也不是旅行社。SevenSeatJP 是一支以日本为家的小型司机团队——熟门熟路、说得了中文、开得了山路。一行人、一辆车、一段不被打扰的旅程。'
+    : '配車アプリでも、旅行代理店でもありません。私たちは日本を拠点とする少人数のドライバーチーム——道を知り、中国語を話し、山道も任せられる。家族で、ひと組で、騒がしくない移動を。';
 ---
 <BaseLayout
   locale={locale}
   title={t(locale, 'home.title')}
   description={t(locale, 'home.subtitle')}
+  immersiveHeader
 >
   <LocalBusinessJsonLd locale={locale} />
+
   <Hero locale={locale} />
-  <ServiceGrid locale={locale} />
-  <TestimonialsList locale={locale} />
+
   <Section>
-    <Container class="flex flex-col items-center gap-4 text-center">
-      <p class="text-text-muted">{t(locale, 'home.subtitle')}</p>
-      <Button href={inquiryHref} variant="primary">{t(locale, 'home.cta')}</Button>
+    <Container size="wide" class="grid grid-cols-12 gap-6 sm:gap-12 items-start">
+      <p class="col-span-12 md:col-span-2 caption md:pt-3">
+        {locale === 'zh' ? '为什么是我们' : 'なぜ私たちか'}
+      </p>
+      <p class="col-span-12 md:col-span-7 font-display text-2xl sm:text-3xl leading-[1.4] text-text">
+        {leadParagraph}
+      </p>
+      <div class="col-span-12 md:col-span-3 md:pt-3 flex flex-col gap-3 text-sm text-text-muted">
+        <p>{locale === 'zh' ? '运营基地' : '本社'}<br /><span class="text-text">東京 · Tokyo</span></p>
+        <p>{locale === 'zh' ? '対応エリア' : 'サービスエリア'}<br /><span class="text-text">関東 · 関西 · 長野</span></p>
+      </div>
+    </Container>
+  </Section>
+
+  <ServiceGrid locale={locale} />
+
+  <Section spacing="flush">
+    <div class="w-full relative isolate flex items-end">
+      <Image
+        src={cabinImg}
+        alt={cabinAlt}
+        widths={[640, 1024, 1600, 2400]}
+        sizes="100vw"
+        quality={82}
+        class="w-full aspect-[16/9] sm:aspect-[21/9] object-cover -z-10"
+      />
+      <div
+        aria-hidden="true"
+        class="absolute inset-0 -z-10 bg-gradient-to-t from-bg via-bg/30 to-transparent"
+      ></div>
+      <div class="flex justify-center w-full pb-10 sm:pb-16">
+        <div class="w-full max-w-7xl px-5 sm:px-8 grid grid-cols-12 gap-6 items-end">
+          <p class="col-span-12 md:col-span-2 caption">{locale === 'zh' ? '车内' : 'On board'}</p>
+          <h2 class="col-span-12 md:col-span-7 font-display text-2xl sm:text-4xl leading-[1.25] max-w-2xl">
+            {locale === 'zh'
+              ? '七张座椅,各得其所。'
+              : '七つの座席は、それぞれの居場所を。'}
+          </h2>
+          <p class="col-span-12 md:col-span-3 text-sm text-text-muted leading-relaxed">
+            {locale === 'zh'
+              ? '真皮独立座椅、木纹饰板、车载 Wi-Fi、空气净化器。每一程都是公共交通到不了的从容。'
+              : '本革キャプテンシート、ウッドトリム、車載 Wi-Fi、空気清浄機。公共交通では届かない、ひと息のゆとりを。'}
+          </p>
+        </div>
+      </div>
+    </div>
+  </Section>
+
+  <TrustMetrics locale={locale} />
+
+  <Section>
+    <Container size="wide" class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+      <div class="lg:col-span-7 relative">
+        <Image
+          src={homeFujiImg}
+          alt={fujiAlt}
+          widths={[640, 1024, 1400]}
+          sizes="(min-width: 1024px) 58vw, 100vw"
+          quality={80}
+          class="w-full aspect-[4/5] sm:aspect-[5/4] object-cover"
+        />
+      </div>
+      <div class="lg:col-span-5 flex flex-col gap-6">
+        <p class="caption">{locale === 'zh' ? '行程范例' : 'Sample itinerary'}</p>
+        <h2 class="font-display text-3xl sm:text-5xl leading-[1.15]">
+          {locale === 'zh' ? '富士山 · 河口湖 · 一日包车' : '富士山 · 河口湖 · 一日チャーター'}
+        </h2>
+        <p class="text-text-muted leading-relaxed">
+          {locale === 'zh'
+            ? '清晨从东京出发，途经新仓山浅间公园俯瞰五重塔与富士。中午抵河口湖，午餐后绕湖一周。傍晚返回东京，全程八小时。'
+            : '東京を朝出発、新倉山浅間公園で五重塔越しの富士を一望。昼に河口湖、湖畔ランチ後に湖を一周。夕刻に東京帰着、全行程 8 時間。'}
+        </p>
+        <ul class="flex flex-col gap-2 text-sm text-text-muted border-y border-border py-5">
+          <li class="flex justify-between"><span>{locale === 'zh' ? '所要时间' : '所要時間'}</span><span class="tabular text-text">8h</span></li>
+          <li class="flex justify-between"><span>{locale === 'zh' ? '使用车型' : '車両'}</span><span class="text-text">Alphard / Vellfire</span></li>
+          <li class="flex justify-between"><span>{locale === 'zh' ? '参考料金' : '参考料金'}</span><span class="tabular text-text">¥88,000〜</span></li>
+        </ul>
+        <Button href={locale === 'zh' ? '/zh/charter' : '/charter'} variant="link">
+          {locale === 'zh' ? '查看チャーター全部套餐' : 'チャータープラン一覧'}
+        </Button>
+      </div>
+    </Container>
+  </Section>
+
+  <TestimonialsList locale={locale} />
+
+  <Section spacing="loose">
+    <Container size="wide" class="flex flex-col items-start gap-10">
+      <p class="caption">{locale === 'zh' ? '联系' : 'Get in touch'}</p>
+      <h2 class="font-display text-4xl sm:text-6xl leading-[1.05] max-w-4xl">
+        {locale === 'zh'
+          ? '把行程交给我们，省下安排的力气。'
+          : '旅の段取りは、私たちに。'}
+      </h2>
+      <p class="max-w-xl text-text-muted leading-relaxed">
+        {locale === 'zh'
+          ? '请把出行日期、行程概要、人数与行李信息一并发来，我们会在 24 小时内回复并给出详细方案。'
+          : 'ご旅程・人数・お荷物の概要をお送りください。24 時間以内に詳細プランをご返信いたします。'}
+      </p>
+      <Button href={inquiryHref} variant="solid">
+        {t(locale, 'home.cta')}
+      </Button>
     </Container>
   </Section>
 </BaseLayout>

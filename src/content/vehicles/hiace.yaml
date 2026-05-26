@@ -6,5 +6,5 @@ features:
   - { ja: 'スキー機材積載対応', zh: '支持滑雪装备运输' }
   - { ja: '長距離快適仕様', zh: '长途舒适配置' }
 photos:
-  - ../../assets/vehicles/hiace-1.jpg
+  - ../../assets/vehicles/hiace-1.png
 order: 3

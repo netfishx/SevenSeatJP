@@ -5,7 +5,10 @@ import { defineConfig } from 'astro/config';
 
 export default defineConfig({
   output: 'server',
-  adapter: cloudflare(),
+  // `compile` runs sharp at build time for prerendered pages and emits
+  // multi-format assets (avif/webp/jpg) into `dist/client/_astro/`. Workers
+  // runtime never touches image processing, so no IMAGES binding is required.
+  adapter: cloudflare({ imageService: 'compile' }),
   site: 'https://sevenseatjp.com',
   i18n: {
     defaultLocale: 'ja',

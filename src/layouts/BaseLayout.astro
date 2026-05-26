@@ -11,9 +11,22 @@ interface Props {
   title?: string;
   description?: string;
   ogImage?: string;
+  /**
+   * When `true`, the site header floats over the hero on initial paint and
+   * gains its solid backdrop on scroll. Pages without an immersive hero
+   * (legal, FAQ) should leave this `false` so the header is opaque from
+   * the start.
+   */
+  immersiveHeader?: boolean;
 }
 
-const { locale, title, description, ogImage = '/og-default.png' } = Astro.props;
+const {
+  locale,
+  title,
+  description,
+  ogImage = '/og-default.png',
+  immersiveHeader = false,
+} = Astro.props;
 const fullTitle = title ? `${title} | ${t(locale, 'site.name')}` : t(locale, 'site.name');
 const canonical = new URL(getCanonicalUrl(Astro.url, locale), Astro.site);
 const jaUrl = new URL(getCanonicalUrl(Astro.url, 'ja'), Astro.site);
@@ -24,12 +37,14 @@ const ogLocaleAlt = locale === 'zh' ? 'ja_JP' : 'zh_CN';
 const desc = description ?? t(locale, 'site.name');
 const homeHref = locale === 'zh' ? '/zh/' : '/';
 const legalPrefix = locale === 'zh' ? '/zh' : '';
+const year = new Date().getFullYear();
 ---
 <!doctype html>
 <html lang={locale === 'ja' ? 'ja' : 'zh-CN'}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1c1a17" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{fullTitle}</title>
     <meta name="description" content={desc} />
@@ -52,50 +67,124 @@ const legalPrefix = locale === 'zh' ? '/zh' : '';
     <meta name="twitter:description" content={desc} />
     <meta name="twitter:image" content={ogImageUrl} />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Spectral:wght@300;400;600&family=Shippori+Mincho:wght@400;600&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&display=swap"
+    />
+
     <script>
       import '@/lib/attribution.client';
     </script>
   </head>
-  <body class="min-h-screen bg-bg text-text font-body flex flex-col">
-    <header class="sticky top-0 z-30 backdrop-blur-md bg-bg/85 border-b border-border flex justify-center">
-      <div class="w-full max-w-7xl flex items-center gap-4 px-6 py-4">
-        <a
-          href={homeHref}
-          class="font-display text-xl text-gold whitespace-nowrap"
-        >{t(locale, 'site.name')}</a>
-        <div class="flex-1 flex justify-center">
-          <SiteNav locale={locale} variant="header" />
-        </div>
-        <div class="flex items-center gap-2">
-          <LangSwitch />
-          <MobileMenu locale={locale} />
+  <body class="min-h-screen flex flex-col antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-50 focus:bg-bg focus:text-gold focus:px-3 focus:py-2"
+    >Skip to content</a>
+
+    <header
+      data-site-header
+      data-immersive={immersiveHeader ? 'true' : 'false'}
+      class:list={[
+        'fixed inset-x-0 top-0 z-40 transition-[background-color,backdrop-filter,border-color] duration-300',
+        immersiveHeader
+          ? 'bg-transparent border-b border-transparent'
+          : 'bg-bg/85 backdrop-blur-md border-b border-border',
+      ]}
+    >
+      <div class="flex justify-center">
+        <div class="w-full max-w-7xl flex items-center gap-4 px-5 sm:px-8 py-5">
+          <a
+            href={homeHref}
+            class="font-display text-base sm:text-lg text-text tracking-[0.18em] uppercase whitespace-nowrap"
+          >Seven<span class="text-gold">·</span>Seat</a>
+          <div class="flex-1 flex justify-center">
+            <SiteNav locale={locale} variant="header" />
+          </div>
+          <div class="flex items-center gap-3">
+            <LangSwitch />
+            <MobileMenu locale={locale} />
+          </div>
         </div>
       </div>
     </header>
 
-    <main class="flex-1"><slot /></main>
+    <main
+      id="main"
+      class:list={[
+        'flex-1 flex flex-col',
+        !immersiveHeader && 'pt-24 sm:pt-28',
+      ]}
+    ><slot /></main>
 
-    <footer class="border-t border-border flex justify-center">
-      <div class="w-full max-w-7xl px-6 py-10 flex flex-col gap-8">
-        <SiteNav locale={locale} variant="footer" />
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-border text-xs text-text-muted">
-          <p>© {new Date().getFullYear()} SevenSeatJP</p>
-          <div class="flex flex-wrap gap-x-4 gap-y-2">
+    <footer class="flex justify-center mt-24 sm:mt-40">
+      <div class="w-full max-w-7xl px-5 sm:px-8 pb-12 flex flex-col gap-12">
+        <div class="border-t border-border pt-12 grid grid-cols-1 md:grid-cols-12 gap-8">
+          <div class="md:col-span-4 flex flex-col gap-3">
+            <p class="font-display text-xl tracking-[0.18em] uppercase">Seven<span class="text-gold">·</span>Seat</p>
+            <p class="text-sm text-text-muted leading-relaxed max-w-xs">
+              {locale === 'zh'
+                ? '日本全境的私人专车手配。东京・京都・白马，双语司机随行。'
+                : '日本全土のプライベートハイヤー手配。東京・京都・白馬、二言語ドライバー同行。'}
+            </p>
+          </div>
+
+          <nav class="md:col-span-5" aria-label="Footer">
+            <SiteNav locale={locale} variant="footer" />
+          </nav>
+
+          <div class="md:col-span-3 flex flex-col gap-2 text-sm text-text-muted">
+            <p class="caption mb-1">{locale === 'zh' ? '联系' : 'お問合せ'}</p>
+            <p>LINE: <span class="text-text">@sevenseatjp</span></p>
+            <p>WeChat: <span class="text-text">sevenseatjp</span></p>
+            <p>Mail: <span class="text-text">contact@sevenseatjp.com</span></p>
+          </div>
+        </div>
+
+        <div class="border-t border-border pt-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 text-xs text-text-muted">
+          <p class="tabular">© {year} &nbsp; SevenSeatJP &nbsp;·&nbsp; All rights reserved</p>
+          <div class="flex flex-wrap gap-x-6 gap-y-2">
             <a
               href={`${legalPrefix}/legal/tokushoho`}
-              class="inline-flex items-center min-h-11 hover:text-gold"
+              class="inline-flex items-center min-h-11 hover:text-text"
             >{t(locale, 'about.section.policy.tokushoho')}</a>
             <a
               href={`${legalPrefix}/legal/privacy`}
-              class="inline-flex items-center min-h-11 hover:text-gold"
+              class="inline-flex items-center min-h-11 hover:text-text"
             >{t(locale, 'about.section.policy.privacy')}</a>
             <a
               href={`${legalPrefix}/legal/cancel-policy`}
-              class="inline-flex items-center min-h-11 hover:text-gold"
+              class="inline-flex items-center min-h-11 hover:text-text"
             >{t(locale, 'about.section.policy.cancel')}</a>
           </div>
         </div>
       </div>
     </footer>
+
+    <script>
+      // Header tone shift: immersive header gets a solid backdrop only after
+      // the user has scrolled past the hero fold.
+      const header = document.querySelector<HTMLElement>('[data-site-header]');
+      if (header && header.dataset.immersive === 'true') {
+        const SCROLLED = 'is-scrolled';
+        const onScroll = () => {
+          if (window.scrollY > 64) header.classList.add(SCROLLED);
+          else header.classList.remove(SCROLLED);
+        };
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+      }
+    </script>
+
+    <style>
+      [data-site-header].is-scrolled {
+        background-color: oklch(0.13 0.005 60 / 0.88);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom-color: var(--color-border);
+      }
+    </style>
   </body>
 </html>

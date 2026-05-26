@@ -6,5 +6,5 @@ features:
   - { ja: 'JBLプレミアムサウンド', zh: 'JBL 高级音响' }
   - { ja: 'デュアル電動ドア', zh: '电动双侧门' }
 photos:
-  - ../../assets/vehicles/vellfire-1.jpg
+  - ../../assets/vehicles/vellfire-1.png
 order: 2

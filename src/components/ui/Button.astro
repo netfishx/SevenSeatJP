@@ -1,25 +1,39 @@
 ---
 interface Props {
   href?: string;
-  variant?: 'primary' | 'ghost';
+  /**
+   * `link` — typographic CTA with hairline underline and trailing arrow.
+   * `quiet` — bronze-bordered button for form submission.
+   * `solid` — filled bronze, reserved for the single primary action per page.
+   */
+  variant?: 'link' | 'quiet' | 'solid';
+  type?: 'button' | 'submit' | 'reset';
   class?: string;
 }
-const { href, variant = 'primary', class: extra = '' } = Astro.props;
-const base =
-  'inline-flex items-center justify-center min-h-11 px-6 rounded-[var(--radius-card)] font-display transition-colors';
-const styles =
-  variant === 'primary'
-    ? 'bg-gold text-bg hover:bg-gold-dark'
-    : 'border border-border text-text hover:border-gold';
+const { href, variant = 'link', type = 'button', class: extra = '' } = Astro.props;
+
+const styles = {
+  link: 'group inline-flex items-center gap-2 min-h-11 text-base text-text border-b border-text/40 hover:border-gold hover:text-gold transition-colors pb-1',
+  quiet:
+    'inline-flex items-center justify-center min-h-12 px-7 border border-gold/60 text-gold hover:bg-gold hover:text-bg transition-colors font-display tracking-[0.12em] uppercase text-sm rounded-[2px]',
+  solid:
+    'inline-flex items-center justify-center min-h-12 px-7 bg-gold text-bg hover:bg-gold-dark transition-colors font-display tracking-[0.12em] uppercase text-sm rounded-[2px]',
+}[variant];
 ---
 {
   href ? (
-    <a href={href} class:list={[base, styles, extra]}>
+    <a href={href} class:list={[styles, extra]}>
       <slot />
+      {variant === 'link' && (
+        <span aria-hidden="true" class="transition-transform group-hover:translate-x-1">→</span>
+      )}
     </a>
   ) : (
-    <button type="button" class:list={[base, styles, extra]}>
+    <button type={type} class:list={[styles, extra]}>
       <slot />
+      {variant === 'link' && (
+        <span aria-hidden="true" class="transition-transform group-hover:translate-x-1">→</span>
+      )}
     </button>
   )
 }

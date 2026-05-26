@@ -1,0 +1,82 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+
+interface Props {
+  image: ImageMetadata;
+  alt: string;
+  eyebrow: string;
+  /** Bilingual headline. Component renders both lines stacked for editorial weight. */
+  title: { primary: string; secondary?: string };
+  /**
+   * Visually-hidden canonical page name kept inside the h1 for SEO and so
+   * a11y / e2e tests can identify the page by its standard i18n title.
+   */
+  srOnlyTitle?: string;
+  /** Optional small badge (e.g. "シーズン限定 · Dec – Mar"). */
+  badge?: string;
+  /** Short subline below headline. */
+  subline: string;
+  /** Family for the primary headline. Default = display (Spectral). Use `display-jp` for Japanese-first heroes. */
+  family?: 'display' | 'display-jp';
+}
+const {
+  image,
+  alt,
+  eyebrow,
+  title,
+  srOnlyTitle,
+  badge,
+  subline,
+  family = 'display-jp',
+} = Astro.props;
+const headlineFamily = family === 'display-jp' ? 'font-display-jp' : 'font-display';
+---
+<section class="relative isolate h-[80svh] min-h-[520px] flex flex-col">
+  <Image
+    src={image}
+    alt={alt}
+    widths={[640, 1024, 1600, 2400]}
+    sizes="100vw"
+    quality={80}
+    loading="eager"
+    fetchpriority="high"
+    class="absolute inset-0 w-full h-full object-cover -z-10"
+  />
+  <div
+    aria-hidden="true"
+    class="absolute inset-0 -z-10 bg-gradient-to-b from-bg/55 via-bg/15 to-bg"
+  ></div>
+  <div
+    aria-hidden="true"
+    class="absolute inset-0 -z-10 bg-gradient-to-r from-bg/65 via-bg/15 to-transparent"
+  ></div>
+
+  <div class="flex-1 flex justify-center">
+    <div class="w-full max-w-7xl px-5 sm:px-8 pt-32 sm:pt-40 pb-12 flex flex-col justify-end gap-6">
+      <p class="caption text-text">{eyebrow}</p>
+      <h1
+        class:list={[
+          headlineFamily,
+          'text-[clamp(2.5rem,1.6rem+5vw,5.5rem)] leading-[1.05] tracking-tight max-w-4xl',
+        ]}
+      >
+        {srOnlyTitle && <span class="sr-only">{srOnlyTitle}</span>}
+        <span aria-hidden={srOnlyTitle ? 'true' : undefined} class="block">{title.primary}</span>
+        {title.secondary && (
+          <span aria-hidden={srOnlyTitle ? 'true' : undefined} class="block text-gold">
+            {title.secondary}
+          </span>
+        )}
+      </h1>
+      {badge && (
+        <p class="text-xs text-gold tracking-[0.18em] uppercase border border-gold/60 self-start px-3 py-1.5 rounded-[2px]">
+          {badge}
+        </p>
+      )}
+      <p class="max-w-xl text-base sm:text-lg leading-relaxed text-text-muted">
+        {subline}
+      </p>
+    </div>
+  </div>
+</section>

@@ -162,9 +162,9 @@ git-credential-manager dialog doesn't pop on each push). Do **not** re-add
   `test -f dist/_worker.js` predates the v13 adapter and needs translating to
   `test -f dist/server/entry.mjs`.
 
-## Placeholder assets (must replace before launch)
+## Pre-launch reminders
 
-- `public/og-default.png` — 1×1 PNG, needs 1200×630 brand image.
-- `src/assets/vehicles/{alphard,vellfire,hiace}-1.jpg` — 1×1 stubs.
-- `src/components/pages/legal/TokushohoPage.astro` — placeholder operator name
-  and address strings, awaiting client info.
+- `src/components/pages/legal/TokushohoPage.astro` still carries placeholder
+  operator name and address strings, awaiting client info.
+- `X-Robots-Tag: noindex, nofollow` is still set in `public/_headers` and
+  `src/middleware.ts`. Remove both together once the client confirms launch.

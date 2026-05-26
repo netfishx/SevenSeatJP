@@ -1,17 +1,147 @@
 @import "tailwindcss";
 
+/*
+ * Design system — Aman / Lacquerware lane.
+ * Warm soot black ground, ivory text, aged-bronze restraint (used ≤1%).
+ * Fonts: Spectral (display Latin), Shippori Mincho (display JP),
+ * Zen Kaku Gothic New (body, both scripts).
+ *
+ * The legacy token names (bg/surface/border/text/text-muted/gold) are kept
+ * so existing components keep compiling; the values underneath are new.
+ */
 @theme {
-  --color-bg: #0a0a0b;
-  --color-surface: #14141a;
-  --color-border: #2a2a32;
-  --color-text: #ede9d8;
-  --color-text-muted: #9a9486;
-  --color-gold: #c9a96e;
-  --color-gold-dark: #9c7f4f;
-  --color-accent: #e8d9a0;
-  --font-display: "Noto Serif JP", "Source Han Serif SC", serif;
-  --font-body: "Noto Sans JP", "Source Han Sans SC", system-ui, sans-serif;
-  --radius-card: 12px;
-  --shadow-card:
-    0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 30px rgba(0, 0, 0, 0.4);
+  /* === Surface === */
+  --color-bg: oklch(0.13 0.005 60);
+  --color-surface: oklch(0.16 0.005 60);
+  --color-surface-lift: oklch(0.2 0.006 60);
+
+  /* === Rules === */
+  --color-border: oklch(0.28 0.006 60);
+  --color-border-strong: oklch(0.38 0.008 60);
+
+  /* === Paper (text) === */
+  --color-text: oklch(0.94 0.008 80);
+  --color-text-muted: oklch(0.72 0.01 80);
+  --color-text-deep: oklch(0.55 0.01 80);
+
+  /* === Bronze accent (≤1% use) === */
+  --color-gold: oklch(0.62 0.085 50);
+  --color-gold-dark: oklch(0.48 0.09 45);
+  --color-gold-soft: oklch(0.62 0.085 50 / 0.12);
+  --color-accent: oklch(0.62 0.085 50);
+
+  /* === Type families === */
+  --font-display:
+    "Spectral", "Shippori Mincho", "Noto Serif JP", "Source Han Serif SC", serif;
+  --font-display-jp:
+    "Shippori Mincho", "Noto Serif JP", "Source Han Serif SC", serif;
+  --font-body:
+    "Zen Kaku Gothic New", "Noto Sans JP", system-ui, -apple-system,
+    "Helvetica Neue", sans-serif;
+
+  /* === Type scale — fluid clamp, ≥1.25 ratio === */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: clamp(1.0625rem, 0.97rem + 0.4vw, 1.1875rem);
+  --text-xl: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.3rem + 0.9vw, 1.875rem);
+  --text-3xl: clamp(1.875rem, 1.55rem + 1.4vw, 2.5rem);
+  --text-4xl: clamp(2.5rem, 2rem + 2.3vw, 3.75rem);
+  --text-5xl: clamp(3.25rem, 2.5rem + 3.5vw, 5.5rem);
+  --text-6xl: clamp(4rem, 3rem + 4.5vw, 7rem);
+
+  /* === Radius / shadow — near-zero, hairline aesthetic === */
+  --radius-card: 0;
+  --radius-input: 2px;
+  --shadow-card: none;
+
+  /* === Tracking === */
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.12em;
+  --tracking-wider: 0.18em;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-feature-settings: "palt" 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    line-height: 1.12;
+    letter-spacing: var(--tracking-tight);
+    font-weight: 400;
+  }
+
+  :lang(ja) h1,
+  :lang(ja) h2,
+  :lang(ja) h3 {
+    font-family: var(--font-display-jp);
+  }
+
+  ::selection {
+    background-color: var(--color-gold);
+    color: var(--color-bg);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-gold);
+    outline-offset: 3px;
+    border-radius: 0;
+  }
+}
+
+@layer utilities {
+  .font-display-jp {
+    font-family: var(--font-display-jp);
+  }
+
+  .caption {
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wider);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .ordinal {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings:
+      "tnum" 1,
+      "lnum" 1;
+    font-weight: 300;
+    letter-spacing: 0;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hairline {
+    border-color: var(--color-border);
+  }
+
+  /* Subtle film-grain overlay used on hero photos for tactile depth. */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.7 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+  }
 }
