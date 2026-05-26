@@ -109,6 +109,26 @@
     outline-offset: 3px;
     border-radius: 0;
   }
+
+  /* WCAG 2.2 AA — honor user motion preference. Hover slides, opacity fades,
+   * the scroll-hint pulse, and any other decorative motion collapse to a
+   * single frame. The DESIGN.md "Quiet structure" rule covers the rest.
+   *
+   * `!important` is mandatory here: Tailwind v4 emits inline utility classes
+   * (transition-duration-300, animate-pulse, etc.) directly on element
+   * selectors; without `!important` the cascade lets them win over this
+   * media query block. Biome flags this as 4 noImportantStyles warnings,
+   * which we accept as the cost of correct reduced-motion behavior. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer utilities {

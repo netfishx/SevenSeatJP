@@ -3,6 +3,12 @@ import { readAttribution } from '@/lib/attribution.client';
 
 const form = document.getElementById('inquiry-form') as HTMLFormElement | null;
 if (form) {
+  // Set date input min to today so the user can't pick a date in the past.
+  // Server-side rendering can't know the user's "today" because the page is
+  // prerendered; do this client-side as a small enhancement.
+  const dateInput = document.getElementById('date') as HTMLInputElement | null;
+  if (dateInput) dateInput.min = new Date().toISOString().slice(0, 10);
+
   const submitBtn = form.querySelector(
     'button[type="submit"]',
   ) as HTMLButtonElement;
