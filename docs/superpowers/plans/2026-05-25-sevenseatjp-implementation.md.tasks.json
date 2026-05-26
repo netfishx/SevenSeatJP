@@ -26,7 +26,7 @@
           "bun.lock"
         ],
         "verifyCommand": "bun install && bun run build && bun run lint && bun run typecheck && test -f dist/_worker.js && grep -q '_worker.js' dist/.assetsignore && grep -q 'X-Robots-Tag' dist/_headers",
-        "notes": "output: 'server' + adapter: cloudflare(); wrangler.jsonc with nodejs_compat + not_found_handling; dual-layer headers (public/_headers static + src/middleware.ts dynamic) for Workers Static Assets bypass; public/.assetsignore excludes _worker.js; index.astro has 'export const prerender = true'. @astrojs/cloudflare ^13.5.4."
+        "notes": "output: 'server' + adapter: cloudflare(); wrangler.jsonc with nodejs_compat (NO not_found_handling — MPA uses default 'asset-then-Worker' fallback); dual-layer headers (public/_headers static + src/middleware.ts dynamic) for Workers Static Assets bypass; public/.assetsignore excludes _worker.js; index.astro has 'export const prerender = true'. @astrojs/cloudflare ^13.5.4."
       }
     },
     {
@@ -37,7 +37,7 @@
       "metadata": {
         "files": ["public/robots.txt", "public/favicon.svg", "src/pages/index.astro"],
         "verifyCommand": "curl -sI https://<worker>.workers.dev/ | grep -i x-robots-tag && curl -s https://<worker>.workers.dev/robots.txt | grep Disallow",
-        "notes": "Workers Builds GitHub integration (not Pages); no custom domain until Task 16; X-Robots-Tag noindex via src/middleware.ts (set in Task 1); robots.txt Disallow: /."
+        "notes": "Workers Builds GitHub integration (not Pages); no custom domain until Task 16; X-Robots-Tag noindex on prerendered HTML comes from public/_headers (static layer), on dynamic Action responses comes from src/middleware.ts (dynamic layer); robots.txt Disallow: /."
       }
     },
     {

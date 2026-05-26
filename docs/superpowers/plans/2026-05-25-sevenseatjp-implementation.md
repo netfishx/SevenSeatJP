@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-extended-cc:subagent-driven-development (recommended) or superpowers-extended-cc:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 按 spec `docs/superpowers/specs/2026-05-25-sevenseatjp-design.md` 实现日本 7 座出行预约网站(中日双语、9 + 1 + 3 页、Cloudflare Pages 部署、询价表单 → Resend 双邮件 + Turnstile + UTM 归因)。
+**Goal:** 按 spec `docs/superpowers/specs/2026-05-25-sevenseatjp-design.md` 实现日本 7 座出行预约网站(中日双语、9 + 1 + 3 页、**Cloudflare Workers + Static Assets** 部署、询价表单 → **Astro Action** → Resend 双邮件 + Turnstile + UTM 归因)。
 
 **Architecture (static-first / dynamic-ready):** Astro 6 server runtime + `@astrojs/cloudflare` adapter,部署到 **Cloudflare Workers + Static Assets**。营销页 `export const prerender = true` build 时输出 HTML(加载与纯静态等价);询价走 **Astro Actions**(`src/actions/index.ts`,类型从 schema 推到客户端),为 v2 加 D1/admin/支付/鉴权留好路径——不需要重拆部署模型。内容用 Content Collections + Zod 4 schema,翻译 inline 双语 YAML。Tailwind v4 CSS-first(@theme tokens)。i18n 默认 ja + `/zh/` 子路径,每页只写一份组件、镜像页两行引用。E2E 用 Playwright 跑 `astro dev`(adapter 接管 workerd)。
 
@@ -64,16 +64,16 @@
 ## 任务依赖图
 
 ```
-1 (骨架) → 2 (CF 部署) → 3 (i18n) → 4 (Collections) → 5 (BaseLayout+UTM) → 6 (UI tokens+组件)
+1 (骨架 + adapter) → 2 (Workers 部署) → 3 (i18n) → 4 (Collections) → 5 (BaseLayout+UTM) → 6 (UI tokens+组件)
                                                                                   ↓
                                                                   7 (HomePage)
                                                                   8 (About+FAQ)
                                                                   9 (Airport+Ski)
                                                                   10 (Charter+Rental+Pricing+Vehicles)
                                                                   11 (Legal 3 页)
-                                                                  12 (Form 前端+Schema)
+                                                                  12 (Form 前端+Schema+Action stub)
                                                                                   ↓
-                                                                  13 (Function+邮件) ← 12
+                                                                  13 (Action handler+邮件) ← 12
                                                                                   ↓
                                                                   14 (SEO 完整化) ← 7-13
                                                                   15 (E2E + CI) ← 13, 14
@@ -227,8 +227,7 @@ export default defineConfig({
   "main": "./dist/_worker.js",
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS"
   },
   "observability": { "enabled": true }
 }
@@ -398,7 +397,8 @@ git commit -m "feat: bootstrap Astro 6 server + cloudflare adapter + headers + m
 - [ ] Production + Preview env 均配 `PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA`(占位 dummy;Task 16 切真实)
 - [ ] 推 main → 部署到 `<worker>.workers.dev` 默认子域,占位首页可访问
 - [ ] PR preview Worker URL 可访问
-- [ ] **`curl -I https://<worker>.workers.dev/` 响应头含 `X-Robots-Tag: noindex, nofollow`**(来自 src/middleware.ts)
+- [ ] **`curl -I https://<worker>.workers.dev/` 响应头含 `X-Robots-Tag: noindex, nofollow`**(prerendered 首页来自 **`public/_headers`** 静态层;动态响应才来自 middleware)
+- [ ] **`curl -I -X POST https://<worker>.workers.dev/_actions/inquiry -H "content-type: application/json" -d '{}'`** 响应头也含 `X-Robots-Tag`(动态响应来自 **`src/middleware.ts`**)
 - [ ] **`curl https://<worker>.workers.dev/robots.txt` 返回 `Disallow: /`**
 - [ ] 未绑定 custom domain(Settings → Domains & Routes 应为空,直到 Task 16)
 

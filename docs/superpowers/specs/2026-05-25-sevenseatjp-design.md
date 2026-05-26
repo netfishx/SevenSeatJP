@@ -47,7 +47,7 @@ authors: cricket
 | i18n | Astro 原生 i18n + 自写 `t()` helper | 默认 `ja` 用根路径,`zh` 用 `/zh/` 子路径 |
 | 邮件 | Resend(免费 100/日、3000/月) | React Email v6 模板,中日双语 |
 | 防滥用 | Cloudflare Turnstile(server-side siteverify 在 Action 内) | 免费、无 cookie、E2E 用 dummy keys |
-| HTTP headers | `src/middleware.ts` 注入(CSP / X-Robots-Tag 等) | server 模式下 `public/_headers` 只对静态资源生效;middleware 才能覆盖动态响应 |
+| HTTP headers | **双层**:`public/_headers`(静态层)+ `src/middleware.ts`(动态层) | Workers Static Assets 匹配到的文件**不进 Worker**,所以 prerendered 营销页只能靠 `_headers`;Action/SSR 响应只能靠 middleware。**两层内容保持一致**,Task 1 双写,Task 14 双删 X-Robots-Tag。 |
 | 部署 | Cloudflare Workers,GitHub 直连 | 免费层、全球 edge、PR preview;`wrangler deploy`(不是 `pages deploy`) |
 | 包管理 | Bun(与工作区一致) | — |
 | 代码质量 | Biome v2(lint+format) + `astro check`(类型) | — |
@@ -107,13 +107,13 @@ servenSeatJP/
 ├── tsconfig.json
 ├── playwright.config.ts
 ├── public/
+│   ├── _headers                     # 静态层响应头(prerendered 营销页 + 资产);与 middleware.ts 内容一致
+│   ├── .assetsignore                # 排除 _worker.js / _routes.json,防被当资产 serve
 │   ├── favicon.svg
 │   ├── og-image.png
 │   └── robots.txt
-│   # 注:public/_headers 只对静态资源生效,不覆盖 Worker 动态响应;
-│   #     CSP / X-Robots-Tag 等头改在 src/middleware.ts 注入
 ├── src/
-│   ├── middleware.ts                # 注入 CSP / X-Robots-Tag / X-Frame-Options 等全站响应头
+│   ├── middleware.ts                # 动态层响应头(Action / SSR);与 public/_headers 内容一致
 │   ├── actions/
 │   │   └── index.ts                 # export const server = { inquiry: defineAction({...}) }
 │   ├── content.config.ts            # Collections schema
@@ -917,10 +917,10 @@ ActionError 的 `code` 字段是 HTTP-status-style 字符串(`'BAD_REQUEST'`、`
   "main": "./dist/_worker.js",
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS",
-    // 默认 Workers Static Assets 行为:匹配到的静态文件**直接 serve,不进 Worker**——
-    // 所以 prerendered 营销页拿不到 Worker middleware 的响应头(见 §8.6 双层 headers)
-    "not_found_handling": "single-page-application"   // 或 'none';让未匹配路径走 Worker
+    "binding": "ASSETS"
+    // 默认行为(无 not_found_handling):静态命中走 asset,**未命中走 Worker** ——
+    // 正是 Astro MPA + 未来 server route 想要的(404 + Action 路由都能正常)。
+    // 注意 prerendered 营销页是"静态命中",拿不到 Worker middleware 的响应头(见 §8.6 双层 headers)。
   },
   "observability": { "enabled": true }
   // secrets 不写在这里;走 `wrangler secret put` / Workers dashboard
