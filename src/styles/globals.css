@@ -68,12 +68,19 @@
     color: var(--color-text);
     font-family: var(--font-body);
     line-height: 1.75;
+    /* `overflow-x: clip` keeps the layout viewport pinned to device-width on
+     * isMobile-emulated Chromium. Without it, images with intrinsic `width`
+     * attributes (e.g. Astro Image's 2400px hero) can briefly stretch the
+     * layout viewport before CSS sizing kicks in, breaking fixed-header
+     * geometry and triggering horizontal scroll. */
+    overflow-x: clip;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     font-feature-settings: "palt" 1;
+    overflow-x: clip;
   }
 
   h1,

@@ -32,7 +32,7 @@ const {
 } = Astro.props;
 const headlineFamily = family === 'display-jp' ? 'font-display-jp' : 'font-display';
 ---
-<section class="relative isolate h-[80svh] min-h-[520px] flex flex-col">
+<section class="relative isolate h-[80svh] min-h-[500px] flex flex-col overflow-hidden">
   <Image
     src={image}
     alt={alt}
@@ -53,12 +53,12 @@ const headlineFamily = family === 'display-jp' ? 'font-display-jp' : 'font-displ
   ></div>
 
   <div class="flex-1 flex justify-center">
-    <div class="w-full max-w-7xl px-5 sm:px-8 pt-32 sm:pt-40 pb-12 flex flex-col justify-end gap-6">
+    <div class="w-full max-w-7xl px-5 sm:px-8 pt-28 sm:pt-40 pb-10 sm:pb-12 flex flex-col justify-end gap-4 sm:gap-6">
       <p class="caption text-text">{eyebrow}</p>
       <h1
         class:list={[
           headlineFamily,
-          'text-[clamp(2.5rem,1.6rem+5vw,5.5rem)] leading-[1.05] tracking-tight max-w-4xl',
+          'text-[clamp(1.875rem,1.2rem+2.5vw,5.5rem)] leading-[1.1] tracking-tight max-w-4xl break-words',
         ]}
       >
         {srOnlyTitle && <span class="sr-only">{srOnlyTitle}</span>}
@@ -74,7 +74,7 @@ const headlineFamily = family === 'display-jp' ? 'font-display-jp' : 'font-displ
           {badge}
         </p>
       )}
-      <p class="max-w-xl text-base sm:text-lg leading-relaxed text-text-muted">
+      <p class="max-w-xl text-sm sm:text-lg leading-relaxed text-text-muted">
         {subline}
       </p>
     </div>
