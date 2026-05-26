@@ -82,7 +82,7 @@ export function InquiryCustomerEmail(input: Props) {
           <Hr />
 
           <Text>{c.contact}</Text>
-          <Text>— {c.sign}</Text>
+          <Text>{c.sign}</Text>
         </Container>
       </Body>
     </Html>
