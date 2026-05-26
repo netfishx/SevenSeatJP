@@ -114,5 +114,14 @@
   "form.error.turnstile_failed": "認証に失敗しました。再度お試しください",
   "form.error.turnstile_unavailable": "認証サービスに一時的に接続できません。LINE からご連絡ください",
   "form.error.email_send_failed": "送信に失敗しました。LINE からご連絡ください",
-  "form.success": "お問合せを受け付けました。24時間以内にご返信いたします。"
+  "form.success": "お問合せを受け付けました。24時間以内にご返信いたします。",
+  "trip.spine.timeline.title": "送迎の流れ",
+  "trip.spine.season.title": "シーズンご利用情報",
+  "trip.spine.itinerary.title": "サンプル行程",
+  "trip.spine.checklist.title": "ご利用チェックリスト",
+  "trip.browse.heading": "ご旅程をお選びください",
+  "trip.browse.group.airport": "空港送迎",
+  "trip.browse.group.day": "日帰り",
+  "trip.browse.group.ski": "雪季送迎",
+  "trip.browse.group.selfdrive": "セルフドライブ"
 }

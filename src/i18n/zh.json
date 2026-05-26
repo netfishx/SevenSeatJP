@@ -114,5 +114,14 @@
   "form.error.turnstile_failed": "人机验证失败,请刷新重试",
   "form.error.turnstile_unavailable": "验证服务暂时不可用,请稍后重试或通过 LINE 联系",
   "form.error.email_send_failed": "提交失败,请通过 LINE 或微信联系",
-  "form.success": "已收到您的询价,我们将在 24 小时内回复。"
+  "form.success": "已收到您的询价,我们将在 24 小时内回复。",
+  "trip.spine.timeline.title": "接送流程",
+  "trip.spine.season.title": "雪季出行信息",
+  "trip.spine.itinerary.title": "样本行程",
+  "trip.spine.checklist.title": "出行准备清单",
+  "trip.browse.heading": "请选择您的行程",
+  "trip.browse.group.airport": "空港接送",
+  "trip.browse.group.day": "一日游",
+  "trip.browse.group.ski": "雪季送迎",
+  "trip.browse.group.selfdrive": "自驾"
 }

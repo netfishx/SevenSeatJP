@@ -20,6 +20,65 @@ const fares = z
   )
   .min(1);
 
+const spineTimeline = z.object({
+  type: z.literal('timeline'),
+  items: z
+    .array(
+      z.object({
+        offset: z.string().min(1),
+        label: i18nString,
+        body: i18nString,
+      }),
+    )
+    .min(1),
+});
+
+const spineSeason = z.object({
+  type: z.literal('season'),
+  months: z.array(z.number().int().min(1).max(12)).min(1).max(12),
+  hoursLabel: i18nString,
+  advisories: z.array(i18nString).min(1),
+});
+
+const spineItinerary = z.object({
+  type: z.literal('itinerary'),
+  items: z
+    .array(
+      z.object({
+        time: z.string().regex(/^\d{2}:\d{2}$/),
+        place: i18nString,
+        body: i18nString,
+      }),
+    )
+    .min(1),
+});
+
+const spineChecklist = z.object({
+  type: z.literal('checklist'),
+  groups: z
+    .array(
+      z.object({
+        category: i18nString,
+        items: z
+          .array(
+            z.object({
+              label: i18nString,
+              notes: i18nString.optional(),
+            }),
+          )
+          .min(1),
+      }),
+    )
+    .min(1),
+});
+
+const spine = z.discriminatedUnion('type', [
+  spineTimeline,
+  spineSeason,
+  spineItinerary,
+  spineChecklist,
+]);
+
 const routes = defineCollection({
   loader: glob({ pattern: '**/*.yaml', base: './src/content/routes' }),
   schema: z.object({
@@ -35,6 +94,7 @@ const routes = defineCollection({
         to: z.string().regex(/^\d{2}-\d{2}$/),
       })
       .optional(),
+    spine,
     order: z.number().default(999),
   }),
 });
@@ -56,6 +116,7 @@ const packages = defineCollection({
     inclusions: z.array(i18nString),
     excludeRegions: i18nString.optional(),
     notes: i18nString.optional(),
+    spine,
     order: z.number().default(999),
   }),
 });
