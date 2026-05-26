@@ -70,3 +70,35 @@ test('mobile menu button fits in viewport on /zh/', async ({
   expect(menu.right).toBeLessThanOrEqual(viewport.width);
   expect(menu.left).toBeGreaterThanOrEqual(0);
 });
+
+// Regression guard: the mobile menu panel must cover the full viewport even
+// after the user has scrolled past the immersive-header fold (scrollY > 64).
+// Bug history: the panel lived inside <header>; on scroll the header gained
+// `backdrop-filter: blur(...)` which becomes a containing block for fixed
+// descendants, collapsing the `fixed inset-0` panel to the header's height.
+// Symptom: clicking the hamburger after scrolling did nothing visible.
+test('mobile menu opens to full viewport after scroll', async ({
+  page: pw,
+  viewport,
+}) => {
+  if (!viewport || viewport.width >= 1024) {
+    test.skip();
+    return;
+  }
+  await pw.goto('/');
+  await pw.evaluate(() => window.scrollTo(0, 400));
+  await pw.locator('[data-mobile-toggle]').click();
+  const panelRect = await pw.evaluate(() => {
+    const r = document
+      .querySelector('[data-mobile-panel]')
+      ?.getBoundingClientRect();
+    return r
+      ? { top: r.top, left: r.left, width: r.width, height: r.height }
+      : null;
+  });
+  if (!panelRect) throw new Error('mobile menu panel not found in DOM');
+  expect(panelRect.top).toBeLessThanOrEqual(1);
+  expect(panelRect.left).toBeLessThanOrEqual(1);
+  expect(panelRect.width).toBeGreaterThanOrEqual(viewport.width - 1);
+  expect(panelRect.height).toBeGreaterThanOrEqual(viewport.height * 0.9);
+});

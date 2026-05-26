@@ -1,6 +1,7 @@
 ---
 import LangSwitch from '@/components/ui/LangSwitch.astro';
 import MobileMenu from '@/components/ui/MobileMenu.astro';
+import MobileMenuPanel from '@/components/ui/MobileMenuPanel.astro';
 import SiteNav from '@/components/ui/SiteNav.astro';
 import { type Locale, t } from '@/i18n/t';
 import { getCanonicalUrl } from '@/lib/alternate';
@@ -110,6 +111,8 @@ const year = new Date().getFullYear();
         </div>
       </div>
     </header>
+
+    <MobileMenuPanel locale={locale} />
 
     <main
       id="main"

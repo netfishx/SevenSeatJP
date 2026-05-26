@@ -1,0 +1,106 @@
+---
+import { type I18nKey, type Locale, t } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const prefix = locale === 'zh' ? '/zh' : '';
+
+const links: ReadonlyArray<{ slug: string; key: I18nKey }> = [
+  { slug: '', key: 'nav.home' },
+  { slug: '/airport-transfer', key: 'nav.airport' },
+  { slug: '/charter', key: 'nav.charter' },
+  { slug: '/ski-hakuba', key: 'nav.ski' },
+  { slug: '/rental', key: 'nav.rental' },
+  { slug: '/vehicles', key: 'nav.vehicles' },
+  { slug: '/pricing', key: 'nav.pricing' },
+  { slug: '/about', key: 'nav.about' },
+  { slug: '/faq', key: 'nav.faq' },
+  { slug: '/inquiry', key: 'nav.inquiry' },
+];
+
+const labelClose = locale === 'zh' ? '关闭菜单' : 'メニューを閉じる';
+---
+<div
+  id="mobile-nav-panel"
+  data-mobile-panel
+  aria-hidden="true"
+  class="lg:hidden fixed inset-0 z-[60] bg-bg flex flex-col opacity-0 pointer-events-none transition-opacity duration-300"
+>
+  <div class="flex justify-center border-b border-border">
+    <div class="w-full max-w-7xl flex items-center justify-between gap-4 px-5 sm:px-8 py-5">
+      <span class="font-display text-base tracking-[0.18em] uppercase">Seven<span class="text-gold">·</span>Seat</span>
+      <button
+        type="button"
+        data-mobile-close
+        aria-label={labelClose}
+        class="inline-flex items-center justify-center min-h-11 min-w-11 text-text hover:text-gold"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.4"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M6 6l12 12M6 18L18 6" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <nav aria-label="Mobile" class="flex-1 overflow-y-auto flex justify-center">
+    <div class="w-full max-w-7xl px-5 sm:px-8 py-10 flex flex-col gap-1">
+      {links.map((l, i) => (
+        <a
+          href={`${prefix}${l.slug || '/'}`}
+          class="group flex items-baseline gap-4 py-4 border-b border-border text-text hover:text-gold"
+        >
+          <span class="ordinal text-text-muted text-sm w-8 tabular">
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <span class="font-display text-2xl group-hover:translate-x-1 transition-transform">
+            {t(locale, l.key)}
+          </span>
+        </a>
+      ))}
+    </div>
+  </nav>
+</div>
+
+<script>
+  // Toggle and panel live in different parts of the DOM tree on purpose: the
+  // toggle sits inside <header>, the panel hangs off <body> so it escapes the
+  // header's `backdrop-filter` containing block. Resolve both at document
+  // scope.
+  const toggle = document.querySelector<HTMLButtonElement>('[data-mobile-toggle]');
+  const closeBtn = document.querySelector<HTMLButtonElement>('[data-mobile-close]');
+  const panel = document.querySelector<HTMLElement>('[data-mobile-panel]');
+  if (toggle && closeBtn && panel) {
+    const open = () => {
+      panel.classList.remove('opacity-0', 'pointer-events-none');
+      panel.classList.add('opacity-100');
+      panel.setAttribute('aria-hidden', 'false');
+      toggle.setAttribute('aria-expanded', 'true');
+      document.documentElement.style.overflow = 'hidden';
+    };
+    const shut = () => {
+      panel.classList.add('opacity-0', 'pointer-events-none');
+      panel.classList.remove('opacity-100');
+      panel.setAttribute('aria-hidden', 'true');
+      toggle.setAttribute('aria-expanded', 'false');
+      document.documentElement.style.overflow = '';
+    };
+    toggle.addEventListener('click', open);
+    closeBtn.addEventListener('click', shut);
+    panel.querySelectorAll('a').forEach((a) => a.addEventListener('click', shut));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') shut();
+    });
+  }
+</script>
