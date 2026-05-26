@@ -1,5 +1,8 @@
 ---
 export const prerender = true;
+import Button from '@/components/ui/Button.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { t } from '@/i18n/t';
 const locale = 'ja' as const;
@@ -9,8 +12,11 @@ const locale = 'ja' as const;
   title={t(locale, 'home.title')}
   description={t(locale, 'home.subtitle')}
 >
-  <section class="flex flex-col items-center justify-center gap-4 p-12">
-    <h1 class="text-5xl text-gold font-display">{t(locale, 'home.title')}</h1>
-    <p class="text-text-muted">{t(locale, 'home.subtitle')}</p>
-  </section>
+  <Section>
+    <Container class="flex flex-col items-center justify-center gap-6">
+      <h1 class="text-5xl text-gold font-display">{t(locale, 'home.title')}</h1>
+      <p class="text-text-muted">{t(locale, 'home.subtitle')}</p>
+      <Button href="/inquiry" variant="primary">{t(locale, 'nav.inquiry')}</Button>
+    </Container>
+  </Section>
 </BaseLayout>

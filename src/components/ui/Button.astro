@@ -1,0 +1,25 @@
+---
+interface Props {
+  href?: string;
+  variant?: 'primary' | 'ghost';
+  class?: string;
+}
+const { href, variant = 'primary', class: extra = '' } = Astro.props;
+const base =
+  'inline-flex items-center justify-center min-h-11 px-6 rounded-[var(--radius-card)] font-display transition-colors';
+const styles =
+  variant === 'primary'
+    ? 'bg-gold text-bg hover:bg-gold-dark'
+    : 'border border-border text-text hover:border-gold';
+---
+{
+  href ? (
+    <a href={href} class:list={[base, styles, extra]}>
+      <slot />
+    </a>
+  ) : (
+    <button type="button" class:list={[base, styles, extra]}>
+      <slot />
+    </button>
+  )
+}

@@ -1,0 +1,7 @@
+---
+interface Props {
+  class?: string;
+}
+const { class: extra = '' } = Astro.props;
+---
+<section class:list={['flex justify-center py-16', extra]}><slot /></section>
