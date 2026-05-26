@@ -271,29 +271,29 @@ INQUIRY_FROM_EMAIL=onboarding@resend.dev
 - [ ] **Step 9: 安装依赖并跑 verify**
 
 ```bash
-bun install            # 按 package.json 里固定的 caret 版本解析,bun.lockb 锁定确切版本
+bun install            # 按 package.json 里固定的 caret 版本解析,bun.lock 锁定确切版本
 bun run build
 bun run lint
 bun run typecheck
 ```
 
-期望:`dist/index.html` 生成,grep "SevenSeatJP" 命中;`bun.lockb` 已生成并 commit。**主版本号已锁定在 package.json**(`^6.3.7` 等),`bun.lockb` 进一步锁定 patch + transitive deps。
+期望:`dist/index.html` 生成,grep "SevenSeatJP" 命中;`bun.lock` 已生成并 commit。**主版本号已锁定在 package.json**(`^6.3.7` 等),`bun.lock` 进一步锁定 patch + transitive deps。
 
 **若 build fail**(如 Astro 6.x 接口与 plan 假设不符):
 1. 跑 `bun update --latest <pkg>` 试最新 minor/patch
 2. 看 Astro 官方迁移指南
 3. 修复后**回填新版本号到 package.json + 本 plan Step 1 的 JSON 块**(保持 plan 与代码一致)
 
-- [ ] **Step 10: 提交(必须含 `bun.lockb`,否则 lockfile 承诺落空)**
+- [ ] **Step 10: 提交(必须含 `bun.lock`,否则 lockfile 承诺落空)**
 
 ```bash
-git add package.json bun.lockb tsconfig.json biome.json astro.config.mjs \
+git add package.json bun.lock tsconfig.json biome.json astro.config.mjs \
   src/styles/globals.css src/pages/index.astro \
   .gitignore .env.local.example .dev.vars.example
 git commit -m "feat: bootstrap Astro 6 + Tailwind v4 + Biome v2 toolchain"
 ```
 
-> `bun.lockb` 是二进制锁文件,确保跨机器/CI 装出来的 transitive deps 与本机一致。CI 跑 `bun install --frozen-lockfile` 时会校验。
+> `bun.lock` 是 Bun 1.2+ 的**文本 JSON 锁文件**(取代旧版二进制 `bun.lockb`),可 diff、CI 友好。确保跨机器/CI 装出来的 transitive deps 与本机一致。CI 跑 `bun install --frozen-lockfile` 时会校验。
 
 ---
 

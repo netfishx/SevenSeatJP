@@ -19,10 +19,10 @@
           ".gitignore",
           ".env.local.example",
           ".dev.vars.example",
-          "bun.lockb"
+          "bun.lock"
         ],
         "verifyCommand": "bun install && bun run build && bun run lint && bun run typecheck",
-        "notes": "Pin concrete versions (no @latest in plan text). Biome v2 schema/format. bun.lockb must be committed."
+        "notes": "Pin concrete versions (no @latest in plan text). Biome v2 schema/format. bun.lock must be committed."
       }
     },
     {
