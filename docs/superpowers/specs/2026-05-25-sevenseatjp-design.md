@@ -347,31 +347,29 @@ order: 1
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
+import cloudflare from '@astrojs/cloudflare';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  output: 'static',
+  output: 'server',                       // server runtime;营销页用 page-level prerender opt-in
+  adapter: cloudflare(),                  // 部署目标:Cloudflare Workers + Static Assets
   site: 'https://sevenseatjp.com',
   i18n: {
     defaultLocale: 'ja',
     locales: ['ja', 'zh'],
-    routing: {
-      prefixDefaultLocale: false,    // ja 用根路径,zh 用 /zh/
-    },
+    routing: { prefixDefaultLocale: false },    // ja 用根路径,zh 用 /zh/
   },
-  vite: {
-    plugins: [tailwindcss()],
-  },
+  vite: { plugins: [tailwindcss()] },
 });
 ```
 
 ### 5.2 URL 形态
 
-| 路径 | 语言 |
+| 路径 | 语言 / 类型 |
 |---|---|
-| `/`、`/about`、`/airport-transfer` 等 | ja |
-| `/zh/`、`/zh/about`、`/zh/airport-transfer` 等 | zh |
-| `/api/inquiry` | 数据 endpoint,无语言前缀 |
+| `/`、`/about`、`/airport-transfer` 等 | ja 营销页(prerendered) |
+| `/zh/`、`/zh/about`、`/zh/airport-transfer` 等 | zh 营销页(prerendered) |
+| `/_actions/inquiry` | Astro Action 公开 endpoint;由 `actions.inquiry(input)` 自动 POST,**无手写 endpoint 文件** |
 
 ### 5.3 实现:内容只一份,镜像页只做 locale 选择
 
@@ -919,13 +917,29 @@ ActionError 的 `code` 字段是 HTTP-status-style 字符串(`'BAD_REQUEST'`、`
   "main": "./dist/_worker.js",
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // 默认 Workers Static Assets 行为:匹配到的静态文件**直接 serve,不进 Worker**——
+    // 所以 prerendered 营销页拿不到 Worker middleware 的响应头(见 §8.6 双层 headers)
+    "not_found_handling": "single-page-application"   // 或 'none';让未匹配路径走 Worker
   },
   "observability": { "enabled": true }
   // secrets 不写在这里;走 `wrangler secret put` / Workers dashboard
-  // vars(非密文)可加 [vars] 段;本项目所有 server 端值都是 secret,不需要
 }
 ```
+
+### 8.1.2 `public/.assetsignore`(必须)
+
+Workers Static Assets 默认会把 `assets.directory`(即 `dist/`)**全部内容**当资产候选,包括 `_worker.js` 本身。**必须**用 `.assetsignore` 排除,否则:
+1. `_worker.js` 可能被作为 `/_worker.js` 公开 serve(暴露 Worker 源码)
+2. 与 Worker 入口冲突
+
+```
+# public/.assetsignore  —— build 后会复制到 dist/.assetsignore,wrangler 按此过滤
+_worker.js
+_routes.json
+```
+
+(Astro adapter 在 build 时可能自动生成 `_routes.json` 来声明 Worker 路由模式,也排除掉。)
 
 ### 8.2 环境变量
 
@@ -991,12 +1005,15 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bunx playwright install --with-deps chromium
-      - run: bun run test:e2e                   # webServer = astro dev(adapter 接管 workerd)
-        env:
-          TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
-          RESEND_API_KEY:       ${{ secrets.RESEND_API_KEY_PREVIEW }}
-          COMPANY_INBOX:        delivered+internal@resend.dev
-          INQUIRY_FROM_EMAIL:   onboarding@resend.dev
+      # 显式生成 .dev.vars,而非依赖 process.env fallback(Cloudflare workerd 要求 .dev.vars 或 CLOUDFLARE_INCLUDE_PROCESS_ENV=true)
+      - run: |
+          cat > .dev.vars <<EOF
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY_PREVIEW }}
+          TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+          COMPANY_INBOX=delivered+internal@resend.dev
+          INQUIRY_FROM_EMAIL=onboarding@resend.dev
+          EOF
+      - run: bun run test:e2e                   # webServer = astro dev(adapter 接管 workerd,读 .dev.vars)
 ```
 
 E2E 仅在 PR 上加 `run-e2e` 标签触发,日常 PR 不阻塞。
@@ -1062,41 +1079,80 @@ export default defineConfig({
 });
 ```
 
-> CI E2E 时 secrets 由 GitHub Actions `env` 注入到 process.env;Cloudflare Vite plugin 在缺 `.dev.vars` 时**会读 process.env**作为 fallback。本地用户走 `.dev.vars`,CI 走 env。无须 `--binding=` 桥接。
+> **CI E2E env 注入方式**(两个等价做法,plan/CI 二选一):
+> - **A. CI 步骤里把 `process.env` 写入 `.dev.vars` 文件**(更显式、跨 wrangler 版本稳定):
+>   ```yaml
+>   - run: |
+>       cat > .dev.vars <<EOF
+>       RESEND_API_KEY=${{ secrets.RESEND_API_KEY_PREVIEW }}
+>       TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+>       COMPANY_INBOX=delivered+internal@resend.dev
+>       INQUIRY_FROM_EMAIL=onboarding@resend.dev
+>       EOF
+>   - run: bun run test:e2e
+>   ```
+> - **B. 设 `CLOUDFLARE_INCLUDE_PROCESS_ENV=true`** + 把 secret 放 `process.env`:
+>   ```yaml
+>   - run: bun run test:e2e
+>     env:
+>       CLOUDFLARE_INCLUDE_PROCESS_ENV: "true"
+>       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY_PREVIEW }}
+>       TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+>       COMPANY_INBOX: delivered+internal@resend.dev
+>       INQUIRY_FROM_EMAIL: onboarding@resend.dev
+>   ```
+>
+> **不要**仅依赖 "Vite plugin 自动 fallback 到 process.env" 的假设——Cloudflare 文档明确要求上面任一显式做法,否则 workerd 拿不到 env。Plan Task 15 采用方案 A(写 `.dev.vars` 文件)。
 
-### 8.6 全站响应头(`src/middleware.ts`)
+### 8.6 全站响应头(**双层架构**:`public/_headers` + `src/middleware.ts`)
 
-`output: 'server'` 模式下,`public/_headers` **只对静态资源生效**——Worker 动态响应不经过它。CSP / X-Robots-Tag / X-Frame-Options 等头**改在 Astro middleware 注入**,可按路径细分(占位阶段全站 `noindex`,Task 14 解除)。
+**Workers Static Assets 默认行为**:匹配到的静态文件**不进 Worker**,直接由 edge serve。所以 Astro `src/middleware.ts` 只能注入 Action / SSR 响应头,**不能覆盖 prerendered 营销页 + 静态资产**。CSP / X-Robots-Tag 等必须在两层都设:
+
+| 层 | 文件 | 覆盖范围 | 在 Task 1 创建,Task 14 修订 |
+|---|---|---|---|
+| 静态层 | `public/_headers` | prerendered HTML + CSS/JS/IMG 资产 | ✓ |
+| 动态层 | `src/middleware.ts` | Astro Action `/_actions/*` + 任何 server 渲染路由 | ✓ |
+
+两层内容**保持一致**(都设 CSP / X-Robots-Tag / X-Frame-Options 等),写两遍接受冗余。
+
+#### `public/_headers`(静态层)
+
+```
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  X-Robots-Tag: noindex, nofollow
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com;
+```
+
+#### `src/middleware.ts`(动态层)
 
 ```ts
-// src/middleware.ts
 import { defineMiddleware } from 'astro:middleware';
 
-const STATIC_HEADERS: Record<string, string> = {
-  'X-Frame-Options': 'DENY',
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
-  // 占位阶段(Task 2 之前生产域未绑定时);Task 14 在 SEO 完整化时移除此行
-  'X-Robots-Tag': import.meta.env.LAUNCH_READY === 'true' ? '' : 'noindex, nofollow',
-  'Content-Security-Policy': [
+export const onRequest = defineMiddleware(async (_ctx, next) => {
+  const res = await next();
+  res.headers.set('X-Frame-Options', 'DENY');
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  // 占位阶段反索引;Task 14 SEO 完整化时**同时**移除这里和 _headers 的对应行
+  res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  res.headers.set('Content-Security-Policy', [
     "default-src 'self'",
     "script-src 'self' https://challenges.cloudflare.com",
     "img-src 'self' data: https:",
     "style-src 'self' 'unsafe-inline'",
     "connect-src 'self' https://challenges.cloudflare.com",
     "frame-src https://challenges.cloudflare.com",
-  ].join('; '),
-};
-
-export const onRequest = defineMiddleware(async (ctx, next) => {
-  const response = await next();
-  for (const [k, v] of Object.entries(STATIC_HEADERS)) {
-    if (v) response.headers.set(k, v);
-  }
-  return response;
+  ].join('; '));
+  return res;
 });
 ```
+
+**Task 14 解除反索引时**:`public/_headers` 删除 `X-Robots-Tag` 行 **+** `src/middleware.ts` 删除 `res.headers.set('X-Robots-Tag', ...)` 整行——**两处都改**,否则有一处残留就会让搜索引擎看到 noindex。
 
 ## 9. 视觉与设计系统
 
@@ -1173,7 +1229,7 @@ export const onRequest = defineMiddleware(async (ctx, next) => {
 ## 12. 安全与隐私
 
 - 静态站攻击面:CDN 边缘缓存,无 SSR 数据库
-- 动态入口仅 `/api/inquiry`,所有写操作都过 Turnstile + Zod
+- 动态入口仅 `/_actions/inquiry`(Astro Action 自动生成的公开 endpoint),所有写操作都过 Astro Actions 自动 schema 校验 + handler 内的 Turnstile siteverify;Astro `security.checkOrigin: true`(server 模式默认)拦跨站 POST
 - 隐私政策(`/legal/privacy`)声明:
   - 询价数据存储位置:Resend 邮件日志(默认保留 30 天) + 公司 Gmail
   - 不接 GA / Pixel / 任何第三方追踪;`utm_*` 仅记录在 sessionStorage/localStorage,提交时随邮件发送
@@ -1199,7 +1255,7 @@ export const onRequest = defineMiddleware(async (ctx, next) => {
 | 周次 | 范围 | 付款节点 |
 |---|---|---|
 | 启动 | 合同签订 | 签约启动 30% |
-| **W1** | Astro init + Tailwind v4 + i18n 骨架 + CF Pages 部署; collection schema + 5 条示例数据; 首页 + 询价表单(无样式版本) | 设计稿确认 30% |
+| **W1** | Astro 6 init + cloudflare adapter + Tailwind v4 + i18n 骨架 + Workers 首次部署(`*.workers.dev`); collection schema + 5 条示例数据; 首页 + 询价表单(无样式版本) | 设计稿确认 30% |
 | **W2** | 9 个营销页中日双语 + 视觉调性; 询价表单完整链路(Turnstile + Resend 双邮件 + 归因 + 客户邮件 waitUntil); 3 个法务页 | 开发完成 30% |
 | **W3** | Playwright E2E 全覆盖; SEO 三联 / sitemap / JSON-LD / OG; 性能调优(Lighthouse ≥ 95); 客户内容录入回合 + 正式上线 | 正式上线 10% |
 

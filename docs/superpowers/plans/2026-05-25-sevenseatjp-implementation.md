@@ -93,7 +93,9 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
 - Create: `tsconfig.json`、`biome.json`(v2 格式)
 - Create: `astro.config.mjs`(`output: 'server'` + `adapter: cloudflare()`)
 - Create: `wrangler.jsonc`(Workers 配置 + `nodejs_compat`)
-- Create: `src/middleware.ts`(CSP / X-Robots-Tag noindex 占位)
+- Create: **`public/.assetsignore`**(`_worker.js` + `_routes.json`,防 Worker 入口被当资产 serve)
+- Create: **`public/_headers`**(静态层响应头:CSP / X-Robots-Tag noindex / 其他;覆盖 prerendered 营销页 + 资产)
+- Create: **`src/middleware.ts`**(动态层响应头,与 `_headers` 一致内容;覆盖 Action / SSR)
 - Create: `src/styles/globals.css`(Tailwind v4 + @theme)
 - Create: `src/pages/index.astro`(临时占位,**显式 `export const prerender = true`**)
 - Create: `.gitignore`、`.env.local.example`、`.dev.vars.example`
@@ -105,10 +107,12 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
 - [ ] `bun run typecheck` 通过
 - [ ] `astro.config.mjs` 中 `output: 'server'` + `adapter: cloudflare()`
 - [ ] `wrangler.jsonc` 含 `compatibility_flags: ["nodejs_compat"]` + `main: "./dist/_worker.js"` + `assets.directory: "./dist"`
-- [ ] `src/middleware.ts` 注入 CSP + `X-Robots-Tag: noindex, nofollow`
+- [ ] **`public/.assetsignore` 含 `_worker.js`**(必填)
+- [ ] **`public/_headers` + `src/middleware.ts` 同时**注入 CSP + `X-Robots-Tag: noindex, nofollow`(Workers Static Assets 不进 Worker,必须双层)
 - [ ] `src/pages/index.astro` 含 `export const prerender = true`
 - [ ] `.dev.vars.example` 中 `COMPANY_INBOX=delivered+internal@resend.dev`
 - [ ] `package.json` 版本号具体(无 `@latest`);含 `@astrojs/cloudflare ^13.5.4`
+- [ ] **build 后 `dist/.assetsignore` 存在且含 `_worker.js`;`dist/_headers` 存在且含 `X-Robots-Tag`**
 - [ ] `bun.lock` 已 commit
 
 **Verify:** `bun install && bun run build && bun run lint && bun run typecheck` → 4 命令全部 exit 0;`test -f dist/_worker.js && test -f dist/index.html`
@@ -223,11 +227,35 @@ export default defineConfig({
   "main": "./dist/_worker.js",
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
   },
   "observability": { "enabled": true }
 }
 ```
+
+- [ ] **Step 4b1: 创建 `public/.assetsignore`(必须,防止 `_worker.js` 被当资产 serve)**
+
+```
+_worker.js
+_routes.json
+```
+
+> Workers Static Assets 默认把 `assets.directory` 全部内容当资产候选。**必须**排除 `_worker.js`(Worker 入口本身)与 `_routes.json`(adapter 可能生成的 Worker 路由声明),否则被作为 `/_worker.js` 公开 serve 会暴露 Worker 源码。Astro build 时会把 `public/.assetsignore` 复制到 `dist/.assetsignore`,wrangler 按此过滤。
+
+- [ ] **Step 4b2: 创建 `public/_headers`(静态层响应头,与 middleware 双层注入)**
+
+```
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  X-Robots-Tag: noindex, nofollow
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com;
+```
+
+> **Workers Static Assets 不进 Worker**——middleware 不能覆盖 prerendered HTML + 资产。必须在 `_headers` 重复一份。Task 14 解除反索引时**两处都改**(删 `_headers` 与 `middleware.ts` 中各自的 `X-Robots-Tag` 行)。
 
 - [ ] **Step 4c: 创建 `src/middleware.ts`(全站响应头注入)**
 
@@ -340,14 +368,15 @@ bun run typecheck
 2. 看 Astro 官方迁移指南
 3. 修复后**回填新版本号到 package.json + 本 plan Step 1 的 JSON 块**(保持 plan 与代码一致)
 
-- [ ] **Step 10: 提交(必须含 `bun.lock` + `wrangler.jsonc` + `src/middleware.ts`)**
+- [ ] **Step 10: 提交(必须含 `bun.lock` + `wrangler.jsonc` + `src/middleware.ts` + `public/_headers` + `public/.assetsignore`)**
 
 ```bash
 git add package.json bun.lock tsconfig.json biome.json astro.config.mjs \
   wrangler.jsonc src/middleware.ts \
+  public/_headers public/.assetsignore \
   src/styles/globals.css src/pages/index.astro \
   .gitignore .env.local.example .dev.vars.example
-git commit -m "feat: bootstrap Astro 6 server + cloudflare adapter + middleware"
+git commit -m "feat: bootstrap Astro 6 server + cloudflare adapter + headers + middleware"
 ```
 
 > `bun.lock` 是 Bun 1.2+ 的**文本 JSON 锁文件**(取代旧版二进制 `bun.lockb`),可 diff、CI 友好。确保跨机器/CI 装出来的 transitive deps 与本机一致。CI 跑 `bun install --frozen-lockfile` 时会校验。
@@ -1226,7 +1255,7 @@ git commit -m "feat: add legal pages (tokushoho, privacy, cancel-policy)"
 - Create: `src/components/inquiry/InquiryForm.astro`
 - Create: `src/components/inquiry/inquiry-form.client.ts`(import `actions` from `astro:actions`)
 - Create: `src/components/pages/InquiryPage.astro`(form + 隐私 + `<noscript>` 兜底)
-- Create: `src/pages/inquiry.astro`、`src/pages/zh/inquiry.astro`(**省略 `prerender = true` 让其走 server**——表单页要在 server 渲染才能注入 Turnstile token / dynamic 元素;或者保留 prerender,Turnstile widget 通过客户端 island 加载也可,本任务用后者:保留 `prerender = true`,Turnstile 完全走客户端)
+- Create: `src/pages/inquiry.astro`、`src/pages/zh/inquiry.astro`(**保留 `export const prerender = true`**——Turnstile site key 是 build-time public env(`import.meta.env.PUBLIC_TURNSTILE_SITE_KEY`),widget 由客户端 island 加载;无任何依赖 server 渲染的动态字段,prerender 完全够用 + 速度最快)
 
 **Acceptance Criteria:**
 - [ ] `bun run build && bun run typecheck` 通过
@@ -1319,16 +1348,18 @@ git commit -m "feat: implement inquiry Astro Action with Resend dual emails"
 - Create: `src/components/seo/LocalBusinessJsonLd.astro`(JSON-LD)
 - Modify: `src/components/pages/HomePage.astro`(注入 JSON-LD)
 - Create: `public/og-default.png`(占位 1200×630)
-- **Modify: `public/robots.txt`(`Disallow: /` → `Allow: /` + Sitemap 行)**
-- **Modify: `src/middleware.ts`(删除 `res.headers.set('X-Robots-Tag', ...)` 整行)**
+- **Modify: `public/robots.txt`**(`Disallow: /` → `Allow: /` + Sitemap 行)
+- **Modify: `public/_headers`**(删除 `X-Robots-Tag: noindex, nofollow` 行)
+- **Modify: `src/middleware.ts`**(删除 `res.headers.set('X-Robots-Tag', ...)` 整行)
 
 **Acceptance Criteria:**
 - [ ] `dist/sitemap-index.xml` 存在,包含 `/zh/` 路由
 - [ ] HomePage prerendered HTML 含 `<script type="application/ld+json">` 含 `"@type":"LocalBusiness"`
 - [ ] 所有页面 `<head>` 含 `og:title` `og:description` `og:image` `og:locale`(ja → `ja_JP`,zh → `zh_CN`)+ `twitter:card`
 - [ ] **`dist/robots.txt`** = `User-agent: *\nAllow: /\n\nSitemap: https://sevenseatjp.com/sitemap-index.xml`
+- [ ] **`dist/_headers` 中无 `X-Robots-Tag` 行**:`! grep -q 'X-Robots-Tag' dist/_headers`
 - [ ] **`src/middleware.ts` 中无 `X-Robots-Tag` 引用**:`! grep -q 'X-Robots-Tag' src/middleware.ts`
-- [ ] 部署后 `curl -I https://<prod>/` 响应头无 `X-Robots-Tag`(middleware 不再注入)
+- [ ] 部署后 prerendered 营销页 + Action 响应都**无** `X-Robots-Tag`(`curl -I https://<prod>/` 和 `curl -I https://<prod>/_actions/inquiry -X POST -d {}` 都不含此头)
 
 **Verify:**
 
@@ -1350,7 +1381,7 @@ git commit -m "feat: add sitemap, JSON-LD, OG metadata for SEO"
 
 ### Task 15: Playwright E2E + GitHub Actions CI
 
-**Goal:** Playwright config 用 `wrangler pages dev` 走真实 Function;3 个 spec 覆盖关键路径;CI workflow 跑 lint+typecheck+build,PR 加 `run-e2e` 标签时跑 E2E。
+**Goal:** Playwright config 用 `astro dev`(adapter 接管 workerd)跑真实 Action;3 个 spec 覆盖关键路径;两个 projects(desktop + mobile);CI workflow `pull_request.types` 含 `labeled`,E2E job **显式写 `.dev.vars`** 后跑;build/lint/typecheck 在每个 PR 都跑。
 
 **Files:**
 - Create: `playwright.config.ts`(spec §8.5 完整片段含 `SECRET_KEYS.filter` + **两个 projects:`chromium-desktop` 与 `chromium-mobile`**)
@@ -1390,11 +1421,11 @@ export default defineConfig({
 });
 ```
 
-> CI 时 secrets 由 GitHub Actions workflow `env` 注入到 `process.env`;Cloudflare Vite plugin 缺 `.dev.vars` 时**会读 `process.env`** fallback,无需 `--binding=` 桥接(Pages Function 模式特有的痛点已不存在)。本地用户走 `.dev.vars`。
+> **CI 必须显式写 `.dev.vars`**(见上方 workflow YAML)——Cloudflare workerd 不会自动从 `process.env` fallback 到 `env.X`,文档要求 `.dev.vars` 文件**或** `CLOUDFLARE_INCLUDE_PROCESS_ENV=true`,**二选一**。本 plan 选前者(更显式 + 跨 wrangler 版本稳定)。本地用户走自己手写的 `.dev.vars`(不提交)。**无 `--binding=` 桥接代码**——Pages Function 时代的复杂度已消失。
 
 **Verify:** `bun run test:e2e --reporter=line` 全 PASS;GitHub Actions PR run 显示 `build` job 绿 + `e2e` job 在加标签后绿
 
-**workflow YAML 关键片段(spec §8.4 基础上明确加 `labeled` types):**
+**workflow YAML 关键片段(`labeled` types + E2E job 显式写 `.dev.vars`):**
 
 ```yaml
 on:
@@ -1408,11 +1439,25 @@ env:
 
 jobs:
   build:
-    # 见 spec §8.4
+    # bun install --frozen-lockfile + lint + typecheck + build
   e2e:
     needs: build
     if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-e2e')
-    # 见 spec §8.4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      # 关键:CI 必须显式写 .dev.vars(Cloudflare workerd 不会自动从 process.env fallback;
+      #   要么写 .dev.vars,要么 CLOUDFLARE_INCLUDE_PROCESS_ENV=true,二选一,本 plan 选前者)
+      - run: |
+          cat > .dev.vars <<EOF
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY_PREVIEW }}
+          TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+          COMPANY_INBOX=delivered+internal@resend.dev
+          INQUIRY_FROM_EMAIL=onboarding@resend.dev
+          EOF
+      - run: bun run test:e2e
 ```
 
 **Steps:** config → 3 spec → workflow → 本地跑通 → 推 throwaway PR 验证 → commit。
@@ -1491,8 +1536,8 @@ git commit -m "test: add Playwright E2E suite and GitHub Actions CI"
   - 验证返回数组里无 `home.title` 之类未解析的 i18n key 漏出
 
 - [ ] **Step 8: 切 DNS 到生产域名**
-  - CF Pages 加 custom domain `sevenseatjp.com`
-  - DNS A/CNAME 指向 CF Pages
+  - Cloudflare Workers dashboard 加 custom domain `sevenseatjp.com`(Domains & Routes)
+  - DNS A/CNAME/Workers route 指向 Worker
   - 等 SSL 颁发完成
   - 完整 checklist URL 替换 `*.pages.dev` 为生产域名重跑关键检查
 
