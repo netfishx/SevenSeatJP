@@ -38,7 +38,6 @@ const channelHint = {
   },
 } as const;
 
-const recommendedChannel = locale === 'zh' ? 'wechat' : 'line';
 const continueLabel = locale === 'zh' ? '继续' : '次へ';
 const skipLabel = locale === 'zh' ? '跳过此步' : 'この質問を飛ばす';
 const continueClass =
@@ -50,7 +49,7 @@ const continueClass =
     <header class="flex items-baseline gap-4">
       <span class="font-display text-text-deep tabular text-2xl sm:text-3xl">01</span>
       <h2 class="font-display text-2xl sm:text-3xl text-text">
-        {locale === 'zh' ? '您要去哪、什么时候?' : 'どちらへ・いつ?'}
+        {locale === 'zh' ? '您要去哪、什么时候？' : 'どちらへ・いつ？'}
       </h2>
     </header>
 
@@ -83,7 +82,7 @@ const continueClass =
             name="from"
             required
             maxlength="200"
-            placeholder={locale === 'zh' ? '例:成田机场' : '例:成田空港'}
+            placeholder={locale === 'zh' ? '例：成田机场' : '例:成田空港'}
             class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text"
           />
         </div>
@@ -97,7 +96,7 @@ const continueClass =
             name="to"
             required
             maxlength="200"
-            placeholder={locale === 'zh' ? '例:东京站' : '例:東京駅'}
+            placeholder={locale === 'zh' ? '例：东京站' : '例:東京駅'}
             class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text"
           />
         </div>
@@ -156,7 +155,7 @@ const continueClass =
     <header class="flex items-baseline gap-4">
       <span class="font-display text-text-deep tabular text-2xl sm:text-3xl">02</span>
       <h2 class="font-display text-2xl sm:text-3xl text-text">
-        {locale === 'zh' ? '有什么需要我们提前知道的吗?' : '何か特別な点はありますか?'}
+        {locale === 'zh' ? '有什么需要我们提前知道的吗？' : '何か特別な点はありますか？'}
       </h2>
     </header>
 
@@ -187,7 +186,7 @@ const continueClass =
           rows="4"
           placeholder={
             locale === 'zh'
-              ? '例:需要儿童座椅、随行长者需要协助、宠物同行...'
+              ? '例：需要儿童座椅、随行长者需要协助、宠物同行…'
               : '例:チャイルドシート希望、高齢者の同行支援、ペット同伴…'
           }
           class="bg-surface border border-border rounded-[2px] px-3 py-2 text-text leading-relaxed"
@@ -211,7 +210,7 @@ const continueClass =
     <header class="flex items-baseline gap-4">
       <span class="font-display text-text-deep tabular text-2xl sm:text-3xl">03</span>
       <h2 class="font-display text-2xl sm:text-3xl text-text">
-        {locale === 'zh' ? '我们用哪个渠道联系您?' : 'どこでお返事しましょう?'}
+        {locale === 'zh' ? '我们用哪个渠道联系您？' : 'どこでお返事しましょう？'}
       </h2>
     </header>
 
@@ -229,7 +228,6 @@ const continueClass =
             value={c}
             class="sr-only peer"
             required
-            checked={c === recommendedChannel}
           />
           <span class="font-display text-lg sm:text-xl text-text peer-checked:text-gold transition-colors">
             {channelLabel[c][locale]}
@@ -238,9 +236,7 @@ const continueClass =
           <span
             class="font-display tabular text-text-deep peer-checked:text-gold transition-colors"
             aria-hidden="true"
-          >
-            {c === recommendedChannel ? '●' : '○'}
-          </span>
+          >○</span>
         </label>
       ))}
     </fieldset>

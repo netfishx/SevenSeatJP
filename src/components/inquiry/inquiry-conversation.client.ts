@@ -10,6 +10,22 @@ if (form) {
   const dateInput = document.getElementById('date') as HTMLInputElement | null;
   if (dateInput) dateInput.min = new Date().toISOString().slice(0, 10);
 
+  // ?service=airport|charter|ski|rental → preselect the service type select.
+  // Trip pages set this query param on their closing CTA so the inquiry form
+  // arrives pre-tuned for the trip the visitor was reading.
+  const serviceQuery = new URLSearchParams(window.location.search).get(
+    'service',
+  );
+  if (
+    serviceQuery &&
+    ['airport', 'charter', 'ski', 'rental'].includes(serviceQuery)
+  ) {
+    const serviceSelect = document.getElementById(
+      'serviceType',
+    ) as HTMLSelectElement | null;
+    if (serviceSelect) serviceSelect.value = serviceQuery;
+  }
+
   // Progressive disclosure: only section 1 is visible at first paint.
   // "Continue" reveals the next section after validating the current one.
   const sections = Array.from(
