@@ -1,0 +1,32 @@
+---
+import { type Locale, t } from '@/i18n/t';
+
+interface TimelineItem {
+  offset: string;
+  label: { ja: string; zh: string };
+  body: { ja: string; zh: string };
+}
+interface Props {
+  locale: Locale;
+  items: readonly TimelineItem[];
+}
+const { locale, items } = Astro.props;
+---
+<section class="flex justify-center">
+  <div class="w-full max-w-7xl px-5 sm:px-8 py-16 sm:py-24 grid grid-cols-12 gap-6 sm:gap-12">
+    <p class="caption col-span-12 md:col-span-2">{t(locale, 'trip.spine.timeline.title')}</p>
+    <ol class="col-span-12 md:col-span-10 flex flex-col">
+      {items.map((item, i) => (
+        <li class:list={['grid grid-cols-12 gap-4 sm:gap-8 py-6 sm:py-8', i > 0 && 'border-t border-border']}>
+          <p class="col-span-12 sm:col-span-3 font-display text-2xl sm:text-3xl tracking-tight text-text-deep tabular">
+            {item.offset}
+          </p>
+          <div class="col-span-12 sm:col-span-9 flex flex-col gap-3">
+            <h3 class="font-display text-lg sm:text-xl text-text">{item.label[locale]}</h3>
+            <p class="text-text-muted leading-relaxed max-w-2xl">{item.body[locale]}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

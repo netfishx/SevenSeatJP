@@ -1,0 +1,41 @@
+---
+import { type Locale, t } from '@/i18n/t';
+
+interface ChecklistItem {
+  label: { ja: string; zh: string };
+  notes?: { ja: string; zh: string };
+}
+interface ChecklistGroup {
+  category: { ja: string; zh: string };
+  items: readonly ChecklistItem[];
+}
+interface Props {
+  locale: Locale;
+  groups: readonly ChecklistGroup[];
+}
+const { locale, groups } = Astro.props;
+---
+<section class="flex justify-center">
+  <div class="w-full max-w-7xl px-5 sm:px-8 py-16 sm:py-24 grid grid-cols-12 gap-6 sm:gap-12">
+    <p class="caption col-span-12 md:col-span-2">{t(locale, 'trip.spine.checklist.title')}</p>
+    <div class="col-span-12 md:col-span-10 flex flex-col gap-14 sm:gap-16">
+      {groups.map((group) => (
+        <div class="grid grid-cols-12 gap-4 sm:gap-8">
+          <h3 class="col-span-12 sm:col-span-3 font-display text-lg sm:text-xl text-text">
+            {group.category[locale]}
+          </h3>
+          <ul class="col-span-12 sm:col-span-9 flex flex-col">
+            {group.items.map((item, i) => (
+              <li class:list={['flex flex-col gap-2 py-4 sm:py-5', i > 0 && 'border-t border-border']}>
+                <span class="text-text">{item.label[locale]}</span>
+                {item.notes && (
+                  <span class="text-sm text-text-muted leading-relaxed max-w-2xl">{item.notes[locale]}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
