@@ -1,0 +1,31 @@
+---
+import Hero from '@/components/home/Hero.astro';
+import ServiceGrid from '@/components/home/ServiceGrid.astro';
+import TestimonialsList from '@/components/home/TestimonialsList.astro';
+import Button from '@/components/ui/Button.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { type Locale, t } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
+---
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'home.title')}
+  description={t(locale, 'home.subtitle')}
+>
+  <Hero locale={locale} />
+  <ServiceGrid locale={locale} />
+  <TestimonialsList locale={locale} />
+  <Section>
+    <Container class="flex flex-col items-center gap-4 text-center">
+      <p class="text-text-muted">{t(locale, 'home.subtitle')}</p>
+      <Button href={inquiryHref} variant="primary">{t(locale, 'home.cta')}</Button>
+    </Container>
+  </Section>
+</BaseLayout>

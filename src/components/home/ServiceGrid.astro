@@ -1,0 +1,44 @@
+---
+import Card from '@/components/ui/Card.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import { type Locale, t, type I18nKey } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const prefix = locale === 'zh' ? '/zh' : '';
+
+const services: ReadonlyArray<{
+  slug: string;
+  titleKey: I18nKey;
+  descKey: I18nKey;
+}> = [
+  { slug: 'airport-transfer', titleKey: 'service.airport.title', descKey: 'service.airport.desc' },
+  { slug: 'charter', titleKey: 'service.charter.title', descKey: 'service.charter.desc' },
+  { slug: 'ski-hakuba', titleKey: 'service.ski.title', descKey: 'service.ski.desc' },
+  { slug: 'rental', titleKey: 'service.rental.title', descKey: 'service.rental.desc' },
+];
+---
+<Section>
+  <Container class="flex flex-col gap-10">
+    <h2 class="text-3xl text-gold font-display text-center">
+      {t(locale, 'home.services.title')}
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {services.map((s) => (
+        <a
+          data-service-card
+          href={`${prefix}/${s.slug}`}
+          class="block min-h-11 transition-colors hover:no-underline focus-visible:outline-2 focus-visible:outline-gold"
+        >
+          <Card class="h-full flex flex-col gap-3 hover:border-gold">
+            <h3 class="text-xl font-display text-gold">{t(locale, s.titleKey)}</h3>
+            <p class="text-text-muted text-sm leading-relaxed">{t(locale, s.descKey)}</p>
+          </Card>
+        </a>
+      ))}
+    </div>
+  </Container>
+</Section>

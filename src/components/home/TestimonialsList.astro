@@ -1,0 +1,48 @@
+---
+import Card from '@/components/ui/Card.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import { type Locale, t } from '@/i18n/t';
+import { getCollection } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+
+const all = await getCollection('testimonials');
+const sorted = all
+  .slice()
+  .sort((a, b) => (a.data.date < b.data.date ? 1 : -1))
+  .slice(0, 3);
+---
+<Section>
+  <Container class="flex flex-col gap-10">
+    <h2 class="text-3xl text-gold font-display text-center">
+      {t(locale, 'home.testimonials.title')}
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {sorted.map((entry) => (
+        <article data-testimonial class="flex">
+          <Card class="flex flex-col gap-4 w-full">
+            <div class="flex items-center gap-3">
+              <span
+                class="inline-flex items-center justify-center min-w-11 min-h-11 rounded-full bg-gold text-bg font-display"
+              >{entry.data.customerInitials}</span>
+              <div class="flex flex-col">
+                <span class="text-xs text-text-muted uppercase tracking-wider">
+                  {entry.data.sourceChannel}
+                </span>
+                <span class="text-xs text-text-muted">{entry.data.date}</span>
+              </div>
+            </div>
+            <p class="text-sm text-text leading-relaxed">{entry.data.content[locale]}</p>
+            <div class="flex gap-1 text-gold" aria-label={`${entry.data.rating} / 5`}>
+              {Array.from({ length: entry.data.rating }).map(() => <span>★</span>)}
+            </div>
+          </Card>
+        </article>
+      ))}
+    </div>
+  </Container>
+</Section>

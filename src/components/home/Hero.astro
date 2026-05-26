@@ -1,0 +1,21 @@
+---
+import Button from '@/components/ui/Button.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import { type Locale, t } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
+---
+<Section class="py-24">
+  <Container class="flex flex-col items-center justify-center gap-6 text-center">
+    <h1 class="text-4xl sm:text-5xl text-gold font-display leading-tight">
+      {t(locale, 'home.title')}
+    </h1>
+    <p class="text-text-muted text-lg max-w-2xl">{t(locale, 'home.subtitle')}</p>
+    <Button href={inquiryHref} variant="primary">{t(locale, 'home.cta')}</Button>
+  </Container>
+</Section>
