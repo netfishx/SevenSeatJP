@@ -1,0 +1,47 @@
+---
+import PriceTable from '@/components/route/PriceTable.astro';
+import Button from '@/components/ui/Button.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { type Locale, t } from '@/i18n/t';
+import { getCollection } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
+
+const all = await getCollection('routes');
+const skiRoutes = all
+  .filter((r) => r.data.category === 'ski')
+  .sort((a, b) => a.data.order - b.data.order);
+
+const seasonal = skiRoutes[0]?.data.seasonal;
+---
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'ski.title')}
+  description={t(locale, 'ski.lead')}
+>
+  <Section>
+    <Container class="flex flex-col gap-8">
+      <header class="flex flex-col gap-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <h1 class="text-4xl text-gold font-display">{t(locale, 'ski.title')}</h1>
+          {seasonal && (
+            <span class="inline-flex items-center min-h-8 px-3 rounded-full bg-gold/10 text-gold text-xs font-display border border-gold/30">
+              {t(locale, 'ski.seasonal.badge')} · {seasonal.from} – {seasonal.to}
+            </span>
+          )}
+        </div>
+        <p class="text-text-muted text-lg leading-relaxed max-w-3xl">{t(locale, 'ski.lead')}</p>
+      </header>
+      <PriceTable routes={skiRoutes} locale={locale} />
+      <div class="flex justify-center pt-4">
+        <Button href={inquiryHref} variant="primary">{t(locale, 'cta.inquire')}</Button>
+      </div>
+    </Container>
+  </Section>
+</BaseLayout>

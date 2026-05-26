@@ -1,0 +1,71 @@
+---
+import { type Locale, t } from '@/i18n/t';
+import { getEntries } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  routes: CollectionEntry<'routes'>[];
+  locale: Locale;
+}
+const { routes, locale } = Astro.props;
+const yen = new Intl.NumberFormat('ja-JP');
+
+type Row = {
+  from: string;
+  to: string;
+  duration: number;
+  vehicleName: string;
+  jpy: number;
+  includes: string;
+  notes?: string;
+};
+
+const rows: Row[] = [];
+for (const route of routes) {
+  const vehicles = await getEntries(route.data.fares.map((f) => f.vehicle));
+  const vehicleMap = new Map(vehicles.map((v) => [v.id, v.data.name[locale]]));
+  for (const fare of route.data.fares) {
+    rows.push({
+      from: route.data.from[locale],
+      to: route.data.to[locale],
+      duration: route.data.durationMin,
+      vehicleName: vehicleMap.get(fare.vehicle.id) ?? fare.vehicle.id,
+      jpy: fare.jpy,
+      includes: fare.includes[locale],
+      notes: fare.notes?.[locale],
+    });
+  }
+}
+---
+<div class="w-full overflow-x-auto">
+  <table class="w-full text-sm border-collapse">
+    <thead>
+      <tr class="bg-surface border-b border-border text-text-muted text-start">
+        <th class="px-3 py-3 text-start font-display">{t(locale, 'price.col.route')}</th>
+        <th class="px-3 py-3 text-start font-display">{t(locale, 'price.col.duration')}</th>
+        <th class="px-3 py-3 text-start font-display">{t(locale, 'price.col.vehicle')}</th>
+        <th class="px-3 py-3 text-end font-display">{t(locale, 'price.col.price')}</th>
+        <th class="px-3 py-3 text-start font-display">{t(locale, 'price.col.includes')}</th>
+        <th class="px-3 py-3 text-start font-display">{t(locale, 'price.col.notes')}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((r) => (
+          <tr class="border-b border-border align-top">
+            <td class="px-3 py-3 text-text">{r.from} → {r.to}</td>
+            <td class="px-3 py-3 text-text-muted whitespace-nowrap">
+              {r.duration} {t(locale, 'price.duration.minutes')}
+            </td>
+            <td class="px-3 py-3 text-text whitespace-nowrap">{r.vehicleName}</td>
+            <td class="px-3 py-3 text-gold font-display text-end whitespace-nowrap">
+              ¥{yen.format(r.jpy)}
+            </td>
+            <td class="px-3 py-3 text-text-muted">{r.includes}</td>
+            <td class="px-3 py-3 text-text-muted">{r.notes ?? ''}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
