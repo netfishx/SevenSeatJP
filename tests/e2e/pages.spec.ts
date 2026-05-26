@@ -27,6 +27,20 @@ const PAGES = [
   { path: '/zh/legal/tokushoho', heading: /特定商取引法表记/ },
   { path: '/zh/legal/privacy', heading: /隐私政策/ },
   { path: '/zh/legal/cancel-policy', heading: /取消政策/ },
+  { path: '/trip/narita-tokyo', heading: /成田/ },
+  { path: '/trip/haneda-tokyo', heading: /羽田/ },
+  { path: '/trip/kix-osaka', heading: /関西/ },
+  { path: '/trip/kix-kyoto', heading: /関西/ },
+  { path: '/trip/tokyo-hakuba', heading: /白馬/ },
+  { path: '/trip/tokyo-full-day-charter', heading: /東京1日/ },
+  { path: '/trip/mt-fuji-rental-2day', heading: /富士山/ },
+  { path: '/zh/trip/narita-tokyo', heading: /成田/ },
+  { path: '/zh/trip/haneda-tokyo', heading: /羽田/ },
+  { path: '/zh/trip/kix-osaka', heading: /关西/ },
+  { path: '/zh/trip/kix-kyoto', heading: /关西/ },
+  { path: '/zh/trip/tokyo-hakuba', heading: /白马/ },
+  { path: '/zh/trip/tokyo-full-day-charter', heading: /东京整日/ },
+  { path: '/zh/trip/mt-fuji-rental-2day', heading: /富士山/ },
 ];
 
 for (const page of PAGES) {

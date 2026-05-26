@@ -1,0 +1,33 @@
+---
+export const prerender = true;
+import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
+import TripPage from '@/components/pages/TripPage.astro';
+
+export async function getStaticPaths() {
+  const routes = await getCollection('routes');
+  const packages = await getCollection('packages');
+  return [
+    ...routes.map((entry) => ({
+      params: { slug: entry.id },
+      props: { kind: 'route' as const, entry },
+    })),
+    ...packages.map((entry) => ({
+      params: { slug: entry.id },
+      props: { kind: 'package' as const, entry },
+    })),
+  ];
+}
+
+type Props =
+  | { kind: 'route'; entry: CollectionEntry<'routes'> }
+  | { kind: 'package'; entry: CollectionEntry<'packages'> };
+const props = Astro.props as Props;
+---
+{
+  props.kind === 'route' ? (
+    <TripPage kind="route" entry={props.entry} locale="ja" />
+  ) : (
+    <TripPage kind="package" entry={props.entry} locale="ja" />
+  )
+}

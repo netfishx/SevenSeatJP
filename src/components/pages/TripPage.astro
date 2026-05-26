@@ -1,0 +1,148 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+import airportHero from '@/assets/photos/airport-hero.jpg';
+import charterHero from '@/assets/photos/home-fuji.jpg';
+import rentalHero from '@/assets/photos/rental-hero.jpg';
+import skiHero from '@/assets/photos/ski-alps.jpg';
+import PackageCard from '@/components/route/PackageCard.astro';
+import PriceTable from '@/components/route/PriceTable.astro';
+import RouteHero from '@/components/route/RouteHero.astro';
+import ChecklistSpine from '@/components/trip/ChecklistSpine.astro';
+import ItinerarySpine from '@/components/trip/ItinerarySpine.astro';
+import SeasonSpine from '@/components/trip/SeasonSpine.astro';
+import TimelineSpine from '@/components/trip/TimelineSpine.astro';
+import Button from '@/components/ui/Button.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { type Locale, t } from '@/i18n/t';
+import { photoCredits } from '@/lib/credits';
+
+interface RouteProps {
+  kind: 'route';
+  entry: CollectionEntry<'routes'>;
+}
+interface PackageProps {
+  kind: 'package';
+  entry: CollectionEntry<'packages'>;
+}
+type Props = (RouteProps | PackageProps) & { locale: Locale };
+
+const props = Astro.props;
+const { kind, entry, locale } = props;
+
+const heroByCategory = {
+  airport: { img: airportHero, file: 'airport-hero.jpg' },
+  ski: { img: skiHero, file: 'ski-alps.jpg' },
+  charter: { img: charterHero, file: 'home-fuji.jpg' },
+  rental: { img: rentalHero, file: 'rental-hero.jpg' },
+} as const;
+
+const categoryKey =
+  kind === 'route' ? entry.data.category : entry.data.type;
+const hero = heroByCategory[categoryKey];
+const alt = photoCredits.find((c) => c.file === hero.file)?.alt[locale] ?? '';
+
+const eyebrowKeyByCategory = {
+  airport: 'trip.browse.group.airport',
+  ski: 'trip.browse.group.ski',
+  charter: 'trip.browse.group.day',
+  rental: 'trip.browse.group.selfdrive',
+} as const;
+const eyebrow = t(locale, eyebrowKeyByCategory[categoryKey]);
+
+const title =
+  kind === 'route'
+    ? {
+        primary: entry.data.from[locale],
+        secondary: entry.data.to[locale],
+      }
+    : { primary: entry.data.title[locale] };
+
+const subline =
+  kind === 'route'
+    ? locale === 'zh'
+      ? `${entry.data.from.zh} 至 ${entry.data.to.zh},全程约 ${entry.data.durationMin} 分钟。`
+      : `${entry.data.from.ja}から${entry.data.to.ja}まで、所要約 ${entry.data.durationMin} 分。`
+    : (entry.data.notes?.[locale] ?? '');
+
+const seoTitle =
+  kind === 'route'
+    ? `${entry.data.from[locale]} → ${entry.data.to[locale]}`
+    : entry.data.title[locale];
+
+const serviceQuery = categoryKey;
+const inquiryHref =
+  locale === 'zh'
+    ? `/zh/inquiry?service=${serviceQuery}`
+    : `/inquiry?service=${serviceQuery}`;
+
+const spine = entry.data.spine;
+
+const ctaBody =
+  locale === 'zh'
+    ? '24 小时内回复,LINE / WeChat / Mail 任您选。'
+    : 'お問合せから 24 時間以内にご返信いたします。LINE / WeChat / メール,どちらでも。';
+const ctaLabel = locale === 'zh' ? '开始问询' : 'お問合せを始める';
+---
+<BaseLayout
+  locale={locale}
+  title={seoTitle}
+  description={subline}
+  immersiveHeader
+>
+  <RouteHero
+    image={hero.img}
+    alt={alt}
+    eyebrow={eyebrow}
+    title={title}
+    srOnlyTitle={seoTitle}
+    subline={subline}
+    family={locale === 'ja' ? 'display-jp' : 'display'}
+  />
+
+  {spine.type === 'timeline' && (
+    <TimelineSpine locale={locale} items={spine.items} />
+  )}
+  {spine.type === 'season' && (
+    <SeasonSpine
+      locale={locale}
+      months={spine.months}
+      hoursLabel={spine.hoursLabel}
+      advisories={spine.advisories}
+    />
+  )}
+  {spine.type === 'itinerary' && (
+    <ItinerarySpine locale={locale} items={spine.items} />
+  )}
+  {spine.type === 'checklist' && (
+    <ChecklistSpine locale={locale} groups={spine.groups} />
+  )}
+
+  {kind === 'route' && (
+    <Section>
+      <Container size="wide">
+        <PriceTable routes={[entry]} locale={locale} />
+      </Container>
+    </Section>
+  )}
+
+  {kind === 'package' && (
+    <Section>
+      <Container size="wide">
+        <PackageCard entry={entry} locale={locale} />
+      </Container>
+    </Section>
+  )}
+
+  <Section spacing="loose">
+    <Container size="wide" class="flex flex-col items-start gap-8 max-w-4xl">
+      <h2 class="font-display text-3xl sm:text-5xl leading-[1.1]">
+        {locale === 'zh' ? '把这趟出行交给我们。' : 'この旅程は、私たちに。'}
+      </h2>
+      <p class="text-text-muted leading-relaxed max-w-xl">{ctaBody}</p>
+      <Button href={inquiryHref} variant="solid">{ctaLabel}</Button>
+    </Container>
+  </Section>
+</BaseLayout>
