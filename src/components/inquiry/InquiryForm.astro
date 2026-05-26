@@ -6,13 +6,21 @@ interface Props {
 }
 const { locale } = Astro.props;
 
-const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
-if (!siteKey) {
-  throw new Error(
-    'PUBLIC_TURNSTILE_SITE_KEY must be defined at build time. ' +
-      'Set it in .env.local (dev) or Workers Builds env (prod / preview).',
+// Cloudflare Turnstile site key. Resolved at BUILD time (Astro public env).
+// Cf https://developers.cloudflare.com/turnstile/troubleshooting/testing/
+// The 1x… fallback is Cloudflare's "always-pass" dummy — useful in dev and
+// during launch staging, but submissions will FAIL in production unless the
+// matching secret is the dummy too. Set PUBLIC_TURNSTILE_SITE_KEY explicitly
+// in Cloudflare Workers Builds → Build configuration → Variables for prod.
+const envSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+if (!envSiteKey && import.meta.env.PROD) {
+  console.warn(
+    '[InquiryForm] PUBLIC_TURNSTILE_SITE_KEY missing in production build. ' +
+      'Shipping the Turnstile dummy site key — real submissions will fail ' +
+      'against any production secret. Configure it in CF Workers Builds.',
   );
 }
+const siteKey = envSiteKey ?? '1x00000000000000000000AA';
 const countryCodes = ['+81', '+86', '+852', '+853', '+886', '+1', '+44', '+65', '+82'] as const;
 ---
 <form id="inquiry-form" class="flex flex-col gap-6 w-full">
