@@ -3,28 +3,28 @@ import { expect, test } from '@playwright/test';
 test('LangSwitch keeps query and adds /zh prefix when switching to zh', async ({
   page,
 }) => {
-  await page.goto('/airport-transfer?utm_source=test');
+  await page.goto('/vehicles?utm_source=test');
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
 
   const zhSwitch = page.locator('[data-lang-switch][href^="/zh/"]').first();
   await expect(zhSwitch).toHaveAttribute(
     'href',
-    '/zh/airport-transfer?utm_source=test',
+    '/zh/vehicles?utm_source=test',
   );
 
   await zhSwitch.click();
-  await page.waitForURL('**/zh/airport-transfer**');
+  await page.waitForURL('**/zh/vehicles**');
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
   expect(page.url()).toContain('utm_source=test');
 });
 
 test('LangSwitch carries location.hash on click', async ({ page }) => {
-  await page.goto('/airport-transfer#pricing');
+  await page.goto('/vehicles#pricing');
   const zhSwitch = page.locator('[data-lang-switch][href^="/zh/"]').first();
   await zhSwitch.click();
   await page.waitForURL(
-    (url) => url.pathname === '/zh/airport-transfer' && url.hash === '#pricing',
+    (url) => url.pathname === '/zh/vehicles' && url.hash === '#pricing',
   );
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
 });
