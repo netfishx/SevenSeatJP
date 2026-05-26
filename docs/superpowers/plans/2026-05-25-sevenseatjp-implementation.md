@@ -71,12 +71,13 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
     "dev":       "bun run build && wrangler pages dev dist --port 4321 --compatibility-flag=nodejs_compat",
     "build":     "astro check && astro build",
     "preview":   "wrangler pages dev dist --port 4321 --compatibility-flag=nodejs_compat",
-    "lint":      "biome check --write .",
+    "lint":      "biome check .",
+    "format":    "biome check --write .",
     "typecheck": "astro check",
     "test:e2e":  "playwright test"
   },
   "dependencies": {
-    "astro": "^5.0.0",
+    "astro": "^6.0.0",
     "@astrojs/sitemap": "^3.2.0",
     "zod": "^4.0.0",
     "resend": "^4.0.0",
@@ -201,9 +202,10 @@ PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA
 
 ```
 # .dev.vars.example  —— wrangler runtime,本地复制为 .dev.vars
+# 本地用 Resend 测试地址跑代码链路;真实邮箱送达在 Task 16(生产域名)做
 RESEND_API_KEY=re_dev_xxx
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
-COMPANY_INBOX=your-dev-email@example.com
+COMPANY_INBOX=delivered+internal@resend.dev
 INQUIRY_FROM_EMAIL=onboarding@resend.dev
 ```
 
@@ -224,14 +226,14 @@ bun run typecheck
 git add package.json tsconfig.json biome.json astro.config.mjs \
   src/styles/globals.css src/pages/index.astro \
   .gitignore .env.local.example .dev.vars.example
-git commit -m "feat: bootstrap Astro 5 + Tailwind v4 + Biome toolchain"
+git commit -m "feat: bootstrap Astro 6 + Tailwind v4 + Biome toolchain"
 ```
 
 ---
 
-### Task 2: CF Pages 部署配置 + 首次部署
+### Task 2: CF Pages 部署配置 + 首次部署(仅 `*.pages.dev`)
 
-**Goal:** 仓库连到 Cloudflare Pages,生产 + Preview 部署链路打通,占位首页可在 `*.pages.dev` 访问。
+**Goal:** 仓库连到 Cloudflare Pages,生产 + Preview 部署链路打通,占位首页**仅在 `<project>.pages.dev` 默认子域 + PR preview** 可访问。**不绑定 custom domain `sevenseatjp.com`**——避免占位首页暴露给搜索引擎与潜在客户;custom domain 切换放到 Task 16。
 
 **Files:**
 - Create: `public/_headers`
@@ -241,12 +243,13 @@ git commit -m "feat: bootstrap Astro 5 + Tailwind v4 + Biome toolchain"
 
 **Acceptance Criteria:**
 - [ ] CF Pages dashboard 已创建项目,Build cmd = `bun run build`,Output = `dist/`,Functions dir 自动识别,兼容性 flag 含 `nodejs_compat`
-- [ ] Production env 已配 `PUBLIC_TURNSTILE_SITE_KEY` 真实 site key;Preview env 配 dummy
-- [ ] 推 main → 部署到生产域名,占位首页可访问
+- [ ] Production env 已配 `PUBLIC_TURNSTILE_SITE_KEY`(可先填 dummy,真实 key 由 Task 16 替换);Preview env 配 dummy
+- [ ] 推 main → 部署到 `<project>.pages.dev`,占位首页可访问
 - [ ] 开一个 throwaway PR → 生成 preview URL,占位首页可访问
-- [ ] curl 生产域 `/robots.txt` 返回 200
+- [ ] curl `<project>.pages.dev/robots.txt` 返回 200
+- [ ] **未绑定 custom domain**(Settings → Custom domains 应为空,直到 Task 16)
 
-**Verify:** 浏览器打开 prod + preview 两个 URL,看到 "SevenSeatJP" 字样 + Tailwind 样式生效(深色背景);`curl -I https://<prod>/robots.txt` 200
+**Verify:** 浏览器打开 `<project>.pages.dev` + preview URL,看到 "SevenSeatJP" + 深色背景;`curl -I https://<project>.pages.dev/robots.txt` 200
 
 **Steps:**
 
@@ -608,9 +611,11 @@ const testimonials = defineCollection({
 export const collections = { routes, packages, vehicles, faq, testimonials };
 ```
 
-- [ ] **Step 3: 5 条 routes seed**
+- [ ] **Step 3: 5 条 routes seed(每条路线一个文件;同路线不同车型用同一文件的 `fares[]` 多元素)**
 
-`src/content/routes/narita-tokyo.yaml`、`haneda-tokyo.yaml`、`kix-osaka.yaml`、`nrt-tokyo-hiace.yaml`、`tokyo-hakuba.yaml`(后者 `category: ski` + `seasonal: { from: "12-01", to: "03-31" }`)。
+`src/content/routes/narita-tokyo.yaml`、`haneda-tokyo.yaml`、`kix-osaka.yaml`、`kix-kyoto.yaml`、`tokyo-hakuba.yaml`(最后一条 `category: ski` + `seasonal: { from: "12-01", to: "03-31" }`)。
+
+> **注意:** 不要按"路线 × 车型"建多个文件。同一条路线的不同车型价格属于同一文件 `fares[]` 数组的不同元素。下面 `narita-tokyo.yaml` 样例展示 3 车型一站式定价。
 
 样例(`narita-tokyo.yaml`):
 
@@ -629,10 +634,20 @@ fares:
     notes:
       ja: "22:00〜翌5:00は深夜料金 +20%"
       zh: "22:00 至次日 5:00 加收 20% 夜间费"
+  - vehicle: vellfire
+    jpy: 30000
+    includes:
+      ja: "高速代・駐車場代込み"
+      zh: "含高速费、停车费"
+  - vehicle: hiace
+    jpy: 32000
+    includes:
+      ja: "7名様まで・大型荷物対応"
+      zh: "最多 7 人、大件行李"
 order: 1
 ```
 
-(其余 4 条按同结构,数值与文案各自合理。)
+(其余 4 条同结构:`kix-kyoto.yaml` 关西机场 → 京都市内,常用 inbound 路线;每条路线在 `fares[]` 里列 1-3 个适合的车型。)
 
 - [ ] **Step 4: 2 条 packages**
 
@@ -1118,7 +1133,9 @@ git commit -m "feat: add inquiry form with Turnstile widget and shared schema"
 
 ### Task 13: 询价表单 — Pages Function + 邮件模板 + 本地链路调通
 
-**Goal:** `functions/api/inquiry.ts` 与 React Email 模板完整;**本地 `bun run dev` 起 wrangler,真实填表 → 真实 Resend 测试地址收信**,跑通完整链路。CI 跑同链路用 dummy + delivered@resend.dev。
+**Goal:** `functions/api/inquiry.ts` 与 React Email 模板完整;**本地 `bun run dev` 起 wrangler,真实填表 → Resend API 调用成功 + Resend dashboard 显示 sent event**,跑通完整代码链路。**真实邮箱送达测试**(Gmail/Outlook/QQ/163/iCloud 5 个)**留到 Task 16**,在生产 Resend 域名 + DNS 配置完成后做。
+
+> **重要:** `delivered@resend.dev` 是 Resend 的**测试地址**,API 调用会返回成功且在 dashboard 留下 sent event,但**不会真实送达任何 inbox**。本任务用这个地址验证 API + 代码链路;`onboarding@resend.dev` 测试发件域对任意客户邮箱有限制,只能发到 `delivered+*@resend.dev` 这类测试地址。生产域名 + 真实送达验证由 Task 16 负责。
 
 **Files:**
 - Create: `functions/api/inquiry.ts`(spec §7.3 完整 + 包含 `sendInternalEmail` / `sendCustomerEmail` helper + content-type/byteLength guard + Turnstile try/catch 503 兜底)
@@ -1127,13 +1144,18 @@ git commit -m "feat: add inquiry form with Turnstile widget and shared schema"
 - Create: `.env.local`(本地复制 `.env.local.example`;**不提交**)
 
 **Acceptance Criteria:**
-- [ ] `bun run dev`(wrangler pages dev)起后,浏览器访问 `http://localhost:4321/inquiry`,填完整表单 + 通过 Turnstile dummy → 提交 → 浏览器显示 "form.success" 文案
-- [ ] `delivered@resend.dev` 收到一封内部邮件(subject 含 `[direct]` 前缀或带 utm source)+ 客户邮箱收到一封确认
-- [ ] 故意 stub Turnstile siteverify 网络(改成 `https://nonexistent.example/`)→ 提交后浏览器显示 `form.error.turnstile_unavailable`(503)
-- [ ] 故意把 `notes` 字段填 200KB 文本 → 浏览器显示 `form.error.payload_too_large`(413)
-- [ ] 邮件正文含完整 UTM 归因块(首触 / 末触 / 本次)
+- [ ] `bun run dev`(wrangler pages dev)起后,浏览器访问 `http://localhost:4321/inquiry`,填完整表单(客户邮箱填 `delivered+customer@resend.dev`)+ Turnstile dummy 通过 → 提交 → 浏览器显示 `form.success` 文案
+- [ ] **Resend dashboard 显示 2 个 sent event**:1 个发往 `delivered+internal@resend.dev`(模拟公司邮箱)+ 1 个发往 `delivered+customer@resend.dev`(客户确认)
+- [ ] **内部邮件 event 的 subject** 含 `[direct]` 前缀(无 UTM 时)或 utm source 前缀(带 `?utm_source=test` 访问首页再走到 inquiry)
+- [ ] **反向 1:** 改 Turnstile siteverify URL 为 `https://nonexistent.example/` → 提交后浏览器显示 `form.error.turnstile_unavailable`(503),Resend dashboard 无新 event
+- [ ] **反向 2:** notes 字段填 >100KB 文本 → 浏览器显示 `form.error.payload_too_large`(413),Resend dashboard 无新 event
+- [ ] **反向 3:** 临时把 `RESEND_API_KEY` 换成无效值 → 浏览器显示 `form.error.email_send_failed`(502)
+- [ ] 内部邮件正文 HTML(在 Resend dashboard event 详情里查看)含完整 UTM 归因块(首触 / 末触 / 本次三段)
+- [ ] `bun run typecheck` 通过
 
-**Verify:** 手动浏览器流程上述 4 条 + 检查邮件;另跑 `bun run typecheck` 通过。
+**Verify:** 上述 7 条 + Resend dashboard 截图/事件 ID 记录在 commit message 或 PR description 中。
+
+**注意:`COMPANY_INBOX` 在本地 `.dev.vars` 必须设为 `delivered+internal@resend.dev`**(不是真实邮箱),否则 onboarding 发件域被限制无法发送。
 
 **Steps:**
 
@@ -1195,16 +1217,39 @@ git commit -m "feat: add sitemap, JSON-LD, OG metadata for SEO"
 - Create: `tests/e2e/pages.spec.ts`(13 个页面 × 2 语言 = 26 cases)
 - Create: `tests/e2e/i18n.spec.ts`(语言切换 + hreflang + 保留 query + 客户端 hash handler)
 - Create: `tests/e2e/inquiry.spec.ts`(成功 / 客户端校验 / 服务端 400 / UTM 归因 4 个 case)
-- Create: `.github/workflows/ci.yml`(spec §8.4 完整 build + e2e job;workflow env 含 `PUBLIC_TURNSTILE_SITE_KEY`)
+- Create: `.github/workflows/ci.yml`(workflow `on.pull_request.types` 必须明确含 `labeled` —— 默认 types 不含,labeled event 不会触发 PR workflow re-run)
 - Create: `.github/workflows/README.md`(说明 `run-e2e` 标签触发)
 
 **Acceptance Criteria:**
 - [ ] 本地 `bun run test:e2e` 通过(`.dev.vars` 已配)
 - [ ] 推 PR 到 main 不触发 e2e job,但触发 build/lint/typecheck 通过
-- [ ] 给 PR 加 `run-e2e` 标签 → e2e job 触发并通过
+- [ ] **给 PR 加 `run-e2e` 标签 → workflow 重新触发(因为 `types: [..., labeled]`)→ e2e job 通过**
+- [ ] **去掉 `run-e2e` 标签再加回去 → workflow 再次触发**(验证 labeled event 真正生效,不是 push 顺路跑的)
 - [ ] `inquiry.spec.ts` 的 UTM 归因 case 验证 `payload.utm.firstTouch.source === 'test'`
+- [ ] i18n.spec.ts 验证 LangSwitch 客户端 hash handler:带 `#section` 点切换 → 目标 URL 含 hash
 
 **Verify:** `bun run test:e2e --reporter=line` 全 PASS;GitHub Actions PR run 显示 `build` job 绿 + `e2e` job 在加标签后绿
+
+**workflow YAML 关键片段(spec §8.4 基础上明确加 `labeled` types):**
+
+```yaml
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+env:
+  PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+
+jobs:
+  build:
+    # 见 spec §8.4
+  e2e:
+    needs: build
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-e2e')
+    # 见 spec §8.4
+```
 
 **Steps:** config → 3 spec → workflow → 本地跑通 → 推 throwaway PR 验证 → commit。
 

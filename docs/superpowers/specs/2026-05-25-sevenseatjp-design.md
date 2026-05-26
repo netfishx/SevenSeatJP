@@ -34,7 +34,7 @@ authors: cricket
 
 | 层 | 选型 | 理由 |
 |---|---|---|
-| 框架 | Astro 5+(TS) | 默认 SSG、零运行时 JS、岛屿水合按需 |
+| 框架 | Astro 6(TS) | 默认 SSG、零运行时 JS、岛屿水合按需;纯 static + 独立 Pages Functions 路径,不依赖 @astrojs/cloudflare adapter |
 | 输出模式 | `output: 'static'`(纯静态) | 与 CF Pages 最佳契合;无 Astro adapter |
 | 样式 | Tailwind v4(CSS-first,Vite plugin) | token 写在 `globals.css` 的 `@theme {}` |
 | 内容 | Astro Content Collections + Zod(`astro/zod`) | YAML 数据 + 编译期校验 |
@@ -932,8 +932,12 @@ function sanitizeHeader(s: string): string {
 ```yaml
 name: CI
 on:
-  push: { branches: [main] }
+  push:
+    branches: [main]
   pull_request:
+    # 必须明确 types 含 `labeled`,否则给 PR 加 run-e2e 标签时 workflow 不会重新触发
+    # (默认 types = [opened, synchronize, reopened],不含 labeled)
+    types: [opened, synchronize, reopened, labeled]
 
 env:
   PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA   # dummy,build 时注入到 dist/
