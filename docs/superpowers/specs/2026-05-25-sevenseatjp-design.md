@@ -733,7 +733,7 @@ import { defineAction, ActionError } from 'astro:actions';
 import { Resend } from 'resend';
 import { render } from 'react-email';            // React Email v6 单包
 import { env } from 'cloudflare:workers';        // Astro 6 + cloudflare adapter:模块级 env(替代已删除的 Astro.locals.runtime.env)
-import { InquirySchema } from '@/lib/schemas/inquiry';
+import { InquirySchema, type InquiryPayload } from '@/lib/schemas/inquiry';
 import { InquiryInternalEmail } from '@/emails/InquiryInternal';
 import { InquiryCustomerEmail } from '@/emails/InquiryCustomer';
 
@@ -808,7 +808,7 @@ export const server = {
   }),
 };
 
-type Input = typeof InquirySchema._output;
+type Input = InquiryPayload;   // 用 schema 文件已 export 的类型(`z.infer<typeof InquirySchema>`),避免依赖 Zod 内部 `_output` 字段
 type SendResult = { data: { id: string } | null; error: unknown };
 
 async function sendInternalEmail(

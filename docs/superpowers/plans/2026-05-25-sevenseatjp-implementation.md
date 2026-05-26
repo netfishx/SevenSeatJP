@@ -86,7 +86,7 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
 
 ### Task 1: 项目骨架与工具链
 
-**Goal:** Astro 6 server runtime + cloudflare adapter 骨架可运行;`astro dev` 直接跑 workerd;`astro build` 产出 `dist/_worker.js` + 静态资源;middleware 注入响应头;wrangler.jsonc 就绪;env 样例齐全。
+**Goal:** Astro 6 server runtime + cloudflare adapter 骨架可运行;`astro dev` 直接跑 workerd;`astro build` 产出 `dist/_worker.js` + 静态资源;**双层响应头**(`public/_headers` 静态层 + `src/middleware.ts` 动态层,内容一致);`wrangler.jsonc` + `public/.assetsignore` 就绪;env 样例齐全。
 
 **Files:**
 - Create: `package.json`(含 `@astrojs/cloudflare`)
@@ -384,7 +384,7 @@ git commit -m "feat: bootstrap Astro 6 server + cloudflare adapter + headers + m
 
 ### Task 2: Cloudflare Workers 部署配置 + 首次部署(仅 `*.workers.dev`)
 
-**Goal:** 仓库连到 **Cloudflare Workers**(Workers Builds GitHub 集成),生产 + Preview 部署链路打通,占位首页仅在 `<worker>.workers.dev` + PR preview Worker 可访问。**不绑定 custom domain** + **反索引保护**(middleware `X-Robots-Tag: noindex` + `robots.txt Disallow: /`)。custom domain 切换 + 解除反索引 = Task 14/16。
+**Goal:** 仓库连到 **Cloudflare Workers**(Workers Builds GitHub 集成),生产 + Preview 部署链路打通,占位首页仅在 `<worker>.workers.dev` + PR preview Worker 可访问。**不绑定 custom domain** + **双层反索引保护**(`public/_headers` 覆盖 prerendered 页 + `src/middleware.ts` 覆盖 Action/SSR,各自注入 `X-Robots-Tag: noindex`)+ `robots.txt Disallow: /`。custom domain 切换 + 解除反索引 = Task 14/16。
 
 **Files:**
 - Create: `public/robots.txt`(占位阶段 `Disallow: /`)
@@ -398,7 +398,7 @@ git commit -m "feat: bootstrap Astro 6 server + cloudflare adapter + headers + m
 - [ ] 推 main → 部署到 `<worker>.workers.dev` 默认子域,占位首页可访问
 - [ ] PR preview Worker URL 可访问
 - [ ] **`curl -I https://<worker>.workers.dev/` 响应头含 `X-Robots-Tag: noindex, nofollow`**(prerendered 首页来自 **`public/_headers`** 静态层;动态响应才来自 middleware)
-- [ ] **`curl -I -X POST https://<worker>.workers.dev/_actions/inquiry -H "content-type: application/json" -d '{}'`** 响应头也含 `X-Robots-Tag`(动态响应来自 **`src/middleware.ts`**)
+- [ ] **`curl -sS -D - -o /dev/null -X POST https://<worker>.workers.dev/_actions/inquiry -H "content-type: application/json" -d '{}'`** 响应头也含 `X-Robots-Tag`(动态响应来自 **`src/middleware.ts`**;**用 `-D - -o /dev/null` 而不是 `-I`**——`-I` 是 HEAD,与 `-d`/`-X POST` 冲突会被 curl 拒绝)
 - [ ] **`curl https://<worker>.workers.dev/robots.txt` 返回 `Disallow: /`**
 - [ ] 未绑定 custom domain(Settings → Domains & Routes 应为空,直到 Task 16)
 
