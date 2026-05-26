@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0a0b;
+  --color-surface: #14141a;
+  --color-border: #2a2a32;
+  --color-text: #ede9d8;
+  --color-text-muted: #9a9486;
+  --color-gold: #c9a96e;
+  --color-gold-dark: #9c7f4f;
+  --color-accent: #e8d9a0;
+  --font-display: "Noto Serif JP", "Source Han Serif SC", serif;
+  --font-body: "Noto Sans JP", "Source Han Sans SC", system-ui, sans-serif;
+  --radius-card: 12px;
+  --shadow-card:
+    0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 30px rgba(0, 0, 0, 0.4);
+}

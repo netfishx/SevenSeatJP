@@ -1,0 +1,8 @@
+# .dev.vars.example  —— wrangler runtime secrets / vars (NOT committed)
+# Copy to .dev.vars for local dev. CI E2E must write this explicitly
+# because workerd does NOT auto-fallback to process.env.
+# Use Resend delivery sandbox (delivered+*@resend.dev) until real domain is verified in Task 16.
+RESEND_API_KEY=re_dev_xxx
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+COMPANY_INBOX=delivered+internal@resend.dev
+INQUIRY_FROM_EMAIL=onboarding@resend.dev

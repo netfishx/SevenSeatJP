@@ -9,6 +9,7 @@ dist/
 .env.*.local
 .dev.vars
 .dev.vars.*
+!.dev.vars.example
 
 # Playwright 测试输出
 playwright-report/
