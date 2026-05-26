@@ -118,17 +118,21 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
 }
 ```
 
-- [ ] **Step 3: 创建 `biome.json`**
+- [ ] **Step 3: 创建 `biome.json`(Biome v2 格式)**
 
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
-  "files": { "ignore": ["dist", ".astro", ".wrangler", "node_modules"] },
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": ["**", "!!dist", "!!.astro", "!!.wrangler", "!!node_modules"]
+  },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2 },
   "linter": { "enabled": true, "rules": { "recommended": true } },
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "always" } }
 }
 ```
+
+> Biome v2 `files.ignore` 已废弃,改用 `files.includes` 配合 `!!` negation glob;`$schema` 用本地路径避免 schema 与 SDK 版本漂移。
 
 - [ ] **Step 4: 创建 `astro.config.mjs`**
 
@@ -264,7 +268,7 @@ git commit -m "feat: bootstrap Astro 6 + Tailwind v4 + Biome toolchain"
 
 **Steps:**
 
-- [ ] **Step 1: `public/_headers`**
+- [ ] **Step 1: `public/_headers`(含临时 `X-Robots-Tag: noindex` —— Task 14 SEO 完整化时移除)**
 
 ```
 /*
@@ -272,17 +276,26 @@ git commit -m "feat: bootstrap Astro 6 + Tailwind v4 + Biome toolchain"
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
+  X-Robots-Tag: noindex, nofollow
   Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com;
 ```
 
-- [ ] **Step 2: `public/robots.txt`**
+> `X-Robots-Tag: noindex` 是占位阶段双保险:即使 robots.txt 被忽略、即使 pages.dev 子域被外链发现,搜索引擎也不会索引。Task 14 替换为正式 robots.txt + 移除此行。
+
+- [ ] **Step 2: `public/robots.txt`(占位阶段全 Disallow,Task 14 切回正式)**
 
 ```
 User-agent: *
-Allow: /
-
-Sitemap: https://sevenseatjp.com/sitemap-index.xml
+Disallow: /
 ```
+
+> 占位阶段不放出 `Allow: /` 和 sitemap URL——避免占位首页 + 待完成结构被索引。Task 14 SEO 完整化时改为:
+> ```
+> User-agent: *
+> Allow: /
+>
+> Sitemap: https://sevenseatjp.com/sitemap-index.xml
+> ```
 
 - [ ] **Step 3: 占位 `public/favicon.svg`**
 
@@ -1185,9 +1198,9 @@ git commit -m "feat: implement inquiry Pages Function with Resend dual emails"
 
 ---
 
-### Task 14: SEO 完整化
+### Task 14: SEO 完整化 + 解除占位阶段防索引
 
-**Goal:** `@astrojs/sitemap` 自动生成 `sitemap-index.xml`;首页注入 LocalBusiness JSON-LD;OG 完整;每页 `<head>` 都从 BaseLayout 输出 `description` + `og:*`。
+**Goal:** `@astrojs/sitemap` 自动生成 `sitemap-index.xml`;首页注入 LocalBusiness JSON-LD;OG 完整;每页 `<head>` 都从 BaseLayout 输出 `description` + `og:*`。**同时把 Task 2 阶段的反索引保护切换为正式 SEO 配置**(robots.txt Allow / 移除 X-Robots-Tag: noindex)。
 
 **Files:**
 - Modify: `astro.config.mjs`(加 `@astrojs/sitemap` integration,配 i18n 字段)
@@ -1195,11 +1208,16 @@ git commit -m "feat: implement inquiry Pages Function with Resend dual emails"
 - Create: `src/components/seo/LocalBusinessJsonLd.astro`(JSON-LD)
 - Modify: `src/components/pages/HomePage.astro`(注入 JSON-LD)
 - Create: `public/og-default.png`(占位 1200×630)
+- **Modify: `public/robots.txt`(从 `Disallow: /` 改为 `Allow: /` + Sitemap 行)**
+- **Modify: `public/_headers`(删除 `X-Robots-Tag: noindex, nofollow` 行)**
 
 **Acceptance Criteria:**
 - [ ] `dist/sitemap-index.xml` 存在,包含 `/zh/` 路由
 - [ ] `dist/index.html` 含 `application/ld+json` 含 `"@type": "LocalBusiness"`
 - [ ] 所有页面 `<head>` 含 `og:title` `og:description` `og:image` `og:locale`(ja → `ja_JP`,zh → `zh_CN`)+ `twitter:card`
+- [ ] **`dist/robots.txt`** = `User-agent: *\nAllow: /\n\nSitemap: https://sevenseatjp.com/sitemap-index.xml`
+- [ ] **`dist/_headers` 中无 `X-Robots-Tag: noindex` 行**:`! grep -q 'X-Robots-Tag' dist/_headers`
+- [ ] 部署后 `curl -I https://<prod>/` 响应头无 `X-Robots-Tag`
 
 **Verify:**
 
