@@ -9,7 +9,6 @@ export const onRequest = defineMiddleware(async (_ctx, next) => {
     'Permissions-Policy',
     'geolocation=(), microphone=(), camera=()',
   );
-  res.headers.set('X-Robots-Tag', 'noindex, nofollow');
   res.headers.set(
     'Content-Security-Policy',
     [

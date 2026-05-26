@@ -1,0 +1,36 @@
+---
+import type { Locale } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+
+const name = locale === 'zh' ? 'SevenSeatJP 七座出行' : 'SevenSeatJP';
+const description =
+  locale === 'zh'
+    ? '东京·京都·白马的高端 7 座包车服务，机场接送·私人包车·滑雪接送。'
+    : '東京・京都・白馬の高級ハイヤー手配、空港送迎・チャーター・スキー送迎。';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  name,
+  description,
+  url: 'https://sevenseatjp.com',
+  inLanguage: locale === 'zh' ? 'zh-CN' : 'ja-JP',
+  address: {
+    '@type': 'PostalAddress',
+    addressCountry: 'JP',
+    addressLocality: '東京都',
+  },
+  areaServed: [
+    { '@type': 'AdministrativeArea', name: '東京都' },
+    { '@type': 'AdministrativeArea', name: '京都府' },
+    { '@type': 'AdministrativeArea', name: '長野県' },
+  ],
+  priceRange: '¥18000-¥110000',
+  image: 'https://sevenseatjp.com/og-default.png',
+};
+---
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} is:inline></script>

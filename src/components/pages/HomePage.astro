@@ -2,6 +2,7 @@
 import Hero from '@/components/home/Hero.astro';
 import ServiceGrid from '@/components/home/ServiceGrid.astro';
 import TestimonialsList from '@/components/home/TestimonialsList.astro';
+import LocalBusinessJsonLd from '@/components/seo/LocalBusinessJsonLd.astro';
 import Button from '@/components/ui/Button.astro';
 import Container from '@/components/ui/Container.astro';
 import Section from '@/components/ui/Section.astro';
@@ -19,6 +20,7 @@ const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
   title={t(locale, 'home.title')}
   description={t(locale, 'home.subtitle')}
 >
+  <LocalBusinessJsonLd locale={locale} />
   <Hero locale={locale} />
   <ServiceGrid locale={locale} />
   <TestimonialsList locale={locale} />
