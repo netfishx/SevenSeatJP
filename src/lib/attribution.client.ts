@@ -2,6 +2,14 @@ const KEY_FIRST = 'sevenseat_attr_first';
 const KEY_LAST = 'sevenseat_attr_last';
 const MAX_AGE_DAYS = 30;
 
+// Hard caps mirror InquirySchema in src/lib/schemas/inquiry.ts so payloads
+// are always shape-valid. If a marketing campaign drops a 300-char utm_term
+// or the user lands on a URL with a huge query string, we still want a
+// successful submission — attribution is observational, not load-bearing.
+const MAX_FIELD = 200;
+const MAX_REFERRER = 2000;
+const MAX_LANDING = 500;
+
 type Attr = {
   source: string;
   medium: string;
@@ -12,6 +20,10 @@ type Attr = {
   landing: string;
   ts: number;
 };
+
+function clip(s: string, max: number): string {
+  return s.length > max ? s.slice(0, max) : s;
+}
 
 function safeGet(storage: Storage, key: string): string | null {
   try {
@@ -37,12 +49,42 @@ function safeRemove(storage: Storage, key: string): void {
   }
 }
 
-function safeParse(s: string): Attr | null {
+function isAttrShape(v: unknown): v is Attr {
+  if (!v || typeof v !== 'object') return false;
+  const o = v as Record<string, unknown>;
+  return (
+    typeof o.source === 'string' &&
+    typeof o.medium === 'string' &&
+    typeof o.campaign === 'string' &&
+    typeof o.content === 'string' &&
+    typeof o.term === 'string' &&
+    typeof o.referrer === 'string' &&
+    typeof o.landing === 'string' &&
+    typeof o.ts === 'number'
+  );
+}
+
+function clipAttr(a: Attr): Attr {
+  return {
+    source: clip(a.source, MAX_FIELD),
+    medium: clip(a.medium, MAX_FIELD),
+    campaign: clip(a.campaign, MAX_FIELD),
+    content: clip(a.content, MAX_FIELD),
+    term: clip(a.term, MAX_FIELD),
+    referrer: clip(a.referrer, MAX_REFERRER),
+    landing: clip(a.landing, MAX_LANDING),
+    ts: a.ts,
+  };
+}
+
+function safeParse(raw: string): Attr | null {
+  let v: unknown;
   try {
-    return JSON.parse(s);
+    v = JSON.parse(raw);
   } catch {
     return null;
   }
+  return isAttrShape(v) ? clipAttr(v) : null;
 }
 
 function readCurrent(): { attr: Attr; hasUtm: boolean } {
@@ -55,21 +97,19 @@ function readCurrent(): { attr: Attr; hasUtm: boolean } {
     'utm_term',
   ] as const;
   const hasUtm = utmKeys.some((k) => sp.has(k));
-  return {
-    hasUtm,
-    attr: {
-      source:
-        sp.get('utm_source') ??
-        (hasUtm ? '' : document.referrer ? 'referral' : 'direct'),
-      medium: sp.get('utm_medium') ?? '',
-      campaign: sp.get('utm_campaign') ?? '',
-      content: sp.get('utm_content') ?? '',
-      term: sp.get('utm_term') ?? '',
-      referrer: document.referrer,
-      landing: location.pathname + location.search,
-      ts: Date.now(),
-    },
+  const attr: Attr = {
+    source:
+      sp.get('utm_source') ??
+      (hasUtm ? '' : document.referrer ? 'referral' : 'direct'),
+    medium: sp.get('utm_medium') ?? '',
+    campaign: sp.get('utm_campaign') ?? '',
+    content: sp.get('utm_content') ?? '',
+    term: sp.get('utm_term') ?? '',
+    referrer: document.referrer,
+    landing: location.pathname + location.search,
+    ts: Date.now(),
   };
+  return { hasUtm, attr: clipAttr(attr) };
 }
 
 (function init() {
@@ -80,14 +120,12 @@ function readCurrent(): { attr: Attr; hasUtm: boolean } {
   if (hasUtm) {
     safeSet(localStorage, KEY_LAST, JSON.stringify(attr));
   } else {
+    // Best-effort expiry sweep. Bad-shape or unparseable rows are also dropped
+    // so readAttribution() never returns ones that would fail server schema.
     const raw = safeGet(localStorage, KEY_LAST);
     if (raw) {
-      try {
-        const last = JSON.parse(raw) as Attr;
-        if (Date.now() - last.ts > MAX_AGE_DAYS * 86400_000) {
-          safeRemove(localStorage, KEY_LAST);
-        }
-      } catch {
+      const parsed = safeParse(raw);
+      if (!parsed || Date.now() - parsed.ts > MAX_AGE_DAYS * 86400_000) {
         safeRemove(localStorage, KEY_LAST);
       }
     }

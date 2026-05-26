@@ -2,6 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-extended-cc:subagent-driven-development (recommended) or superpowers-extended-cc:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **⚠️ Path convention update (post-execution, 2026-05-26):**
+> `@astrojs/cloudflare` **v13** splits `dist/` into `dist/client/` (static, `_headers`, `.assetsignore`, prerendered HTML) and `dist/server/entry.mjs` (worker code). It does **not** emit a single `dist/_worker.js` like v12 did. Wherever this plan or the `.tasks.json` next to it references:
+> - `dist/_worker.js` → use `dist/server/entry.mjs`
+> - `dist/index.html`, `dist/_headers`, `dist/.assetsignore`, `dist/robots.txt`, `dist/sitemap-index.xml` → prefix with `dist/client/`
+> - `wrangler.jsonc` `main` → `@astrojs/cloudflare/entrypoints/server` (not `./dist/_worker.js`)
+> - `wrangler.jsonc` `assets.directory` → `./dist/client` (not `./dist`)
+>
+> The two automation-bearing `verifyCommand` entries in `.tasks.json` (Task 1, Task 14) have been updated in place. Free-text path mentions elsewhere in this doc are descriptive and have been left as historical record — translate at read time using the rules above.
+
 **Goal:** 按 spec `docs/superpowers/specs/2026-05-25-sevenseatjp-design.md` 实现日本 7 座出行预约网站(中日双语、9 + 1 + 3 页、**Cloudflare Workers + Static Assets** 部署、询价表单 → **Astro Action** → Resend 双邮件 + Turnstile + UTM 归因)。
 
 **Architecture (static-first / dynamic-ready):** Astro 6 server runtime + `@astrojs/cloudflare` adapter,部署到 **Cloudflare Workers + Static Assets**。营销页 `export const prerender = true` build 时输出 HTML(加载与纯静态等价);询价走 **Astro Actions**(`src/actions/index.ts`,类型从 schema 推到客户端),为 v2 加 D1/admin/支付/鉴权留好路径——不需要重拆部署模型。内容用 Content Collections + Zod 4 schema,翻译 inline 双语 YAML。Tailwind v4 CSS-first(@theme tokens)。i18n 默认 ja + `/zh/` 子路径,每页只写一份组件、镜像页两行引用。E2E 用 Playwright 跑 `astro dev`(adapter 接管 workerd)。

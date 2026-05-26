@@ -1,12 +1,16 @@
 ---
 interface Props {
+  /** Padding preset. Use `none` for media-flush cards (e.g. VehicleCard image). */
+  padding?: 'default' | 'none';
   class?: string;
 }
-const { class: extra = '' } = Astro.props;
+const { padding = 'default', class: extra = '' } = Astro.props;
+const padCls = padding === 'none' ? '' : 'p-6';
 ---
 <div
   class:list={[
-    'bg-surface border border-border rounded-[var(--radius-card)] p-6 shadow-[var(--shadow-card)]',
+    'bg-surface border border-border rounded-[var(--radius-card)] shadow-[var(--shadow-card)]',
+    padCls,
     extra,
   ]}
 >

@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-const Attr = z
+// Attribution fields are observational. Each one is preprocessed to a safe
+// fallback before strict validation so a malformed first/last/current touch
+// (stale localStorage from an old script, a campaign with overlong UTM,
+// a freak referer) never aborts a valid inquiry. Bad data degrades to null
+// (firstTouch / lastTouch) or to a placeholder direct stamp (current).
+const AttrShape = z
   .strictObject({
     source: z.string().max(200),
     medium: z.string().max(200),
@@ -12,6 +17,27 @@ const Attr = z
     ts: z.number().int().nonnegative(),
   })
   .nullable();
+
+const Attr = z.preprocess((raw) => {
+  if (raw == null) return null;
+  const parsed = AttrShape.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}, AttrShape);
+
+const CurrentAttr = z.preprocess((raw) => {
+  const parsed = AttrShape.unwrap().safeParse(raw);
+  if (parsed.success) return parsed.data;
+  return {
+    source: 'unknown',
+    medium: '',
+    campaign: '',
+    content: '',
+    term: '',
+    referrer: '',
+    landing: '',
+    ts: Date.now(),
+  };
+}, AttrShape.unwrap());
 
 export const InquirySchema = z.strictObject({
   serviceType: z.enum(['airport', 'charter', 'ski', 'rental']),
@@ -32,7 +58,7 @@ export const InquirySchema = z.strictObject({
   utm: z.strictObject({
     firstTouch: Attr,
     lastTouch: Attr,
-    current: Attr.unwrap(),
+    current: CurrentAttr,
   }),
   turnstileToken: z.string().min(1),
 });

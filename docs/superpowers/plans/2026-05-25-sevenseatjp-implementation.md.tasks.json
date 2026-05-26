@@ -25,7 +25,7 @@
           ".dev.vars.example",
           "bun.lock"
         ],
-        "verifyCommand": "bun install && bun run build && bun run lint && bun run typecheck && test -f dist/_worker.js && grep -q '_worker.js' dist/.assetsignore && grep -q 'X-Robots-Tag' dist/_headers",
+        "verifyCommand": "bun install && bun run build && bun run lint && bun run typecheck && test -f dist/server/entry.mjs && grep -q '_worker.js' dist/client/.assetsignore && grep -q 'X-Robots-Tag' dist/client/_headers",
         "notes": "output: 'server' + adapter: cloudflare(); wrangler.jsonc with nodejs_compat (NO not_found_handling — MPA uses default 'asset-then-Worker' fallback); dual-layer headers (public/_headers static + src/middleware.ts dynamic) for Workers Static Assets bypass; public/.assetsignore excludes _worker.js; index.astro has 'export const prerender = true'. @astrojs/cloudflare ^13.5.4."
       }
     },
@@ -160,7 +160,7 @@
       "blockedBy": ["7", "8", "9", "10", "11", "13"],
       "metadata": {
         "files": ["astro.config.mjs", "src/layouts/BaseLayout.astro", "src/components/seo/LocalBusinessJsonLd.astro", "src/components/pages/HomePage.astro", "public/og-default.png", "public/robots.txt", "public/_headers", "src/middleware.ts"],
-        "verifyCommand": "bun run build && test -f dist/sitemap-index.xml && grep -q '/zh/' dist/sitemap-index.xml && ! grep -q 'X-Robots-Tag' dist/_headers && ! grep -q 'X-Robots-Tag' src/middleware.ts && grep -q 'Allow: /' dist/robots.txt",
+        "verifyCommand": "bun run build && test -f dist/client/sitemap-index.xml && grep -rq '/zh/' dist/client/sitemap-*.xml && ! grep -q 'X-Robots-Tag' dist/client/_headers && ! grep -q 'X-Robots-Tag' src/middleware.ts && grep -q 'Allow: /' dist/client/robots.txt",
         "notes": "Flip robots.txt Disallow→Allow + remove X-Robots-Tag from BOTH public/_headers AND src/middleware.ts (dual-layer cleanup)."
       }
     },
