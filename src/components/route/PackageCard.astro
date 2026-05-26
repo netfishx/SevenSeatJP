@@ -1,0 +1,61 @@
+---
+import Card from '@/components/ui/Card.astro';
+import { type Locale, t } from '@/i18n/t';
+import { getEntries } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  entry: CollectionEntry<'packages'>;
+  locale: Locale;
+}
+const { entry, locale } = Astro.props;
+const yen = new Intl.NumberFormat('ja-JP');
+
+const allFareVehicles = entry.data.durations.flatMap((d) => d.fares.map((f) => f.vehicle));
+const uniqueVehicleRefs = Array.from(new Map(allFareVehicles.map((v) => [v.id, v])).values());
+const vehicles = await getEntries(uniqueVehicleRefs);
+const vehicleMap = new Map(vehicles.map((v) => [v.id, v.data.name[locale]]));
+---
+<Card class="flex flex-col gap-5">
+  <h3 class="text-2xl font-display text-gold">{entry.data.title[locale]}</h3>
+
+  <div class="flex flex-col gap-4">
+    <h4 class="text-xs uppercase tracking-wider text-text-muted">{t(locale, 'package.duration')}</h4>
+    <ul class="flex flex-col gap-3">
+      {
+        entry.data.durations.map((d) => (
+          <li class="flex flex-col gap-2 border-l-2 border-border ps-4">
+            <span class="font-display text-text">{d.label[locale]}</span>
+            <ul class="flex flex-col gap-1 text-sm">
+              {d.fares.map((f) => (
+                <li class="flex justify-between gap-3 text-text-muted">
+                  <span>{vehicleMap.get(f.vehicle.id) ?? f.vehicle.id}</span>
+                  <span class="text-gold font-display whitespace-nowrap">¥{yen.format(f.jpy)}</span>
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <h4 class="text-xs uppercase tracking-wider text-text-muted">
+      {t(locale, 'package.inclusions')}
+    </h4>
+    <ul class="flex flex-col gap-1 text-sm text-text-muted">
+      {entry.data.inclusions.map((inc) => <li>· {inc[locale]}</li>)}
+    </ul>
+  </div>
+
+  {
+    entry.data.excludeRegions && (
+      <p class="text-xs text-text-muted">
+        <strong class="text-text">{t(locale, 'package.excludes')}:</strong>{' '}
+        {entry.data.excludeRegions[locale]}
+      </p>
+    )
+  }
+  {entry.data.notes && <p class="text-xs text-text-muted">{entry.data.notes[locale]}</p>}
+</Card>

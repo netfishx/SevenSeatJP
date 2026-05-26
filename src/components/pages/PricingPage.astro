@@ -1,0 +1,85 @@
+---
+import PackageCard from '@/components/route/PackageCard.astro';
+import PriceTable from '@/components/route/PriceTable.astro';
+import Button from '@/components/ui/Button.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { type Locale, t } from '@/i18n/t';
+import { getCollection } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
+
+const [allRoutes, allPackages] = await Promise.all([
+  getCollection('routes'),
+  getCollection('packages'),
+]);
+const airportRoutes = allRoutes
+  .filter((r) => r.data.category === 'airport')
+  .sort((a, b) => a.data.order - b.data.order);
+const skiRoutes = allRoutes
+  .filter((r) => r.data.category === 'ski')
+  .sort((a, b) => a.data.order - b.data.order);
+const charterPkgs = allPackages
+  .filter((p) => p.data.type === 'charter')
+  .sort((a, b) => a.data.order - b.data.order);
+const rentalPkgs = allPackages
+  .filter((p) => p.data.type === 'rental')
+  .sort((a, b) => a.data.order - b.data.order);
+---
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'pricing.title')}
+  description={t(locale, 'pricing.lead')}
+>
+  <Section>
+    <Container class="flex flex-col gap-12">
+      <header class="flex flex-col gap-4">
+        <h1 class="text-4xl text-gold font-display">{t(locale, 'pricing.title')}</h1>
+        <p class="text-text-muted text-lg leading-relaxed max-w-3xl">
+          {t(locale, 'pricing.lead')}
+        </p>
+      </header>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="text-2xl text-gold font-display border-b border-border pb-2">
+          {t(locale, 'pricing.section.airport')}
+        </h2>
+        <PriceTable routes={airportRoutes} locale={locale} />
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="text-2xl text-gold font-display border-b border-border pb-2">
+          {t(locale, 'pricing.section.ski')}
+        </h2>
+        <PriceTable routes={skiRoutes} locale={locale} />
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="text-2xl text-gold font-display border-b border-border pb-2">
+          {t(locale, 'pricing.section.charter')}
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {charterPkgs.map((p) => <PackageCard entry={p} locale={locale} />)}
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="text-2xl text-gold font-display border-b border-border pb-2">
+          {t(locale, 'pricing.section.rental')}
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {rentalPkgs.map((p) => <PackageCard entry={p} locale={locale} />)}
+        </div>
+      </section>
+
+      <div class="flex justify-center pt-4">
+        <Button href={inquiryHref} variant="primary">{t(locale, 'cta.inquire')}</Button>
+      </div>
+    </Container>
+  </Section>
+</BaseLayout>

@@ -1,0 +1,40 @@
+---
+import VehicleCard from '@/components/route/VehicleCard.astro';
+import Button from '@/components/ui/Button.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { type Locale, t } from '@/i18n/t';
+import { getCollection } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
+
+const all = await getCollection('vehicles');
+const sorted = all.slice().sort((a, b) => a.data.order - b.data.order);
+---
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'vehicles.title')}
+  description={t(locale, 'vehicles.lead')}
+>
+  <Section>
+    <Container class="flex flex-col gap-8">
+      <header class="flex flex-col gap-4">
+        <h1 class="text-4xl text-gold font-display">{t(locale, 'vehicles.title')}</h1>
+        <p class="text-text-muted text-lg leading-relaxed max-w-3xl">
+          {t(locale, 'vehicles.lead')}
+        </p>
+      </header>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {sorted.map((v) => <VehicleCard entry={v} locale={locale} />)}
+      </div>
+      <div class="flex justify-center pt-4">
+        <Button href={inquiryHref} variant="primary">{t(locale, 'cta.inquire')}</Button>
+      </div>
+    </Container>
+  </Section>
+</BaseLayout>
