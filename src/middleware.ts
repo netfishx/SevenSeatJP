@@ -13,7 +13,7 @@ export const onRequest = defineMiddleware(async (_ctx, next) => {
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' https://challenges.cloudflare.com",
+      "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
       "img-src 'self' data: https:",
       "style-src 'self' 'unsafe-inline'",
       "connect-src 'self' https://challenges.cloudflare.com",

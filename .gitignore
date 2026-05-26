@@ -24,3 +24,5 @@ test-results/
 .vscode/
 .idea/
 .cursor/
+test-results/
+playwright-report/

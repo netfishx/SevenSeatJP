@@ -8,6 +8,8 @@
       "!!.wrangler",
       "!!node_modules",
       "!!docs",
+      "!!test-results",
+      "!!playwright-report",
       "!**/*.astro"
     ]
   },
