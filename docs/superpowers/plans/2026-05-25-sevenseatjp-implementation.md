@@ -8,7 +8,7 @@
 
 **Tech Stack:** Astro 6 · Tailwind v4 · Cloudflare Pages + Functions · Resend · @react-email · Cloudflare Turnstile · Bun · Biome · Playwright · Zod 4
 
-**版本策略:所有依赖装 `@latest`**——执行 Task 1 时用 `bun add <pkg>@latest`,由 bun 解析当前最新版本写入 `package.json`。不在 plan 里 hardcode 具体 ^x.y.z(避免迅速过期)。
+**版本策略:plan 编写当日(2026-05-26)的具体最新版本**——package.json 用 caret(`^x.y.z`)允许 minor 升级,lockfile 锁定确切版本。执行者若发现 plan 已过时(npm view 显示更高 major),先确认是否安全升级再改 plan。
 
 ---
 
@@ -61,7 +61,7 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
 
 **Steps:**
 
-- [ ] **Step 1: 创建 `package.json` 骨架(只含 scripts,依赖留给 Step 9 用 `bun add @latest` 安装)**
+- [ ] **Step 1: 创建 `package.json`(版本号取自 2026-05-26 npm 当前最新)**
 
 ```json
 {
@@ -77,11 +77,32 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
     "format":    "biome check --write .",
     "typecheck": "astro check",
     "test:e2e":  "playwright test"
+  },
+  "dependencies": {
+    "astro": "^6.3.7",
+    "@astrojs/sitemap": "^3.7.2",
+    "zod": "^4.4.3",
+    "resend": "^6.12.4",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.8",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@cloudflare/workers-types": "^4.20260525.1",
+    "@playwright/test": "^1.60.0",
+    "@tailwindcss/vite": "^4.3.0",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.94.0"
   }
 }
 ```
 
-Step 9 安装时 bun 会写入当前最新版本号。**不在 plan 里固定版本号**(任何 hardcode 都会迅速过期)。
+> **若执行者发现 npm 上已经有更新版本**:用 `bun add <pkg>@latest` 升级单个依赖,确认 build 通过后**回填具体版本号到 plan 这段**,而不是留下 `^latest` 字面。
+
+> **注意几个 spec 时期就需注意的 major 跨越**:Biome 已是 v2(plan 之前提的 1.9.x 已过时)、wrangler v4、TypeScript 6、Resend SDK v6。`onRequestPost` API、Tailwind v4 `@theme`、Astro 6 静态 + Pages Functions 路径在这些版本下都已稳定。
 
 - [ ] **Step 2: 创建 `tsconfig.json`**
 
@@ -194,37 +215,21 @@ COMPANY_INBOX=delivered+internal@resend.dev
 INQUIRY_FROM_EMAIL=onboarding@resend.dev
 ```
 
-- [ ] **Step 9: 安装最新依赖并跑 verify**
+- [ ] **Step 9: 安装依赖并跑 verify**
 
 ```bash
-# 一次性装最新主依赖
-bun add \
-  astro@latest \
-  @astrojs/sitemap@latest \
-  zod@latest \
-  resend@latest \
-  @react-email/components@latest \
-  @react-email/render@latest \
-  react@latest \
-  react-dom@latest
-
-# devDependencies
-bun add -d \
-  @biomejs/biome@latest \
-  @cloudflare/workers-types@latest \
-  @playwright/test@latest \
-  @tailwindcss/vite@latest \
-  tailwindcss@latest \
-  typescript@latest \
-  wrangler@latest
-
-# 验证
+bun install            # 按 package.json 里固定的 caret 版本解析,bun.lockb 锁定确切版本
 bun run build
 bun run lint
 bun run typecheck
 ```
 
-期望:`dist/index.html` 生成,grep "SevenSeatJP" 命中;`package.json` 写入的版本号由 bun 解析当前最新。**安装后子代理应跑一次 `bun run build`,若 Astro/Tailwind 等主版本 breaking 导致 build fail,在本 task 里解决**(因为本 task 就是骨架,后续 task 都基于这个 commit)。
+期望:`dist/index.html` 生成,grep "SevenSeatJP" 命中;`bun.lockb` 已生成并 commit。**主版本号已锁定在 package.json**(`^6.3.7` 等),`bun.lockb` 进一步锁定 patch + transitive deps。
+
+**若 build fail**(如 Astro 6.x 接口与 plan 假设不符):
+1. 跑 `bun update --latest <pkg>` 试最新 minor/patch
+2. 看 Astro 官方迁移指南
+3. 修复后**回填新版本号到 package.json + 本 plan Step 1 的 JSON 块**(保持 plan 与代码一致)
 
 - [ ] **Step 10: 提交**
 
