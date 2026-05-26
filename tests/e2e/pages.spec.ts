@@ -45,3 +45,28 @@ for (const page of PAGES) {
     expect(overflow).toBeLessThanOrEqual(1);
   });
 }
+
+// Regression guard: mobile menu button must stay within viewport bounds for
+// every header that uses the mobile breakpoint. Previously, a longer zh
+// site.name + whitespace-nowrap pushed it past the right edge so users on
+// /zh/ couldn't open the nav. Runs only at <lg breakpoint where MobileMenu
+// is the visible nav surface.
+test('mobile menu button fits in viewport on /zh/', async ({
+  page: pw,
+  viewport,
+}) => {
+  if (!viewport || viewport.width >= 1024) {
+    test.skip();
+    return;
+  }
+  await pw.goto('/zh/');
+  const menu = await pw.evaluate(() => {
+    const r = document
+      .querySelector('[data-mobile-menu] summary')
+      ?.getBoundingClientRect();
+    return r ? { left: r.left, right: r.right, width: r.width } : null;
+  });
+  if (!menu) throw new Error('mobile menu summary not found in DOM');
+  expect(menu.right).toBeLessThanOrEqual(viewport.width);
+  expect(menu.left).toBeGreaterThanOrEqual(0);
+});

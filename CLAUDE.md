@@ -21,7 +21,7 @@ pages + one Astro Action endpoint for the inquiry form.
 | `bun run lint` | `biome check .` |
 | `bun run format` | `biome check --write .` |
 | `bun run typecheck` | `astro check` |
-| `bun run test:e2e` | Playwright; runs both `chromium-desktop` + `chromium-mobile` (iPhone 16 Pro) projects |
+| `bun run test:e2e` | Playwright; runs both `chromium-desktop` + `chromium-mobile` (iPhone 15 Pro emulation on Chromium — `iPhone 16 Pro` isn't in Playwright's device list yet, and IMPORTANT: spreading an undefined device key silently makes the project fall back to a desktop layout, so the device name must be a real entry in `devices`) projects |
 | `bun run test:e2e -g <pattern>` | Single-test by grep |
 | `bun run test:e2e --project=chromium-desktop` | Single project |
 
