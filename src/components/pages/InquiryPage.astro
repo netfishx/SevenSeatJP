@@ -1,0 +1,48 @@
+---
+import InquiryForm from '@/components/inquiry/InquiryForm.astro';
+import Container from '@/components/ui/Container.astro';
+import Section from '@/components/ui/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { type Locale, t } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const privacyHref = locale === 'zh' ? '/zh/legal/privacy' : '/legal/privacy';
+---
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'inquiry.title')}
+  description={t(locale, 'inquiry.lead')}
+>
+  <Section>
+    <Container class="flex flex-col gap-8 max-w-3xl">
+      <header class="flex flex-col gap-3">
+        <h1 class="text-3xl text-gold font-display">{t(locale, 'inquiry.title')}</h1>
+        <p class="text-text-muted leading-relaxed">{t(locale, 'inquiry.lead')}</p>
+      </header>
+
+      <InquiryForm locale={locale} />
+
+      <p class="text-xs text-text-muted">
+        {t(locale, 'inquiry.privacy.note')}
+        <a href={privacyHref} class="text-gold underline underline-offset-4">
+          {t(locale, 'inquiry.privacy.link')}
+        </a>
+        {t(locale, 'inquiry.privacy.note.after')}
+      </p>
+
+      <noscript>
+        <div class="bg-surface border border-border rounded-[var(--radius-card)] p-6 flex flex-col gap-3">
+          <h2 class="font-display text-gold">{t(locale, 'inquiry.noscript.heading')}</h2>
+          <ul class="flex flex-col gap-1 text-sm text-text">
+            <li>{t(locale, 'inquiry.fallback.line')}</li>
+            <li>{t(locale, 'inquiry.fallback.wechat')}</li>
+            <li>{t(locale, 'inquiry.fallback.email')}</li>
+          </ul>
+        </div>
+      </noscript>
+    </Container>
+  </Section>
+</BaseLayout>
