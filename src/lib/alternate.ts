@@ -1,9 +1,14 @@
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import type { Locale } from '@/i18n/t';
 
+function getPathWithoutLocale(currentUrl: URL): string {
+  return currentUrl.pathname.replace(/^\/zh(\/|$)/, '/').replace(/^\/+/, '');
+}
+
 export function getCanonicalUrl(currentUrl: URL, targetLocale: Locale): string {
-  const path = currentUrl.pathname.replace(/^\/zh(\/|$)/, '/');
-  if (targetLocale === 'zh') return path === '/' ? '/zh/' : `/zh${path}`;
-  return path;
+  const pathWithoutLocale = getPathWithoutLocale(currentUrl);
+  const url = getRelativeLocaleUrl(targetLocale, pathWithoutLocale);
+  return pathWithoutLocale === '' ? url : url.replace(/\/$/, '');
 }
 
 export function getLanguageSwitchUrl(
