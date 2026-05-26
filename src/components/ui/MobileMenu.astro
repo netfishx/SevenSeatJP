@@ -1,0 +1,79 @@
+---
+import { type I18nKey, type Locale, t } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const prefix = locale === 'zh' ? '/zh' : '';
+
+const links: ReadonlyArray<{ slug: string; key: I18nKey }> = [
+  { slug: '', key: 'nav.home' },
+  { slug: '/airport-transfer', key: 'nav.airport' },
+  { slug: '/charter', key: 'nav.charter' },
+  { slug: '/ski-hakuba', key: 'nav.ski' },
+  { slug: '/rental', key: 'nav.rental' },
+  { slug: '/vehicles', key: 'nav.vehicles' },
+  { slug: '/pricing', key: 'nav.pricing' },
+  { slug: '/about', key: 'nav.about' },
+  { slug: '/faq', key: 'nav.faq' },
+  { slug: '/inquiry', key: 'nav.inquiry' },
+];
+
+const labelOpen = locale === 'zh' ? '打开菜单' : 'メニューを開く';
+const labelClose = locale === 'zh' ? '关闭菜单' : 'メニューを閉じる';
+---
+<details class="lg:hidden relative" data-mobile-menu>
+  <summary
+    class="list-none inline-flex items-center justify-center min-h-11 min-w-11 cursor-pointer text-text hover:text-gold focus-visible:text-gold"
+    aria-label={labelOpen}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 6h18M3 12h18M3 18h18" data-icon-open />
+      <path d="M6 6l12 12M6 18L18 6" data-icon-close class="hidden" />
+    </svg>
+  </summary>
+  <div
+    class="absolute end-0 top-full mt-2 z-40 bg-surface border border-border rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-2 min-w-56 flex flex-col"
+    role="menu"
+  >
+    {
+      links.map((l) => (
+        <a
+          href={`${prefix}${l.slug || '/'}`}
+          role="menuitem"
+          class="inline-flex items-center min-h-11 px-3 text-sm text-text hover:text-gold focus-visible:text-gold rounded"
+        >
+          {t(locale, l.key)}
+        </a>
+      ))
+    }
+  </div>
+</details>
+
+<script>
+  document.querySelectorAll<HTMLDetailsElement>('[data-mobile-menu]').forEach((d) => {
+    const close = () => {
+      d.open = false;
+    };
+    document.addEventListener('click', (e) => {
+      if (!d.contains(e.target as Node)) close();
+    });
+    d.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') close();
+    });
+    // close after navigating
+    d.querySelectorAll('a').forEach((a) => a.addEventListener('click', close));
+  });
+</script>

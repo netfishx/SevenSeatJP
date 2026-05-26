@@ -1,5 +1,7 @@
 ---
 import LangSwitch from '@/components/ui/LangSwitch.astro';
+import MobileMenu from '@/components/ui/MobileMenu.astro';
+import SiteNav from '@/components/ui/SiteNav.astro';
 import { type Locale, t } from '@/i18n/t';
 import { getCanonicalUrl } from '@/lib/alternate';
 import '@/styles/globals.css';
@@ -20,6 +22,8 @@ const ogImageUrl = new URL(ogImage, Astro.site);
 const ogLocale = locale === 'zh' ? 'zh_CN' : 'ja_JP';
 const ogLocaleAlt = locale === 'zh' ? 'ja_JP' : 'zh_CN';
 const desc = description ?? t(locale, 'site.name');
+const homeHref = locale === 'zh' ? '/zh/' : '/';
+const legalPrefix = locale === 'zh' ? '/zh' : '';
 ---
 <!doctype html>
 <html lang={locale === 'ja' ? 'ja' : 'zh-CN'}>
@@ -52,15 +56,46 @@ const desc = description ?? t(locale, 'site.name');
       import '@/lib/attribution.client';
     </script>
   </head>
-  <body class="min-h-screen bg-bg text-text font-body">
-    <header class="flex items-center justify-between p-6">
-      <a
-        href={locale === 'zh' ? '/zh/' : '/'}
-        class="font-display text-xl text-gold"
-      >{t(locale, 'site.name')}</a>
-      <LangSwitch />
+  <body class="min-h-screen bg-bg text-text font-body flex flex-col">
+    <header class="sticky top-0 z-30 backdrop-blur-md bg-bg/85 border-b border-border flex justify-center">
+      <div class="w-full max-w-7xl flex items-center gap-4 px-6 py-4">
+        <a
+          href={homeHref}
+          class="font-display text-xl text-gold whitespace-nowrap"
+        >{t(locale, 'site.name')}</a>
+        <div class="flex-1 flex justify-center">
+          <SiteNav locale={locale} variant="header" />
+        </div>
+        <div class="flex items-center gap-2">
+          <LangSwitch />
+          <MobileMenu locale={locale} />
+        </div>
+      </div>
     </header>
-    <main><slot /></main>
-    <footer class="p-6 text-center text-text-muted text-sm">© SevenSeatJP</footer>
+
+    <main class="flex-1"><slot /></main>
+
+    <footer class="border-t border-border flex justify-center">
+      <div class="w-full max-w-7xl px-6 py-10 flex flex-col gap-8">
+        <SiteNav locale={locale} variant="footer" />
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-border text-xs text-text-muted">
+          <p>© {new Date().getFullYear()} SevenSeatJP</p>
+          <div class="flex flex-wrap gap-x-4 gap-y-2">
+            <a
+              href={`${legalPrefix}/legal/tokushoho`}
+              class="inline-flex items-center min-h-11 hover:text-gold"
+            >{t(locale, 'about.section.policy.tokushoho')}</a>
+            <a
+              href={`${legalPrefix}/legal/privacy`}
+              class="inline-flex items-center min-h-11 hover:text-gold"
+            >{t(locale, 'about.section.policy.privacy')}</a>
+            <a
+              href={`${legalPrefix}/legal/cancel-policy`}
+              class="inline-flex items-center min-h-11 hover:text-gold"
+            >{t(locale, 'about.section.policy.cancel')}</a>
+          </div>
+        </div>
+      </div>
+    </footer>
   </body>
 </html>
