@@ -284,14 +284,16 @@ bun run typecheck
 2. 看 Astro 官方迁移指南
 3. 修复后**回填新版本号到 package.json + 本 plan Step 1 的 JSON 块**(保持 plan 与代码一致)
 
-- [ ] **Step 10: 提交**
+- [ ] **Step 10: 提交(必须含 `bun.lockb`,否则 lockfile 承诺落空)**
 
 ```bash
-git add package.json tsconfig.json biome.json astro.config.mjs \
+git add package.json bun.lockb tsconfig.json biome.json astro.config.mjs \
   src/styles/globals.css src/pages/index.astro \
   .gitignore .env.local.example .dev.vars.example
-git commit -m "feat: bootstrap Astro 6 + Tailwind v4 + Biome toolchain"
+git commit -m "feat: bootstrap Astro 6 + Tailwind v4 + Biome v2 toolchain"
 ```
+
+> `bun.lockb` 是二进制锁文件,确保跨机器/CI 装出来的 transitive deps 与本机一致。CI 跑 `bun install --frozen-lockfile` 时会校验。
 
 ---
 

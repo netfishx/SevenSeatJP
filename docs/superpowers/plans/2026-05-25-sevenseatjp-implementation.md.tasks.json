@@ -1,25 +1,39 @@
 {
   "planPath": "docs/superpowers/plans/2026-05-25-sevenseatjp-implementation.md",
   "specPath": "docs/superpowers/specs/2026-05-25-sevenseatjp-design.md",
-  "lastUpdated": "2026-05-25T00:00:00Z",
+  "lastUpdated": "2026-05-26T00:00:00Z",
+  "notes": "Plan revised through 6 review rounds; spec finalized. Mobile responsive requirements added as global cross-cutting concerns. See plan §全局横切要求.",
   "tasks": [
     {
       "id": "1",
       "subject": "Task 1: 项目骨架与工具链",
       "status": "pending",
       "metadata": {
-        "files": ["package.json", "tsconfig.json", "biome.json", "astro.config.mjs", "src/styles/globals.css", "src/pages/index.astro", ".gitignore", ".env.local.example", ".dev.vars.example"],
-        "verifyCommand": "bun install && bun run build && bun run lint && bun run typecheck"
+        "files": [
+          "package.json",
+          "tsconfig.json",
+          "biome.json",
+          "astro.config.mjs",
+          "src/styles/globals.css",
+          "src/pages/index.astro",
+          ".gitignore",
+          ".env.local.example",
+          ".dev.vars.example",
+          "bun.lockb"
+        ],
+        "verifyCommand": "bun install && bun run build && bun run lint && bun run typecheck",
+        "notes": "Pin concrete versions (no @latest in plan text). Biome v2 schema/format. bun.lockb must be committed."
       }
     },
     {
       "id": "2",
-      "subject": "Task 2: CF Pages 部署配置 + 首次部署",
+      "subject": "Task 2: CF Pages 部署配置 + 首次部署(仅 *.pages.dev)",
       "status": "pending",
       "blockedBy": ["1"],
       "metadata": {
         "files": ["public/_headers", "public/robots.txt", "public/favicon.svg", "src/pages/index.astro"],
-        "verifyCommand": "curl -sI https://<prod-url>/ && curl -sI https://<prod-url>/robots.txt"
+        "verifyCommand": "curl -sI https://<project>.pages.dev/ | grep -i x-robots-tag && curl -s https://<project>.pages.dev/robots.txt | grep Disallow",
+        "notes": "No custom domain; X-Robots-Tag noindex + robots.txt Disallow until Task 14. Custom domain switch in Task 16."
       }
     },
     {
@@ -39,7 +53,8 @@
       "blockedBy": ["3"],
       "metadata": {
         "files": ["src/content.config.ts", "src/content/routes/", "src/content/packages/", "src/content/vehicles/", "src/content/faq/", "src/content/testimonials/", "src/assets/vehicles/"],
-        "verifyCommand": "bun run build"
+        "verifyCommand": "bun run build",
+        "notes": "5 routes: narita-tokyo, haneda-tokyo, kix-osaka, kix-kyoto, tokyo-hakuba (no nrt-tokyo-hiace; multi-vehicle goes in fares[])."
       }
     },
     {
@@ -58,8 +73,9 @@
       "status": "pending",
       "blockedBy": ["5"],
       "metadata": {
-        "files": ["src/components/ui/Section.astro", "src/components/ui/Container.astro", "src/components/ui/Card.astro", "src/components/ui/Button.astro"],
-        "verifyCommand": "bun run build && bun run typecheck"
+        "files": ["src/components/ui/Section.astro", "src/components/ui/Container.astro", "src/components/ui/Card.astro", "src/components/ui/Button.astro", "src/components/ui/LangSwitch.astro"],
+        "verifyCommand": "bun run build && bun run typecheck",
+        "notes": "LangSwitch (Task 5) requires min-h-11 + min-w-11 + flex-center wrapper; verify in this task."
       }
     },
     {
@@ -69,7 +85,7 @@
       "blockedBy": ["6"],
       "metadata": {
         "files": ["src/components/pages/HomePage.astro", "src/components/home/Hero.astro", "src/components/home/ServiceGrid.astro", "src/components/home/TestimonialsList.astro", "src/pages/index.astro", "src/pages/zh/index.astro"],
-        "verifyCommand": "bun run build"
+        "verifyCommand": "bun run build && [ $(grep -c 'data-service-card' dist/index.html) -eq 4 ] && [ $(grep -c 'data-testimonial' dist/zh/index.html) -eq 3 ]"
       }
     },
     {
@@ -79,7 +95,7 @@
       "blockedBy": ["6"],
       "metadata": {
         "files": ["src/components/pages/AboutPage.astro", "src/components/pages/FaqPage.astro", "src/pages/about.astro", "src/pages/faq.astro", "src/pages/zh/about.astro", "src/pages/zh/faq.astro"],
-        "verifyCommand": "bun run build"
+        "verifyCommand": "bun run build && for p in about zh/about faq zh/faq; do test -f dist/$p/index.html; done"
       }
     },
     {
@@ -89,7 +105,7 @@
       "blockedBy": ["6"],
       "metadata": {
         "files": ["src/components/route/PriceTable.astro", "src/components/pages/AirportTransferPage.astro", "src/components/pages/SkiHakubaPage.astro", "src/pages/airport-transfer.astro", "src/pages/ski-hakuba.astro", "src/pages/zh/airport-transfer.astro", "src/pages/zh/ski-hakuba.astro"],
-        "verifyCommand": "bun run build"
+        "verifyCommand": "bun run build && grep -c '¥' dist/airport-transfer/index.html"
       }
     },
     {
@@ -119,7 +135,8 @@
       "blockedBy": ["6"],
       "metadata": {
         "files": ["src/lib/schemas/inquiry.ts", "src/components/inquiry/InquiryForm.astro", "src/components/inquiry/inquiry-form.client.ts", "src/components/pages/InquiryPage.astro", "src/pages/inquiry.astro", "src/pages/zh/inquiry.astro"],
-        "verifyCommand": "bun run build && grep -q 'challenges.cloudflare.com' dist/inquiry/index.html && ! grep -q 'challenges.cloudflare.com' dist/index.html"
+        "verifyCommand": "bun run build && grep -q 'inputmode' dist/inquiry/index.html && grep -q 'autocomplete' dist/inquiry/index.html && grep -q 'data-size=\"flexible\"' dist/inquiry/index.html",
+        "notes": "Mobile keyboard via input type/inputmode/autocomplete; Turnstile data-size=flexible; aria-busy on submit; 375px no-overflow."
       }
     },
     {
@@ -129,17 +146,19 @@
       "blockedBy": ["12"],
       "metadata": {
         "files": ["functions/api/inquiry.ts", "src/emails/InquiryInternal.tsx", "src/emails/InquiryCustomer.tsx"],
-        "verifyCommand": "bun run typecheck && bun run dev (manual browser test)"
+        "verifyCommand": "bun run typecheck (Resend dashboard 验收手动)",
+        "notes": "delivered@resend.dev is test address (API success, no real inbox). Real 5-inbox delivery test = Task 16."
       }
     },
     {
       "id": "14",
-      "subject": "Task 14: SEO 完整化 (sitemap + JSON-LD + OG)",
+      "subject": "Task 14: SEO 完整化 (sitemap + JSON-LD + OG) + 解除占位反索引",
       "status": "pending",
       "blockedBy": ["7", "8", "9", "10", "11", "13"],
       "metadata": {
-        "files": ["astro.config.mjs", "src/layouts/BaseLayout.astro", "src/components/seo/LocalBusinessJsonLd.astro", "src/components/pages/HomePage.astro", "public/og-default.png"],
-        "verifyCommand": "bun run build && test -f dist/sitemap-index.xml && grep -q '/zh/' dist/sitemap-index.xml"
+        "files": ["astro.config.mjs", "src/layouts/BaseLayout.astro", "src/components/seo/LocalBusinessJsonLd.astro", "src/components/pages/HomePage.astro", "public/og-default.png", "public/robots.txt", "public/_headers"],
+        "verifyCommand": "bun run build && test -f dist/sitemap-index.xml && grep -q '/zh/' dist/sitemap-index.xml && ! grep -q 'X-Robots-Tag' dist/_headers && grep -q 'Allow: /' dist/robots.txt",
+        "notes": "Flip robots.txt Disallow→Allow + remove X-Robots-Tag noindex from _headers; both verified in prod response headers."
       }
     },
     {
@@ -148,8 +167,9 @@
       "status": "pending",
       "blockedBy": ["13", "14"],
       "metadata": {
-        "files": ["playwright.config.ts", "tests/e2e/pages.spec.ts", "tests/e2e/i18n.spec.ts", "tests/e2e/inquiry.spec.ts", ".github/workflows/ci.yml"],
-        "verifyCommand": "bun run test:e2e --reporter=line"
+        "files": ["playwright.config.ts", "tests/e2e/pages.spec.ts", "tests/e2e/i18n.spec.ts", "tests/e2e/inquiry.spec.ts", ".github/workflows/ci.yml", ".github/workflows/README.md"],
+        "verifyCommand": "bun run test:e2e --reporter=line",
+        "notes": "Two projects: chromium-desktop + chromium-mobile (iPhone 14). pull_request.types must include labeled."
       }
     },
     {
@@ -168,15 +188,15 @@
         "acceptanceCriteria": [
           "Lighthouse 5 页 perf/a11y >=95 SEO=100 截图存档",
           "mail-tester >=9/10 截图",
-          "5 真实邮箱测试结果记录",
-          "6 项跨设备记录",
+          "5 真实邮箱(Gmail/Outlook/QQ/163/iCloud)测试结果记录",
+          "6 项跨设备记录 (iPhone Safari, Android Chrome, macOS Chrome/Safari/Firefox, Windows Edge)",
           "双语无残留验证",
           "13 个 URL 全部 200",
           "CTA 语言匹配 grep",
-          "Turnstile 真实通过",
+          "Turnstile 真实通过 (用真实 site key)",
           "内部邮件归因完整",
           "CSP 无 violation",
-          "生产域名 DNS+SSL OK",
+          "生产域名 DNS + SSL 颁发完成",
           "v1.0.0 tag 已推"
         ]
       }
