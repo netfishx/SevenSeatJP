@@ -1,5 +1,5 @@
 ---
-import InquiryForm from '@/components/inquiry/InquiryForm.astro';
+import InquiryConversation from '@/components/inquiry/InquiryConversation.astro';
 import Container from '@/components/ui/Container.astro';
 import Section from '@/components/ui/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
@@ -17,39 +17,64 @@ const privacyHref = locale === 'zh' ? '/zh/legal/privacy' : '/legal/privacy';
   description={t(locale, 'inquiry.lead')}
 >
   <Section spacing="tight">
-    <Container size="wide" class="grid grid-cols-12 gap-6 sm:gap-12">
-      <header class="col-span-12 md:col-span-4 flex flex-col gap-5 md:sticky md:top-28 self-start">
-        <p class="caption">{locale === 'zh' ? '咨询' : 'Inquiry'}</p>
-        <h1 class="font-display text-3xl sm:text-5xl leading-[1.1]">
+    <Container size="wide" class="flex flex-col gap-12 sm:gap-16">
+      <header class="flex flex-col gap-6 max-w-3xl">
+        <h1 class="font-display text-4xl sm:text-6xl leading-[1.05] text-text">
           <span class="sr-only">{t(locale, 'inquiry.title')}</span>
-          <span aria-hidden="true">{locale === 'zh' ? '把行程' : 'ご旅程を'}</span><br />
-          <span aria-hidden="true" class="text-gold">{locale === 'zh' ? '告诉我们。' : 'お送りください。'}</span>
+          <span aria-hidden="true">
+            {locale === 'zh' ? '把行程告诉我们。' : 'ご旅程を、お聞かせください。'}
+          </span>
         </h1>
-        <p class="text-text-muted leading-relaxed text-sm sm:text-base">
-          {t(locale, 'inquiry.lead')}
+        <p class="text-text-muted leading-relaxed max-w-xl">
+          {locale === 'zh'
+            ? '24 小时内回复。如果您更愿意直接对话,下面三个渠道任选其一也欢迎。'
+            : '24 時間以内にご返信いたします。直接ご連絡いただいても結構です。'}
         </p>
-        <div class="flex flex-col gap-2 text-sm border-t border-border pt-5">
-          <p class="caption">{locale === 'zh' ? '其他联系方式' : 'その他の連絡先'}</p>
-          <p class="text-text">LINE · <span class="text-text-muted">@sevenseatjp</span></p>
-          <p class="text-text">WeChat · <span class="text-text-muted">sevenseatjp</span></p>
-          <p class="text-text">Mail · <span class="text-text-muted">contact@sevenseatjp.com</span></p>
+
+        <div class="flex flex-col gap-1 border-t border-border pt-6 text-sm">
+          <p class="text-text">
+            LINE
+            <span class="text-text-deep ms-3">·</span>
+            <a
+              href="https://line.me/R/ti/p/@sevenseatjp"
+              target="_blank"
+              rel="noopener"
+              class="text-text-muted hover:text-gold ms-3"
+            >@sevenseatjp</a>
+          </p>
+          <p class="text-text">
+            WeChat
+            <span class="text-text-deep ms-3">·</span>
+            <span class="text-text-muted ms-3">sevenseatjp</span>
+          </p>
+          <p class="text-text">
+            Mail
+            <span class="text-text-deep ms-3">·</span>
+            <a
+              href="mailto:contact@sevenseatjp.com"
+              class="text-text-muted hover:text-gold ms-3"
+            >contact@sevenseatjp.com</a>
+          </p>
         </div>
       </header>
 
-      <div class="col-span-12 md:col-span-8 flex flex-col gap-6">
-        <InquiryForm locale={locale} />
+      <div class="flex flex-col gap-8 max-w-3xl w-full">
+        <InquiryConversation locale={locale} />
 
         <p class="text-xs text-text-muted leading-relaxed">
           {t(locale, 'inquiry.privacy.note')}
-          <a href={privacyHref} class="text-text underline underline-offset-4 hover:text-gold">
-            {t(locale, 'inquiry.privacy.link')}
-          </a>
+          <a
+            href={privacyHref}
+            class="text-text underline underline-offset-4 hover:text-gold"
+          >{t(locale, 'inquiry.privacy.link')}</a>
           {t(locale, 'inquiry.privacy.note.after')}
         </p>
 
         <noscript>
           <div class="border border-border p-6 flex flex-col gap-3">
-            <h2 class="font-display text-text">{t(locale, 'inquiry.noscript.heading')}</h2>
+            <h2 class="font-display text-text">
+              {t(locale, 'inquiry.noscript.heading')}
+            </h2>
             <ul class="flex flex-col gap-1 text-sm text-text-muted">
               <li>{t(locale, 'inquiry.fallback.line')}</li>
               <li>{t(locale, 'inquiry.fallback.wechat')}</li>

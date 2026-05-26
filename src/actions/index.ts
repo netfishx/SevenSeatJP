@@ -51,6 +51,9 @@ async function sendCustomerEmail(
   resend: Resend,
   input: InquiryPayload,
 ): Promise<SendResult> {
+  if (!input.email) {
+    return { data: null, error: null };
+  }
   try {
     const html = await render(InquiryCustomerEmail(input));
     return await resend.emails.send({
@@ -66,6 +69,12 @@ async function sendCustomerEmail(
     return { data: null, error: e };
   }
 }
+
+const channelDeeplinks: Record<'line' | 'wechat' | 'mail', string | null> = {
+  line: 'https://line.me/R/ti/p/@sevenseatjp',
+  wechat: null,
+  mail: null,
+};
 
 export const server = {
   inquiry: defineAction({
@@ -134,7 +143,11 @@ export const server = {
         })(),
       );
 
-      return { ok: true as const };
+      return {
+        ok: true as const,
+        channel: input.channel,
+        deeplink: channelDeeplinks[input.channel],
+      };
     },
   }),
 };

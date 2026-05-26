@@ -41,12 +41,18 @@ export function InquiryInternalEmail(input: Props) {
           <Section>
             <Heading as="h2">客户信息</Heading>
             <Text>姓名: {input.name}</Text>
-            <Text>邮箱: {input.email}</Text>
+            <Text>
+              首选回复渠道:{' '}
+              {input.channel === 'line'
+                ? 'LINE @sevenseatjp'
+                : input.channel === 'wechat'
+                  ? '微信 sevenseatjp'
+                  : `邮箱 ${input.email ?? '(missing)'}`}
+            </Text>
+            {input.email && <Text>邮箱(备用): {input.email}</Text>}
             <Text>
               电话: {input.phoneCountryCode} {input.phone}
             </Text>
-            {input.lineId && <Text>LINE: {input.lineId}</Text>}
-            {input.wechat && <Text>WeChat: {input.wechat}</Text>}
           </Section>
 
           {input.notes && (

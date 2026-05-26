@@ -1,0 +1,320 @@
+---
+import type { Locale } from '@/i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+if (!siteKey) {
+  throw new Error(
+    '[InquiryConversation] PUBLIC_TURNSTILE_SITE_KEY is required. ' +
+      'Set it in .env.local (dev/CI) or Cloudflare Workers Builds → Variables (prod).',
+  );
+}
+
+const countryCodes = ['+81', '+86', '+852', '+886'] as const;
+
+const channelLabel = {
+  line: { ja: 'LINE', zh: 'LINE' },
+  wechat: { ja: 'WeChat 微信', zh: '微信 WeChat' },
+  mail: { ja: 'メール', zh: '邮箱' },
+} as const;
+
+const channelHint = {
+  line: {
+    ja: '@sevenseatjp · 公式アカウント',
+    zh: '@sevenseatjp · 添加官方帐号',
+  },
+  wechat: {
+    ja: 'sevenseatjp · 公式アカウント',
+    zh: 'sevenseatjp · 添加官方帐号',
+  },
+  mail: {
+    ja: 'メールアドレスをご入力ください',
+    zh: '请填写您的邮箱',
+  },
+} as const;
+
+const recommendedChannel = locale === 'zh' ? 'wechat' : 'line';
+---
+<form id="inquiry-form" class="flex flex-col gap-16 sm:gap-24 w-full" novalidate>
+  <!-- Step 1: 行程の概要 / 行程概要 -->
+  <section class="flex flex-col gap-8">
+    <header class="flex items-baseline gap-4">
+      <span class="font-display text-text-deep tabular text-2xl sm:text-3xl">01</span>
+      <h2 class="font-display text-2xl sm:text-3xl text-text">
+        {locale === 'zh' ? '您要去哪、什么时候?' : 'どちらへ・いつ?'}
+      </h2>
+    </header>
+
+    <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-2">
+        <label for="serviceType" class="text-sm text-text-muted">
+          {locale === 'zh' ? '服务类型' : 'サービス種別'}
+        </label>
+        <select
+          id="serviceType"
+          name="serviceType"
+          required
+          class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text"
+        >
+          <option value="airport">{locale === 'zh' ? '空港接送' : '空港送迎'}</option>
+          <option value="charter">{locale === 'zh' ? '私人包车' : 'チャーター'}</option>
+          <option value="ski">{locale === 'zh' ? '雪季送迎' : 'スキー送迎'}</option>
+          <option value="rental">{locale === 'zh' ? '自驾租车' : 'レンタル(自分で運転)'}</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="flex flex-col gap-2">
+          <label for="from" class="text-sm text-text-muted">
+            {locale === 'zh' ? '出发地' : '出発地'}
+          </label>
+          <input
+            type="text"
+            id="from"
+            name="from"
+            required
+            maxlength="200"
+            placeholder={locale === 'zh' ? '例:成田机场' : '例:成田空港'}
+            class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text"
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="to" class="text-sm text-text-muted">
+            {locale === 'zh' ? '目的地' : '目的地'}
+          </label>
+          <input
+            type="text"
+            id="to"
+            name="to"
+            required
+            maxlength="200"
+            placeholder={locale === 'zh' ? '例:东京站' : '例:東京駅'}
+            class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
+        <div class="flex flex-col gap-2">
+          <label for="date" class="text-sm text-text-muted">
+            {locale === 'zh' ? '日期' : 'ご利用日'}
+          </label>
+          <input
+            type="date"
+            id="date"
+            name="date"
+            required
+            class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text tabular"
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="time" class="text-sm text-text-muted">
+            {locale === 'zh' ? '时间' : 'ご利用時刻'}
+          </label>
+          <input
+            type="time"
+            id="time"
+            name="time"
+            required
+            class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text tabular"
+          />
+        </div>
+        <div class="flex flex-col gap-2 col-span-2 sm:col-span-1">
+          <label for="passengers" class="text-sm text-text-muted">
+            {locale === 'zh' ? '人数' : 'ご乗車人数'}
+          </label>
+          <input
+            type="number"
+            id="passengers"
+            name="passengers"
+            required
+            min="1"
+            max="10"
+            class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text tabular"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Step 2: 荷物・備考 -->
+  <section class="flex flex-col gap-8">
+    <header class="flex items-baseline gap-4">
+      <span class="font-display text-text-deep tabular text-2xl sm:text-3xl">02</span>
+      <h2 class="font-display text-2xl sm:text-3xl text-text">
+        {locale === 'zh' ? '有什么需要我们提前知道的吗?' : '何か特別な点はありますか?'}
+      </h2>
+    </header>
+
+    <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-2">
+        <label for="luggage" class="text-sm text-text-muted">
+          {locale === 'zh' ? '大件行李数量(26 寸及以上)' : '大型荷物の個数(26 インチ以上)'}
+        </label>
+        <input
+          type="number"
+          id="luggage"
+          name="luggage"
+          required
+          min="0"
+          max="15"
+          value="0"
+          class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text tabular w-24"
+        />
+      </div>
+      <div class="flex flex-col gap-2">
+        <label for="notes" class="text-sm text-text-muted">
+          {locale === 'zh' ? '其他备注(可选)' : 'ご要望・備考(任意)'}
+        </label>
+        <textarea
+          id="notes"
+          name="notes"
+          maxlength="2000"
+          rows="4"
+          placeholder={
+            locale === 'zh'
+              ? '例:需要儿童座椅、随行长者需要协助、宠物同行...'
+              : '例:チャイルドシート希望、高齢者の同行支援、ペット同伴…'
+          }
+          class="bg-surface border border-border rounded-[2px] px-3 py-2 text-text leading-relaxed"
+        ></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- Step 3: ご連絡先 / 联系方式 -->
+  <section class="flex flex-col gap-8">
+    <header class="flex items-baseline gap-4">
+      <span class="font-display text-text-deep tabular text-2xl sm:text-3xl">03</span>
+      <h2 class="font-display text-2xl sm:text-3xl text-text">
+        {locale === 'zh' ? '我们用哪个渠道联系您?' : 'どこでお返事しましょう?'}
+      </h2>
+    </header>
+
+    <fieldset class="flex flex-col gap-3" id="channel-fieldset">
+      <legend class="sr-only">
+        {locale === 'zh' ? '联系渠道' : '連絡チャネル'}
+      </legend>
+      {(['line', 'wechat', 'mail'] as const).map((c) => (
+        <label
+          class="group grid grid-cols-[auto_1fr_auto] items-baseline gap-4 py-4 sm:py-5 border-t border-border first:border-t-0 cursor-pointer hover:text-gold transition-colors"
+        >
+          <input
+            type="radio"
+            name="channel"
+            value={c}
+            class="sr-only peer"
+            required
+            checked={c === recommendedChannel}
+          />
+          <span class="font-display text-lg sm:text-xl text-text peer-checked:text-gold transition-colors">
+            {channelLabel[c][locale]}
+          </span>
+          <span class="text-sm text-text-muted">{channelHint[c][locale]}</span>
+          <span
+            class="font-display tabular text-text-deep peer-checked:text-gold transition-colors"
+            aria-hidden="true"
+          >
+            {c === recommendedChannel ? '●' : '○'}
+          </span>
+        </label>
+      ))}
+    </fieldset>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="flex flex-col gap-2">
+        <label for="name" class="text-sm text-text-muted">
+          {locale === 'zh' ? '您的姓名' : 'お名前'}
+        </label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          required
+          maxlength="100"
+          class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text"
+        />
+      </div>
+
+      <div class="flex flex-col gap-2" id="email-field" hidden>
+        <label for="email" class="text-sm text-text-muted">
+          {locale === 'zh' ? '邮箱' : 'メールアドレス'}
+        </label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          maxlength="200"
+          class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text"
+        />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-[7rem_1fr] gap-4 sm:gap-6">
+      <div class="flex flex-col gap-2">
+        <label for="phoneCountryCode" class="text-sm text-text-muted">
+          {locale === 'zh' ? '国家码' : '国番号'}
+        </label>
+        <select
+          id="phoneCountryCode"
+          name="phoneCountryCode"
+          required
+          class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text tabular"
+        >
+          {countryCodes.map((c) => <option value={c}>{c}</option>)}
+        </select>
+      </div>
+      <div class="flex flex-col gap-2">
+        <label for="phone" class="text-sm text-text-muted">
+          {locale === 'zh' ? '电话号码' : '電話番号'}
+        </label>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          required
+          minlength="4"
+          maxlength="20"
+          class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text tabular"
+        />
+      </div>
+    </div>
+
+    <div
+      class="cf-turnstile mt-2"
+      data-sitekey={siteKey}
+      data-theme="dark"
+      data-size="flexible"
+      data-language={locale === 'zh' ? 'zh-cn' : 'ja'}
+    ></div>
+
+    <p
+      id="inquiry-error"
+      class="text-sm text-gold min-h-5"
+      role="alert"
+      aria-live="polite"
+    ></p>
+
+    <button
+      type="submit"
+      class="inline-flex items-center justify-center min-h-12 px-7 bg-gold text-bg hover:bg-gold-dark transition-colors font-display tracking-[0.12em] uppercase text-sm rounded-[2px] self-start"
+    >
+      <span data-submit-default>
+        {locale === 'zh' ? '发送询价' : '送信する'}
+      </span>
+      <span data-submit-sending hidden>
+        {locale === 'zh' ? '发送中…' : '送信中…'}
+      </span>
+    </button>
+  </section>
+</form>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer is:inline></script>
+
+<script>
+  import '@/components/inquiry/inquiry-conversation.client';
+</script>
