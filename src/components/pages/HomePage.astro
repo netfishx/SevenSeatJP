@@ -2,8 +2,8 @@
 import cabinImg from '@/assets/photos/cabin-detail.png';
 import homeFujiImg from '@/assets/photos/home-fuji.jpg';
 import Hero from '@/components/home/Hero.astro';
-import ServiceGrid from '@/components/home/ServiceGrid.astro';
 import TestimonialsList from '@/components/home/TestimonialsList.astro';
+import TripBrowse from '@/components/home/TripBrowse.astro';
 import TrustMetrics from '@/components/home/TrustMetrics.astro';
 import LocalBusinessJsonLd from '@/components/seo/LocalBusinessJsonLd.astro';
 import Button from '@/components/ui/Button.astro';
@@ -52,7 +52,7 @@ const leadParagraph =
     </Container>
   </Section>
 
-  <ServiceGrid locale={locale} />
+  <TripBrowse locale={locale} />
 
   <Section spacing="flush">
     <div class="w-full relative isolate flex items-end">
