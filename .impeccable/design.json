@@ -1,0 +1,348 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-26T00:00:00Z",
+  "title": "Design System: SevenSeatJP",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Soot Black",
+        "canonical": "oklch(0.13 0.005 60)",
+        "tonalRamp": [
+          "oklch(0.07 0.004 60)",
+          "oklch(0.13 0.005 60)",
+          "oklch(0.16 0.005 60)",
+          "oklch(0.20 0.006 60)",
+          "oklch(0.28 0.006 60)",
+          "oklch(0.38 0.008 60)",
+          "oklch(0.55 0.010 70)",
+          "oklch(0.72 0.010 80)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "oklch(0.16 0.005 60)",
+        "tonalRamp": [
+          "oklch(0.08 0.004 60)",
+          "oklch(0.13 0.005 60)",
+          "oklch(0.16 0.005 60)",
+          "oklch(0.20 0.006 60)",
+          "oklch(0.28 0.006 60)",
+          "oklch(0.45 0.008 65)",
+          "oklch(0.65 0.010 75)",
+          "oklch(0.88 0.008 80)"
+        ]
+      },
+      "surface-lift": {
+        "role": "neutral",
+        "displayName": "Surface Lift",
+        "canonical": "oklch(0.20 0.006 60)",
+        "tonalRamp": [
+          "oklch(0.10 0.004 60)",
+          "oklch(0.16 0.005 60)",
+          "oklch(0.20 0.006 60)",
+          "oklch(0.28 0.006 60)",
+          "oklch(0.40 0.008 60)",
+          "oklch(0.55 0.010 70)",
+          "oklch(0.75 0.010 80)",
+          "oklch(0.94 0.008 80)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.28 0.006 60)",
+        "tonalRamp": [
+          "oklch(0.16 0.005 60)",
+          "oklch(0.20 0.006 60)",
+          "oklch(0.24 0.006 60)",
+          "oklch(0.28 0.006 60)",
+          "oklch(0.34 0.007 60)",
+          "oklch(0.42 0.008 60)",
+          "oklch(0.55 0.010 70)",
+          "oklch(0.72 0.010 80)"
+        ]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Hairline Strong",
+        "canonical": "oklch(0.38 0.008 60)",
+        "tonalRamp": [
+          "oklch(0.20 0.006 60)",
+          "oklch(0.28 0.006 60)",
+          "oklch(0.34 0.007 60)",
+          "oklch(0.38 0.008 60)",
+          "oklch(0.45 0.009 60)",
+          "oklch(0.55 0.010 70)",
+          "oklch(0.72 0.010 80)",
+          "oklch(0.94 0.008 80)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Ivory",
+        "canonical": "oklch(0.94 0.008 80)",
+        "tonalRamp": [
+          "oklch(0.13 0.005 60)",
+          "oklch(0.28 0.006 60)",
+          "oklch(0.45 0.008 70)",
+          "oklch(0.55 0.010 80)",
+          "oklch(0.72 0.010 80)",
+          "oklch(0.85 0.009 80)",
+          "oklch(0.94 0.008 80)",
+          "oklch(0.98 0.005 80)"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Ivory Muted",
+        "canonical": "oklch(0.72 0.010 80)",
+        "tonalRamp": [
+          "oklch(0.28 0.006 60)",
+          "oklch(0.45 0.008 70)",
+          "oklch(0.55 0.010 80)",
+          "oklch(0.65 0.010 80)",
+          "oklch(0.72 0.010 80)",
+          "oklch(0.82 0.009 80)",
+          "oklch(0.90 0.008 80)",
+          "oklch(0.96 0.006 80)"
+        ]
+      },
+      "text-deep": {
+        "role": "neutral",
+        "displayName": "Ivory Deep",
+        "canonical": "oklch(0.55 0.010 80)",
+        "tonalRamp": [
+          "oklch(0.22 0.006 60)",
+          "oklch(0.32 0.007 70)",
+          "oklch(0.45 0.009 75)",
+          "oklch(0.55 0.010 80)",
+          "oklch(0.65 0.010 80)",
+          "oklch(0.78 0.010 80)",
+          "oklch(0.88 0.008 80)",
+          "oklch(0.96 0.006 80)"
+        ]
+      },
+      "bronze": {
+        "role": "primary",
+        "displayName": "Aged Bronze",
+        "canonical": "oklch(0.62 0.085 50)",
+        "tonalRamp": [
+          "oklch(0.20 0.050 50)",
+          "oklch(0.30 0.070 48)",
+          "oklch(0.40 0.085 48)",
+          "oklch(0.48 0.090 45)",
+          "oklch(0.62 0.085 50)",
+          "oklch(0.74 0.070 55)",
+          "oklch(0.85 0.040 60)",
+          "oklch(0.95 0.015 65)"
+        ]
+      },
+      "bronze-dark": {
+        "role": "primary",
+        "displayName": "Bronze Dark",
+        "canonical": "oklch(0.48 0.09 45)",
+        "tonalRamp": [
+          "oklch(0.18 0.045 45)",
+          "oklch(0.28 0.065 45)",
+          "oklch(0.38 0.085 45)",
+          "oklch(0.48 0.090 45)",
+          "oklch(0.58 0.090 48)",
+          "oklch(0.70 0.075 52)",
+          "oklch(0.82 0.045 58)",
+          "oklch(0.94 0.020 65)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display (Latin)",
+        "purpose": "Closing CTA blocks and one-line page-defining statements. Spectral serif."
+      },
+      "display-jp": {
+        "displayName": "Display (Japanese)",
+        "purpose": "Hero headlines on the home page only. Shippori Mincho. Once per document."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section titles on service pages."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Editorial row titles inside ServiceGrid and TestimonialsList."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraph text. Capped at ~65ch (max-w-xl). Zen Kaku Gothic New handles JA+ZH."
+      },
+      "label": {
+        "displayName": "Label / Caption",
+        "purpose": "Uppercase eyebrow above every section. The editorial gear that anchors the grid."
+      }
+    },
+    "shadows": [
+      {
+        "name": "none",
+        "value": "none",
+        "purpose": "Flat-by-default. Depth uses tonal lifts and 1px hairlines, not shadows."
+      },
+      {
+        "name": "scrolled-header-blur",
+        "value": "backdrop-filter: blur(12px); background-color: oklch(0.13 0.005 60 / 0.88)",
+        "purpose": "Only functional blur in the system. Applied to fixed header on scrollY > 64 to separate header from photography. Never decorative chrome."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for color and opacity transitions."
+      },
+      {
+        "name": "duration-snap",
+        "value": "150ms",
+        "purpose": "Active-state feedback (button press, scale 0.9 active)."
+      },
+      {
+        "name": "duration-base",
+        "value": "300ms",
+        "purpose": "Default for color, opacity, transform on link hover, panel open/close."
+      },
+      {
+        "name": "prefers-reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce) { all transitions disabled }",
+        "purpose": "Honor accessibility preference. Modifier-only animations (group-hover translate-x) must be wrapped."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Link CTA",
+      "kind": "button",
+      "refersTo": "button-link",
+      "description": "The default CTA shape, used 80% of the time. Hairline-underlined typographic link with trailing arrow that slides on hover.",
+      "html": "<a href=\"#\" class=\"ds-btn-link\">お問合せはこちら<span aria-hidden=\"true\" class=\"ds-btn-link__arrow\">→</span></a>",
+      "css": ".ds-btn-link { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding-bottom: 0.25rem; color: var(--color-text); font-family: 'Zen Kaku Gothic New', system-ui, sans-serif; font-size: 1rem; line-height: 1.75; border-bottom: 1px solid color-mix(in oklch, var(--color-text) 40%, transparent); text-decoration: none; transition: color 300ms cubic-bezier(0.4, 0, 0.2, 1), border-color 300ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-link__arrow { display: inline-block; transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-link:hover { color: var(--color-gold); border-color: var(--color-gold); } .ds-btn-link:hover .ds-btn-link__arrow { transform: translateX(0.25rem); } .ds-btn-link:focus-visible { outline: 1px solid var(--color-gold); outline-offset: 3px; }"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "1px bronze-bordered button for inquiry-form submission. Hover fills with bronze and inverts text to soot.",
+      "html": "<button type=\"submit\" class=\"ds-btn-quiet\">送信</button>",
+      "css": ".ds-btn-quiet { display: inline-flex; align-items: center; justify-content: center; min-height: 3rem; padding: 0 1.75rem; background: transparent; color: var(--color-gold); border: 1px solid color-mix(in oklch, var(--color-gold) 60%, transparent); border-radius: 2px; font-family: 'Spectral', serif; font-size: 0.875rem; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: background-color 300ms cubic-bezier(0.4, 0, 0.2, 1), color 300ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-quiet:hover { background-color: var(--color-gold); color: var(--color-bg); } .ds-btn-quiet:focus-visible { outline: 1px solid var(--color-gold); outline-offset: 3px; }"
+    },
+    {
+      "name": "Solid Button",
+      "kind": "button",
+      "refersTo": "button-solid",
+      "description": "Fully filled aged bronze. Reserved for the single primary action per page (closing CTA on home, send on inquiry). If a page has two, one is wrong.",
+      "html": "<a href=\"#\" class=\"ds-btn-solid\">お問合せ</a>",
+      "css": ".ds-btn-solid { display: inline-flex; align-items: center; justify-content: center; min-height: 3rem; padding: 0 1.75rem; background-color: var(--color-gold); color: var(--color-bg); border-radius: 2px; font-family: 'Spectral', serif; font-size: 0.875rem; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; transition: background-color 300ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-solid:hover { background-color: var(--color-gold-dark); } .ds-btn-solid:focus-visible { outline: 1px solid var(--color-gold); outline-offset: 3px; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Surface-filled hairline-bordered text input. Zero radius (resolves to var(--radius-card) = 0). Label sits above on its own line.",
+      "html": "<label class=\"ds-input-label\" for=\"ds-demo-from\">出発地 <span aria-hidden=\"true\" class=\"ds-input-required\">· 必須</span></label><input type=\"text\" id=\"ds-demo-from\" class=\"ds-input\" placeholder=\"成田空港\" />",
+      "css": ".ds-input-label { display: block; margin-bottom: 0.5rem; color: var(--color-text); font-family: 'Spectral', serif; font-size: 0.875rem; line-height: 1.5; } .ds-input-required { color: var(--color-gold); font-size: 0.75rem; } .ds-input { display: block; width: 100%; min-height: 2.75rem; padding: 0 0.75rem; background-color: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 0; font-family: 'Zen Kaku Gothic New', system-ui, sans-serif; font-size: 1rem; line-height: 1.75; transition: border-color 300ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-input::placeholder { color: var(--color-text-deep); } .ds-input:focus { outline: 1px solid var(--color-gold); outline-offset: 3px; border-radius: 0; border-color: var(--color-border-strong); }"
+    },
+    {
+      "name": "Caption / Eyebrow",
+      "kind": "custom",
+      "refersTo": "caption",
+      "description": "Uppercase eyebrow that anchors every section. The 0.18em tracking is the editorial gear that keeps the grid from devolving into SaaS landing.",
+      "html": "<p class=\"ds-caption\">なぜ私たちか</p>",
+      "css": ".ds-caption { font-family: 'Spectral', serif; font-size: 0.75rem; line-height: 1.5; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-text-muted); margin: 0; }"
+    },
+    {
+      "name": "Editorial Row",
+      "kind": "custom",
+      "refersTo": "card-row",
+      "description": "The signature container pattern. Replaces every instance where the AI-slop instinct says 'card grid'. Serif ordinal + content + 1px hairline rule below. No enclosing box.",
+      "html": "<a href=\"#\" class=\"ds-row\"><span class=\"ds-row__ordinal\">01</span><span class=\"ds-row__title\">空港送迎</span></a>",
+      "css": ".ds-row { display: flex; align-items: baseline; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--color-border); color: var(--color-text); text-decoration: none; transition: color 300ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-row__ordinal { display: inline-block; width: 2rem; color: var(--color-text-muted); font-family: 'Spectral', serif; font-size: 0.875rem; font-weight: 300; font-variant-numeric: tabular-nums lining-nums; } .ds-row__title { font-family: 'Spectral', 'Shippori Mincho', serif; font-size: 1.5rem; line-height: 1.25; letter-spacing: -0.02em; transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-row:hover { color: var(--color-gold); } .ds-row:hover .ds-row__title { transform: translateX(0.25rem); } .ds-row:focus-visible { outline: 1px solid var(--color-gold); outline-offset: 3px; }"
+    },
+    {
+      "name": "Mobile Menu Toggle",
+      "kind": "nav",
+      "refersTo": "button-link",
+      "description": "Hamburger trigger in the mobile header. Active-state scale gives tactile feedback. The panel it opens lives at <body> level to escape the header's backdrop-filter containing block.",
+      "html": "<button type=\"button\" aria-label=\"メニューを開く\" aria-expanded=\"false\" class=\"ds-menu-toggle\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M4 8h16M4 16h16\" /></svg></button>",
+      "css": ".ds-menu-toggle { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; min-width: 2.75rem; padding: 0; background: transparent; color: var(--color-text); border: none; cursor: pointer; transition: color 300ms cubic-bezier(0.4, 0, 0.2, 1), transform 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-menu-toggle:hover { color: var(--color-gold); } .ds-menu-toggle:active { transform: scale(0.9); } .ds-menu-toggle:focus-visible { outline: 1px solid var(--color-gold); outline-offset: 3px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Lacquerware Box",
+    "overview": "A deep-woodgrain hull with a warm matte finish, hardware tucked under the rim, a single bronze hinge that gleams only when the lid moves. Heavy in the hand, made to be opened a handful of times, slowly. The interface has the same posture: warm soot black ground, ivory text laid like rice paper inside, aged bronze used so sparingly that the eye catches on it only twice per page.\n\nThe system is photo-led, hairline-structured, near-zero ornament. Marketing pages live or die on their photography (vehicle cabins, ski-road approaches, predawn airport pickups). The UI's only job is to make space for those photos and give the bilingual editorial typography somewhere quiet to land. Anything that draws attention to itself is interrupting the photograph.\n\nThis system explicitly rejects the four reflexes called out in PRODUCT.md: the rideshare-app shell, the OTA banner-grid, the black-and-gold luxury, and the Airbnb cosy-warm.",
+    "keyCharacteristics": [
+      "Warm soot black ground (oklch(0.13 0.005 60)), never #000.",
+      "Ivory paper text (oklch(0.94 0.008 80)), never #fff.",
+      "Aged bronze accent (oklch(0.62 0.085 50)) deployed at ≤1% area per page.",
+      "Zero default radius on containers, 2px chamfer on form controls and filled buttons only.",
+      "Zero default shadow; depth conveyed through three tonal lifts of the soot ramp.",
+      "Spectral + Shippori Mincho for display; Zen Kaku Gothic New for body (both scripts).",
+      "Touch targets ≥44×44px (WCAG 2.5.5); focus is 1px bronze outline + 3px offset."
+    ],
+    "rules": [
+      {
+        "name": "The One-Percent Rule",
+        "body": "Aged bronze is used on ≤1% of any given page's painted area. A 1px hairline + the wordmark dot + a single button fill = within budget. A bronze-bordered card + bronze hover + bronze chip + bronze section label = budget blown. Strip until the bronze count fits on one hand.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Pure-Black Rule",
+        "body": "Never #000, never #fff. The warmth in the soot black is what separates this from generic dark-mode SaaS. Every new color picks up chroma ≥0.005 toward the 50–80° hue family.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two-Voice Rule",
+        "body": "Spectral and Shippori Mincho are sister gestures, not the same typeface. On /ja routes the hero uses font-display-jp primary; on /zh routes the hero uses font-display. Both pages share Zen Kaku for body — that's where the system stays consistent across scripts.",
+        "section": "typography"
+      },
+      {
+        "name": "The Eyebrow Rule",
+        "body": "Every section begins with a .caption label (uppercase, 0.18em-tracked Spectral). Removing the caption causes the section to read as a SaaS landing block within two scrolls.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-by-Default Rule",
+        "body": "No box-shadow on cards, hovers, or focus rings. Depth means a hairline rule, a tonal step on the soot ramp, or a photograph. Three primitives, nothing else.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Functional Blur Rule",
+        "body": "backdrop-filter is permitted only where it does work the image can't (text legibility over varied photography). It is never decorative chrome. And whatever element gains the filter must not contain other position: fixed elements — backdrop-filter creates a containing block that collapses nested fixed children to the element's size.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do ground every dark surface in the warm soot ramp (oklch(0.13–0.20 0.005–0.006 60)). Tint every neutral toward 60° hue; 0-chroma neutrals look video-game purple on screens.",
+      "Do keep aged bronze under the One-Percent Rule — ≤1% of painted area per page.",
+      "Do lead every section with a .caption label (uppercase, 0.18em-tracked Spectral).",
+      "Do use astro:assets <Image> with explicit widths and sizes for every above-the-fold photograph. Marketing pages live on their photography; serve real srcset.",
+      "Do keep position: fixed panels as direct children of <body>. Header gains backdrop-filter on scroll, which creates a containing-block trap for nested fixed descendants.",
+      "Do write Japanese and Chinese copy independently. No machine-translated parity. Tone can diverge; the visual system stays unified."
+    ],
+    "donts": [
+      "Don't use the rideshare-app reflex (sticky bottom CTA, map-first hero, real-time driver markers, calculator UI).",
+      "Don't use OTA / 旅行社 banner-grids (promo ribbons, '限時' tags, carousel arrows, '立減 ¥3,000' badges).",
+      "Don't introduce high-chroma gold (oklch chroma > 0.10 in the bronze direction). The bronze is aged, not glossy.",
+      "Don't add handwritten / illustrated / emoji ornament. The Airbnb cosy-warm direction is incompatible with hospitality-trust.",
+      "Don't use #000 or #fff. Ever. Every neutral picks up ≥0.005 chroma toward 60–80° hue.",
+      "Don't wrap content in cards. The default container is the open editorial column with hairline rules.",
+      "Don't use box-shadow on any component. Depth = tonal step + hairline.",
+      "Don't use border-left / border-right > 1px as a colored accent stripe.",
+      "Don't animate layout properties. Animate transform, opacity, or color only. Use ease-out exponential curves; no bounce.",
+      "Don't add chat widgets, sticky CTAs, '立即预约' buttons, account systems, or any pattern that implies the site is a transaction surface."
+    ]
+  }
+}

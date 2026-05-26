@@ -168,3 +168,21 @@ git-credential-manager dialog doesn't pop on each push). Do **not** re-add
   operator name and address strings, awaiting client info.
 - `X-Robots-Tag: noindex, nofollow` is still set in `public/_headers` and
   `src/middleware.ts`. Remove both together once the client confirms launch.
+
+## Design context
+
+Strategic brief lives in [`PRODUCT.md`](./PRODUCT.md) (register, users,
+brand personality, anti-references, design principles). Read it before
+any UI / copy change. Headlines:
+
+- **Register**: brand. Hospitality marketing site, no app surface.
+- **Personality**: 静谧 · 内敛 · 工艺 (Aman lane). Restraint over flourish.
+- **Anti-refs to actively resist**: Uber/DiDi app-shell, OTA banner-noise,
+  black-and-gold luxury, Airbnb cosy-warm.
+- **Site only carries trust, not transactions.** No instant booking, no
+  sticky CTAs, no chat widgets — single inquiry form, 24h reply promise.
+- **Bilingual ≠ translation.** Japanese and Chinese copy are written
+  independently and may diverge in tone; visual system stays unified.
+
+Once `DESIGN.md` exists, it owns the visual token vocabulary (colors,
+type scale, components) referenced from this file.
