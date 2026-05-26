@@ -70,9 +70,18 @@ const year = new Date().getFullYear();
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    {/*
+      Weight selection is intentional and minimal — only weights actually
+      referenced in globals.css and templates get loaded. CJK fonts are
+      split into 100+ unicode subsets per weight, so each extra weight
+      multiplies the total downloaded file count. Current usage:
+      - 400: default body, h1–h4, captions, labels
+      - 300: .ordinal utility only (serif tabular numerals)
+      Add a weight ONLY when a real component starts using it.
+    */}
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Spectral:wght@300;400;600&family=Shippori+Mincho:wght@400;600&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Spectral:wght@400&family=Shippori+Mincho&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap"
     />
 
     <script>
