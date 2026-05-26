@@ -4,9 +4,11 @@
 
 **Goal:** 按 spec `docs/superpowers/specs/2026-05-25-sevenseatjp-design.md` 实现日本 7 座出行预约网站(中日双语、9 + 1 + 3 页、Cloudflare Pages 部署、询价表单 → Resend 双邮件 + Turnstile + UTM 归因)。
 
-**Architecture:** Astro 5 纯静态构建 + Cloudflare Pages,询价表单走独立 Pages Function(`functions/api/inquiry.ts`)。内容用 Content Collections + Zod schema,翻译 inline 双语 YAML。Tailwind v4 CSS-first(@theme tokens)。i18n 默认 ja + `/zh/` 子路径,每页只写一份组件、镜像页两行引用。E2E 用 Playwright 走 `wrangler pages dev` 真实 Function。
+**Architecture:** Astro 6 纯静态构建 + Cloudflare Pages,询价表单走独立 Pages Function(`functions/api/inquiry.ts`)。内容用 Content Collections + Zod schema,翻译 inline 双语 YAML。Tailwind v4 CSS-first(@theme tokens)。i18n 默认 ja + `/zh/` 子路径,每页只写一份组件、镜像页两行引用。E2E 用 Playwright 走 `wrangler pages dev` 真实 Function。
 
-**Tech Stack:** Astro 5+ · Tailwind v4 · Cloudflare Pages + Functions · Resend · @react-email · Cloudflare Turnstile · Bun · Biome · Playwright · Zod 4
+**Tech Stack:** Astro 6 · Tailwind v4 · Cloudflare Pages + Functions · Resend · @react-email · Cloudflare Turnstile · Bun · Biome · Playwright · Zod 4
+
+**版本策略:所有依赖装 `@latest`**——执行 Task 1 时用 `bun add <pkg>@latest`,由 bun 解析当前最新版本写入 `package.json`。不在 plan 里 hardcode 具体 ^x.y.z(避免迅速过期)。
 
 ---
 
@@ -59,7 +61,7 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
 
 **Steps:**
 
-- [ ] **Step 1: 创建 `package.json`**
+- [ ] **Step 1: 创建 `package.json` 骨架(只含 scripts,依赖留给 Step 9 用 `bun add @latest` 安装)**
 
 ```json
 {
@@ -75,28 +77,11 @@ W1 ≈ Task 1-6 · W2 ≈ Task 7-13 · W3 ≈ Task 14-16。
     "format":    "biome check --write .",
     "typecheck": "astro check",
     "test:e2e":  "playwright test"
-  },
-  "dependencies": {
-    "astro": "^6.0.0",
-    "@astrojs/sitemap": "^3.2.0",
-    "zod": "^4.0.0",
-    "resend": "^4.0.0",
-    "@react-email/components": "^0.0.31",
-    "@react-email/render": "^1.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
-    "@cloudflare/workers-types": "^4.20250101.0",
-    "@playwright/test": "^1.49.0",
-    "@tailwindcss/vite": "^4.0.0",
-    "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.0",
-    "wrangler": "^3.95.0"
   }
 }
 ```
+
+Step 9 安装时 bun 会写入当前最新版本号。**不在 plan 里固定版本号**(任何 hardcode 都会迅速过期)。
 
 - [ ] **Step 2: 创建 `tsconfig.json`**
 
@@ -209,16 +194,37 @@ COMPANY_INBOX=delivered+internal@resend.dev
 INQUIRY_FROM_EMAIL=onboarding@resend.dev
 ```
 
-- [ ] **Step 9: 安装依赖并跑 verify**
+- [ ] **Step 9: 安装最新依赖并跑 verify**
 
 ```bash
-bun install
+# 一次性装最新主依赖
+bun add \
+  astro@latest \
+  @astrojs/sitemap@latest \
+  zod@latest \
+  resend@latest \
+  @react-email/components@latest \
+  @react-email/render@latest \
+  react@latest \
+  react-dom@latest
+
+# devDependencies
+bun add -d \
+  @biomejs/biome@latest \
+  @cloudflare/workers-types@latest \
+  @playwright/test@latest \
+  @tailwindcss/vite@latest \
+  tailwindcss@latest \
+  typescript@latest \
+  wrangler@latest
+
+# 验证
 bun run build
 bun run lint
 bun run typecheck
 ```
 
-期望:`dist/index.html` 生成,grep "SevenSeatJP" 命中。
+期望:`dist/index.html` 生成,grep "SevenSeatJP" 命中;`package.json` 写入的版本号由 bun 解析当前最新。**安装后子代理应跑一次 `bun run build`,若 Astro/Tailwind 等主版本 breaking 导致 build fail,在本 task 里解决**(因为本 task 就是骨架,后续 task 都基于这个 commit)。
 
 - [ ] **Step 10: 提交**
 
@@ -307,7 +313,7 @@ git push -u origin main
 
 - [ ] **Step 6: CF Pages dashboard 配置(手动 + 截图验证)**
 
-dashboard 步骤:Create project → Connect to Git → 选仓库 → Framework preset = Astro → Build cmd `bun run build` → Output `dist` → Environment variables: 加 `PUBLIC_TURNSTILE_SITE_KEY`(Production = 真实 key,Preview = `1x00000000000000000000AA`)→ Settings → Functions → Compatibility flags 加 `nodejs_compat`(Production + Preview)
+dashboard 步骤:Create project → Connect to Git → 选仓库 → Framework preset = Astro → Build cmd `bun run build` → Output `dist` → Environment variables: 加 `PUBLIC_TURNSTILE_SITE_KEY`(**Production 和 Preview 都先用 dummy `1x00000000000000000000AA`**,真实 site key 由 Task 16 替换)→ Settings → Functions → Compatibility flags 加 `nodejs_compat`(Production + Preview)→ **不绑定 custom domain**(留给 Task 16)
 
 - [ ] **Step 7: 验证部署**
 
