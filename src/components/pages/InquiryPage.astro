@@ -31,31 +31,29 @@ const privacyHref = locale === 'zh' ? '/zh/legal/privacy' : '/legal/privacy';
             : '24 時間以内にご返信いたします。直接ご連絡いただいても結構です。'}
         </p>
 
-        <div class="flex flex-col gap-1 border-t border-border pt-6 text-sm">
-          <p class="text-text">
-            LINE
-            <span class="text-text-deep ms-3">·</span>
+        <dl class="grid grid-cols-[auto_auto_1fr] items-baseline gap-x-3 gap-y-1 border-t border-border pt-6 text-sm">
+          <dt class="text-text">LINE</dt>
+          <dd class="text-text-deep" aria-hidden="true">·</dd>
+          <dd>
             <a
               href="https://line.me/R/ti/p/@sevenseatjp"
               target="_blank"
               rel="noopener"
-              class="text-text-muted hover:text-gold ms-3"
+              class="text-text-muted hover:text-gold"
             >@sevenseatjp</a>
-          </p>
-          <p class="text-text">
-            WeChat
-            <span class="text-text-deep ms-3">·</span>
-            <span class="text-text-muted ms-3">sevenseatjp</span>
-          </p>
-          <p class="text-text">
-            Mail
-            <span class="text-text-deep ms-3">·</span>
+          </dd>
+          <dt class="text-text">WeChat</dt>
+          <dd class="text-text-deep" aria-hidden="true">·</dd>
+          <dd class="text-text-muted">sevenseatjp</dd>
+          <dt class="text-text">Mail</dt>
+          <dd class="text-text-deep" aria-hidden="true">·</dd>
+          <dd>
             <a
               href="mailto:contact@sevenseatjp.com"
-              class="text-text-muted hover:text-gold ms-3"
+              class="text-text-muted hover:text-gold"
             >contact@sevenseatjp.com</a>
-          </p>
-        </div>
+          </dd>
+        </dl>
       </header>
 
       <div class="flex flex-col gap-8 max-w-3xl w-full">

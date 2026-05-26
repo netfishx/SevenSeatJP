@@ -43,33 +43,27 @@ const subline =
   ></div>
 
   <div class="flex-1 flex justify-center">
-    <div class="w-full max-w-7xl px-5 sm:px-8 pt-28 sm:pt-40 pb-12 sm:pb-16 flex flex-col justify-end">
-      <p class="caption mb-4 sm:mb-6 text-text">{eyebrow}</p>
+    <div class="w-full max-w-7xl px-5 sm:px-8 pt-28 sm:pt-40 pb-12 sm:pb-16 flex flex-col justify-end gap-6 sm:gap-8">
+      <p class="caption text-text">{eyebrow}</p>
       {locale === 'ja' ? (
-        <h1 class="font-display-jp text-[clamp(2rem,1.2rem+3vw,6rem)] leading-[1.1] tracking-tight max-w-4xl">
+        <h1 class="font-display-jp text-[clamp(2rem,1.2rem+3vw,6rem)] leading-[1.1] tracking-tight max-w-4xl break-words">
           <span class="sr-only">{t(locale, 'home.title')}</span>
           <span aria-hidden="true" class="block">{headlineJa1}</span>
           <span aria-hidden="true" class="block text-gold">{headlineJa2}</span>
         </h1>
       ) : (
-        <h1 class="font-display text-[clamp(2rem,1.2rem+3vw,6rem)] leading-[1.1] tracking-tight max-w-4xl">
+        <h1 class="font-display text-[clamp(2rem,1.2rem+3vw,6rem)] leading-[1.1] tracking-tight max-w-4xl break-words">
           <span class="sr-only">{t(locale, 'home.title')}</span>
           <span aria-hidden="true" class="block">{headlineZh1}</span>
           <span aria-hidden="true" class="block text-gold">{headlineZh2}</span>
         </h1>
       )}
-      <p class="mt-6 sm:mt-8 max-w-xl text-sm sm:text-lg leading-relaxed text-text-muted">
+      <p class="max-w-xl text-sm sm:text-lg leading-relaxed text-text-muted">
         {subline}
       </p>
-      <div class="mt-8 sm:mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-10">
-        <Button href={inquiryHref} variant="link">
-          {t(locale, 'home.cta')}
-        </Button>
-        <a
-          href={locale === 'zh' ? '/zh/pricing' : '/pricing'}
-          class="inline-flex items-center min-h-11 text-sm text-text-muted hover:text-text caption"
-        >{locale === 'zh' ? '查看料金一览' : '料金一覧を見る'}</a>
-      </div>
+      <Button href={inquiryHref} variant="link">
+        {t(locale, 'home.cta')}
+      </Button>
     </div>
   </div>
 

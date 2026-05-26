@@ -1,4 +1,5 @@
 import { actions } from 'astro:actions';
+import { BUTTON_STYLES } from '@/components/ui/button-styles';
 import { readAttribution } from '@/lib/attribution.client';
 
 const form = document.getElementById('inquiry-form') as HTMLFormElement | null;
@@ -8,6 +9,54 @@ if (form) {
   // prerendered; do this client-side as a small enhancement.
   const dateInput = document.getElementById('date') as HTMLInputElement | null;
   if (dateInput) dateInput.min = new Date().toISOString().slice(0, 10);
+
+  // Progressive disclosure: only section 1 is visible at first paint.
+  // "Continue" reveals the next section after validating the current one.
+  const sections = Array.from(
+    form.querySelectorAll<HTMLElement>('section[data-section]'),
+  );
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  form.querySelectorAll<HTMLButtonElement>('[data-next]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const nextIdx = Number(btn.dataset.next);
+      const currSection = sections[nextIdx - 2];
+      const isSkip =
+        btn.textContent?.trim().includes('飛ばす') ||
+        btn.textContent?.trim().includes('跳过');
+
+      // Validate visible required fields in the current section before
+      // revealing the next, unless this is the explicit Skip control.
+      if (!isSkip && currSection) {
+        const requiredFields = currSection.querySelectorAll(
+          'input[required], select[required]',
+        );
+        let valid = true;
+        for (const node of requiredFields) {
+          const field = node as HTMLInputElement | HTMLSelectElement;
+          if (!field.checkValidity()) {
+            field.reportValidity();
+            valid = false;
+            break;
+          }
+        }
+        if (!valid) return;
+      }
+
+      const next = sections[nextIdx - 1];
+      if (next) {
+        next.hidden = false;
+        next.scrollIntoView({
+          behavior: reduceMotion ? 'auto' : 'smooth',
+          block: 'start',
+        });
+      }
+      // Hide all "Continue" controls in the section we just left.
+      currSection?.querySelectorAll<HTMLElement>('[data-next]').forEach((b) => {
+        b.hidden = true;
+      });
+    });
+  });
 
   const submitBtn = form.querySelector(
     'button[type="submit"]',
@@ -195,7 +244,7 @@ if (form) {
         const success = document.createElement('section');
         success.className = 'flex flex-col gap-6 sm:gap-8 py-12 sm:py-16';
         const ctaHtml = ctaHref
-          ? `<a href="${ctaHref}" target="_blank" rel="noopener" class="inline-flex items-center justify-center min-h-12 px-7 border border-gold/60 text-gold hover:bg-gold hover:text-bg transition-colors font-display tracking-[0.12em] uppercase text-sm rounded-[2px] self-start">${ctaLabel} →</a>`
+          ? `<a href="${ctaHref}" target="_blank" rel="noopener" class="${BUTTON_STYLES.quiet} self-start">${ctaLabel} →</a>`
           : '';
         success.innerHTML = `
           <h2 class="font-display text-3xl sm:text-5xl leading-[1.1]">${successHeadline[locale]}</h2>

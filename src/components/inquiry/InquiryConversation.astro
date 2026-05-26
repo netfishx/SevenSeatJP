@@ -1,4 +1,5 @@
 ---
+import Button from '@/components/ui/Button.astro';
 import type { Locale } from '@/i18n/t';
 
 interface Props {
@@ -38,10 +39,14 @@ const channelHint = {
 } as const;
 
 const recommendedChannel = locale === 'zh' ? 'wechat' : 'line';
+const continueLabel = locale === 'zh' ? '继续' : '次へ';
+const skipLabel = locale === 'zh' ? '跳过此步' : 'この質問を飛ばす';
+const continueClass =
+  'group inline-flex items-center gap-2 min-h-11 text-text border-b border-text/40 hover:border-gold hover:text-gold transition-colors pb-1 self-start';
 ---
 <form id="inquiry-form" class="flex flex-col gap-16 sm:gap-24 w-full" novalidate>
   <!-- Step 1: 行程の概要 / 行程概要 -->
-  <section class="flex flex-col gap-8">
+  <section data-section="1" class="flex flex-col gap-8">
     <header class="flex items-baseline gap-4">
       <span class="font-display text-text-deep tabular text-2xl sm:text-3xl">01</span>
       <h2 class="font-display text-2xl sm:text-3xl text-text">
@@ -139,10 +144,15 @@ const recommendedChannel = locale === 'zh' ? 'wechat' : 'line';
         </div>
       </div>
     </div>
+
+    <button type="button" data-next="2" class={continueClass}>
+      {continueLabel}
+      <span aria-hidden="true" class="transition-transform group-hover:translate-x-1">→</span>
+    </button>
   </section>
 
   <!-- Step 2: 荷物・備考 -->
-  <section class="flex flex-col gap-8">
+  <section data-section="2" hidden class="flex flex-col gap-8">
     <header class="flex items-baseline gap-4">
       <span class="font-display text-text-deep tabular text-2xl sm:text-3xl">02</span>
       <h2 class="font-display text-2xl sm:text-3xl text-text">
@@ -184,10 +194,20 @@ const recommendedChannel = locale === 'zh' ? 'wechat' : 'line';
         ></textarea>
       </div>
     </div>
+
+    <div class="flex flex-wrap items-center gap-6">
+      <button type="button" data-next="3" class={continueClass}>
+        {continueLabel}
+        <span aria-hidden="true" class="transition-transform group-hover:translate-x-1">→</span>
+      </button>
+      <button type="button" data-next="3" class="text-sm text-text-muted hover:text-text underline underline-offset-4 min-h-11 self-start">
+        {skipLabel}
+      </button>
+    </div>
   </section>
 
   <!-- Step 3: ご連絡先 / 联系方式 -->
-  <section class="flex flex-col gap-8">
+  <section data-section="3" hidden class="flex flex-col gap-8">
     <header class="flex items-baseline gap-4">
       <span class="font-display text-text-deep tabular text-2xl sm:text-3xl">03</span>
       <h2 class="font-display text-2xl sm:text-3xl text-text">
@@ -285,7 +305,7 @@ const recommendedChannel = locale === 'zh' ? 'wechat' : 'line';
     </div>
 
     <div
-      class="cf-turnstile mt-2"
+      class="cf-turnstile"
       data-sitekey={siteKey}
       data-theme="dark"
       data-size="flexible"
@@ -299,17 +319,14 @@ const recommendedChannel = locale === 'zh' ? 'wechat' : 'line';
       aria-live="polite"
     ></p>
 
-    <button
-      type="submit"
-      class="inline-flex items-center justify-center min-h-12 px-7 bg-gold text-bg hover:bg-gold-dark transition-colors font-display tracking-[0.12em] uppercase text-sm rounded-[2px] self-start"
-    >
+    <Button type="submit" variant="solid" class="self-start">
       <span data-submit-default>
         {locale === 'zh' ? '发送询价' : '送信する'}
       </span>
       <span data-submit-sending hidden>
         {locale === 'zh' ? '发送中…' : '送信中…'}
       </span>
-    </button>
+    </Button>
   </section>
 </form>
 

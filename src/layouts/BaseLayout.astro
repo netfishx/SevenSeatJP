@@ -79,7 +79,7 @@ const year = new Date().getFullYear();
       import '@/lib/attribution.client';
     </script>
   </head>
-  <body class="min-h-screen flex flex-col antialiased">
+  <body class="min-h-screen flex flex-col gap-24 sm:gap-40 antialiased">
     <a
       href="#main"
       class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-50 focus:bg-bg focus:text-gold focus:px-3 focus:py-2"
@@ -122,7 +122,7 @@ const year = new Date().getFullYear();
       ]}
     ><slot /></main>
 
-    <footer class="flex justify-center mt-24 sm:mt-40">
+    <footer class="flex justify-center">
       <div class="w-full max-w-7xl px-5 sm:px-8 pb-12 flex flex-col gap-12">
         <div class="border-t border-border pt-12 grid grid-cols-1 md:grid-cols-12 gap-8">
           <div class="md:col-span-4 flex flex-col gap-3">

@@ -94,8 +94,8 @@ const policyLinks = [
       <p class="col-span-12 md:col-span-2 caption md:pt-2">
         {locale === 'zh' ? '条款' : 'Policy'}
       </p>
-      <div class="col-span-12 md:col-span-7 flex flex-col">
-        <h2 class="font-display text-3xl sm:text-4xl text-text mb-5">{t(locale, 'about.section.policy.title')}</h2>
+      <div class="col-span-12 md:col-span-7 flex flex-col gap-5">
+        <h2 class="font-display text-3xl sm:text-4xl text-text">{t(locale, 'about.section.policy.title')}</h2>
         <ul class="flex flex-col">
           {policyLinks.map((p) => (
             <li class="border-t border-border last:border-b">

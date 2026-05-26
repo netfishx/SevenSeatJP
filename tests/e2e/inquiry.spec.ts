@@ -15,11 +15,17 @@ test('inquiry page surfaces direct contact channels above the form', async ({
     page.getByText('sevenseatjp', { exact: false }).first(),
   ).toBeVisible();
 
-  // Form + Turnstile widget render.
+  // Form visible; section 1 visible; sections 2 and 3 hidden until Continue.
   await expect(page.locator('form#inquiry-form')).toBeVisible();
-  await expect(
-    page.locator('.cf-turnstile[data-size="flexible"]'),
-  ).toBeVisible();
+  await expect(page.locator('section[data-section="1"]')).toBeVisible();
+  await expect(page.locator('section[data-section="2"]')).toBeHidden();
+  await expect(page.locator('section[data-section="3"]')).toBeHidden();
+
+  // Turnstile widget exists in DOM (mounted by the CF script) even while
+  // section 3 is hidden.
+  await expect(page.locator('.cf-turnstile[data-size="flexible"]')).toHaveCount(
+    1,
+  );
   await expect(page.locator('noscript')).toHaveCount(1);
 });
 
@@ -32,14 +38,49 @@ test('inquiry zh mirror is bilingual and links to zh privacy', async ({
   await expect(privacyLink).toBeVisible();
 });
 
+test('inquiry progressive disclosure reveals sections on Continue', async ({
+  page,
+}) => {
+  await page.goto('/inquiry');
+  // Fill section 1 required fields, then click Continue.
+  await page.fill('input[name="from"]', 'NRT');
+  await page.fill('input[name="to"]', 'Tokyo');
+  await page.fill('input[name="date"]', '2099-08-01');
+  await page.fill('input[name="time"]', '14:00');
+  await page.fill('input[name="passengers"]', '2');
+
+  await page.locator('section[data-section="1"] [data-next="2"]').click();
+  await expect(page.locator('section[data-section="2"]')).toBeVisible();
+  await expect(page.locator('section[data-section="3"]')).toBeHidden();
+
+  // Section 2 only has optional fields; Continue reveals section 3 immediately.
+  await page
+    .locator('section[data-section="2"] [data-next="3"]')
+    .first()
+    .click();
+  await expect(page.locator('section[data-section="3"]')).toBeVisible();
+});
+
 test('inquiry channel selection toggles the email field', async ({ page }) => {
   await page.goto('/inquiry');
-  // Default channel on ja is LINE; email field should be hidden.
+  // Walk through sections 1 and 2 to reveal section 3 (channel selector).
+  await page.fill('input[name="from"]', 'NRT');
+  await page.fill('input[name="to"]', 'Tokyo');
+  await page.fill('input[name="date"]', '2099-08-01');
+  await page.fill('input[name="time"]', '14:00');
+  await page.fill('input[name="passengers"]', '2');
+  await page.locator('section[data-section="1"] [data-next="2"]').click();
+  await page
+    .locator('section[data-section="2"] [data-next="3"]')
+    .first()
+    .click();
+
+  // Default channel on ja is LINE; email field hidden.
   await expect(page.locator('#email-field')).toBeHidden();
 
   // Switching to Mail reveals the email field. The radio input is sr-only,
-  // so check() needs `force: true` since the visible affordance is the
-  // wrapping label.
+  // so check() needs `force: true`; dispatch the change event the JS listens
+  // for since the click happens on the visible label, not the input.
   await page
     .locator('input[name="channel"][value="mail"]')
     .check({ force: true });
@@ -56,9 +97,14 @@ test('client-side guard: submitting without Turnstile token shows error', async 
   await page.goto('/inquiry');
   await page.fill('input[name="from"]', 'NRT');
   await page.fill('input[name="to"]', 'Tokyo');
-  await page.fill('input[name="date"]', '2026-08-01');
+  await page.fill('input[name="date"]', '2099-08-01');
   await page.fill('input[name="time"]', '14:00');
   await page.fill('input[name="passengers"]', '2');
+  await page.locator('section[data-section="1"] [data-next="2"]').click();
+  await page
+    .locator('section[data-section="2"] [data-next="3"]')
+    .first()
+    .click();
   await page.fill('input[name="name"]', 'Test User');
   await page.fill('input[name="phone"]', '09012345678');
 
