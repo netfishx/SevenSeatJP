@@ -1,0 +1,22 @@
+{
+  "site.name": "SevenSeatJP 七座出行",
+  "home.title": "东京 · 京都 · 白马 高端 7 座包车",
+  "home.subtitle": "中文对接 · 机场接送 · 私人包车 · 滑雪接送",
+  "nav.home": "首页",
+  "nav.about": "公司介绍",
+  "nav.airport": "机场接送",
+  "nav.charter": "私人包车",
+  "nav.ski": "白马滑雪",
+  "nav.rental": "租车",
+  "nav.vehicles": "车辆",
+  "nav.pricing": "价格表",
+  "nav.faq": "常见问题",
+  "nav.inquiry": "在线询价",
+  "form.submit": "提交询价",
+  "form.error.invalid_payload": "请检查表单字段",
+  "form.error.payload_too_large": "请求过大,请精简备注后重试",
+  "form.error.turnstile_failed": "人机验证失败,请刷新重试",
+  "form.error.turnstile_unavailable": "验证服务暂时不可用,请稍后重试或通过 LINE 联系",
+  "form.error.email_send_failed": "提交失败,请通过 LINE 或微信联系",
+  "form.success": "已收到您的询价,我们将在 24 小时内回复。"
+}

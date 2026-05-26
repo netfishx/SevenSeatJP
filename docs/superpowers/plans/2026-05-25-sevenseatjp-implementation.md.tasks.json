@@ -1,13 +1,13 @@
 {
   "planPath": "docs/superpowers/plans/2026-05-25-sevenseatjp-implementation.md",
   "specPath": "docs/superpowers/specs/2026-05-25-sevenseatjp-design.md",
-  "lastUpdated": "2026-05-26T14:00:00Z",
+  "lastUpdated": "2026-05-26T11:15:00Z",
   "notes": "Architecture pivoted to Astro 6 server runtime + Actions; second review pass: dual-layer headers (public/_headers + middleware.ts for Static Assets that bypass Worker), public/.assetsignore for _worker.js, CI E2E writes .dev.vars explicitly (Cloudflare workerd doesn't auto-fallback to process.env), all CF Pages residuals cleaned up.",
   "tasks": [
     {
       "id": "1",
       "subject": "Task 1: 项目骨架与工具链 (server + cloudflare adapter)",
-      "status": "pending",
+      "status": "completed",
       "metadata": {
         "files": [
           "package.json",
@@ -32,7 +32,7 @@
     {
       "id": "2",
       "subject": "Task 2: Cloudflare Workers 部署配置 + 首次部署(仅 *.workers.dev)",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": ["1"],
       "metadata": {
         "files": ["public/robots.txt", "public/favicon.svg", "src/pages/index.astro"],

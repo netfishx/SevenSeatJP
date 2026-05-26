@@ -1,0 +1,22 @@
+{
+  "site.name": "SevenSeatJP",
+  "home.title": "東京・京都・白馬の高級ハイヤー手配",
+  "home.subtitle": "中国語対応・空港送迎・チャーター・スキー送迎",
+  "nav.home": "ホーム",
+  "nav.about": "会社概要",
+  "nav.airport": "空港送迎",
+  "nav.charter": "チャーター",
+  "nav.ski": "白馬スキー",
+  "nav.rental": "レンタル",
+  "nav.vehicles": "車両",
+  "nav.pricing": "料金表",
+  "nav.faq": "FAQ",
+  "nav.inquiry": "お問合せ",
+  "form.submit": "問合せを送信",
+  "form.error.invalid_payload": "入力内容をご確認ください",
+  "form.error.payload_too_large": "リクエストサイズが大きすぎます",
+  "form.error.turnstile_failed": "認証に失敗しました。再度お試しください",
+  "form.error.turnstile_unavailable": "認証サービスに一時的に接続できません。LINE からご連絡ください",
+  "form.error.email_send_failed": "送信に失敗しました。LINE からご連絡ください",
+  "form.success": "お問合せを受け付けました。24時間以内にご返信いたします。"
+}
