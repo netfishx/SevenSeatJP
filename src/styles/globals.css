@@ -30,11 +30,14 @@
   --color-gold-soft: oklch(0.62 0.085 50 / 0.12);
   --color-accent: oklch(0.62 0.085 50);
 
-  /* === Type families === */
-  --font-display:
-    "Spectral", "Shippori Mincho", "Noto Serif JP", "Source Han Serif SC", serif;
-  --font-display-jp:
-    "Shippori Mincho", "Noto Serif JP", "Source Han Serif SC", serif;
+  /* === Type families ===
+   * Defaults target Japanese. The :lang(zh-CN) block in @layer base
+   * rebinds these same variables to Simplified Chinese stacks so all
+   * downstream Tailwind utilities (.font-display, .font-display-jp,
+   * `font-body`-derived html font-family) flip automatically without
+   * fighting cascade order. */
+  --font-display: "Spectral", "Shippori Mincho", "Noto Serif JP", serif;
+  --font-display-jp: "Shippori Mincho", "Noto Serif JP", serif;
   --font-body:
     "Zen Kaku Gothic New", "Noto Sans JP", system-ui, -apple-system,
     "Helvetica Neue", sans-serif;
@@ -97,6 +100,23 @@
   :lang(ja) h2,
   :lang(ja) h3 {
     font-family: var(--font-display-jp);
+  }
+
+  /* Simplified Chinese — rebind font-family variables so the entire
+   * cascade switches to SC stacks (avoids mixing Japanese kanji glyphs
+   * into zh text, which caused per-character size variance). Also
+   * disable `palt`, a Japanese OpenType proportional-alternates
+   * feature that compresses CJK punctuation; on zh it crowds 全角标点. */
+  :lang(zh-CN) {
+    --font-display: "Spectral", "Noto Serif SC", "Songti SC", "STSong", serif;
+    --font-display-jp: "Noto Serif SC", "Songti SC", "STSong", serif;
+    --font-body:
+      "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui,
+      -apple-system, sans-serif;
+  }
+
+  :lang(zh-CN) body {
+    font-feature-settings: normal;
   }
 
   ::selection {

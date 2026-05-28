@@ -78,11 +78,23 @@ const year = new Date().getFullYear();
       - 400: default body, h1–h4, captions, labels
       - 300: .ordinal utility only (serif tabular numerals)
       Add a weight ONLY when a real component starts using it.
+
+      Font stacks are split by locale to avoid mixing Japanese kanji
+      glyphs into Simplified Chinese text (and vice versa). The zh
+      side uses Noto Serif/Sans SC; the ja side keeps Shippori Mincho
+      + Zen Kaku Gothic New. Spectral is shared (Latin/numerals only).
     */}
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Spectral:wght@400&family=Shippori+Mincho&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap"
-    />
+    {locale === 'zh' ? (
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Spectral:wght@400&family=Noto+Serif+SC:wght@400&family=Noto+Sans+SC:wght@400&display=swap"
+      />
+    ) : (
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Spectral:wght@400&family=Shippori+Mincho&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap"
+      />
+    )}
 
     <script>
       import '@/lib/attribution.client';
