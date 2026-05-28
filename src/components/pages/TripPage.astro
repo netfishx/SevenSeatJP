@@ -17,7 +17,8 @@ import Container from '@/components/ui/Container.astro';
 import Section from '@/components/ui/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { type Locale, t } from '@/i18n/t';
-import { photoCredits } from '@/lib/credits';
+import { getPhotoAlt } from '@/lib/credits';
+import { inquiryHref as buildInquiryHref } from '@/lib/routes';
 
 interface RouteProps {
   kind: 'route';
@@ -42,7 +43,7 @@ const heroByCategory = {
 const categoryKey =
   kind === 'route' ? entry.data.category : entry.data.type;
 const hero = heroByCategory[categoryKey];
-const alt = photoCredits.find((c) => c.file === hero.file)?.alt[locale] ?? '';
+const alt = getPhotoAlt(hero.file, locale);
 
 const eyebrowKeyByCategory = {
   airport: 'trip.browse.group.airport',
@@ -72,11 +73,7 @@ const seoTitle =
     ? `${entry.data.from[locale]} → ${entry.data.to[locale]}`
     : entry.data.title[locale];
 
-const serviceQuery = categoryKey;
-const inquiryHref =
-  locale === 'zh'
-    ? `/zh/inquiry?service=${serviceQuery}`
-    : `/inquiry?service=${serviceQuery}`;
+const inquiryHref = `${buildInquiryHref(locale)}?service=${categoryKey}`;
 
 const spine = entry.data.spine;
 

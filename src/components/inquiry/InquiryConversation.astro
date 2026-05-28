@@ -199,7 +199,7 @@ const continueClass =
         {continueLabel}
         <span aria-hidden="true" class="transition-transform group-hover:translate-x-1">→</span>
       </button>
-      <button type="button" data-next="3" class="text-sm text-text-muted hover:text-text underline underline-offset-4 min-h-11 self-start">
+      <button type="button" data-next="3" data-skip class="text-sm text-text-muted hover:text-text underline underline-offset-4 min-h-11 self-start">
         {skipLabel}
       </button>
     </div>
@@ -264,7 +264,7 @@ const continueClass =
           type="email"
           id="email"
           name="email"
-          maxlength="200"
+          maxlength="254"
           class="bg-surface border border-border rounded-[2px] px-3 min-h-11 text-text"
         />
       </div>

@@ -37,9 +37,7 @@ if (form) {
     btn.addEventListener('click', () => {
       const nextIdx = Number(btn.dataset.next);
       const currSection = sections[nextIdx - 2];
-      const isSkip =
-        btn.textContent?.trim().includes('飛ばす') ||
-        btn.textContent?.trim().includes('跳过');
+      const isSkip = btn.hasAttribute('data-skip');
 
       // Validate visible required fields in the current section before
       // revealing the next, unless this is the explicit Skip control.
@@ -257,16 +255,32 @@ if (form) {
         const ctaLabel = channelCtaLabel[channelKey][locale];
         const ctaHref = data.deeplink ?? '';
 
+        // Build via DOM methods (not innerHTML) so any future user-controlled
+        // value added to this template can't accidentally inject script.
         const success = document.createElement('section');
         success.className = 'flex flex-col gap-6 sm:gap-8 py-12 sm:py-16';
-        const ctaHtml = ctaHref
-          ? `<a href="${ctaHref}" target="_blank" rel="noopener" class="${BUTTON_STYLES.quiet} self-start">${ctaLabel} →</a>`
-          : '';
-        success.innerHTML = `
-          <h2 class="font-display text-3xl sm:text-5xl leading-[1.1]">${successHeadline[locale]}</h2>
-          <p class="text-text-muted leading-relaxed max-w-xl">${body}</p>
-          ${ctaHtml}
-        `;
+
+        const heading = document.createElement('h2');
+        heading.className = 'font-display text-3xl sm:text-5xl leading-[1.1]';
+        heading.textContent = successHeadline[locale];
+
+        const para = document.createElement('p');
+        para.className = 'text-text-muted leading-relaxed max-w-xl';
+        para.textContent = body;
+
+        success.appendChild(heading);
+        success.appendChild(para);
+
+        if (ctaHref) {
+          const cta = document.createElement('a');
+          cta.href = ctaHref;
+          cta.target = '_blank';
+          cta.rel = 'noopener';
+          cta.className = `${BUTTON_STYLES.quiet} self-start`;
+          cta.textContent = `${ctaLabel} →`;
+          success.appendChild(cta);
+        }
+
         form.replaceWith(success);
         return;
       }

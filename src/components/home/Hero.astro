@@ -2,15 +2,16 @@
 import heroImg from '@/assets/photos/home-hero.jpg';
 import Button from '@/components/ui/Button.astro';
 import { type Locale, t } from '@/i18n/t';
-import { photoCredits } from '@/lib/credits';
+import { getPhotoAlt } from '@/lib/credits';
+import { inquiryHref as buildInquiryHref } from '@/lib/routes';
 import { Image } from 'astro:assets';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
-const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
-const alt = photoCredits.find((c) => c.file === 'home-hero.jpg')?.alt[locale] ?? '';
+const inquiryHref = buildInquiryHref(locale);
+const alt = getPhotoAlt('home-hero.jpg', locale);
 
 const eyebrow = locale === 'zh' ? '私享专车 · 双语司机' : 'Private hire · Bilingual driver';
 const headlineJa1 = '七人乗りで、';

@@ -5,14 +5,15 @@ import Container from '@/components/ui/Container.astro';
 import Section from '@/components/ui/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { type Locale, t } from '@/i18n/t';
-import { photoCredits } from '@/lib/credits';
+import { getPhotoAlt } from '@/lib/credits';
+import { localePrefix } from '@/lib/routes';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
-const prefix = locale === 'zh' ? '/zh' : '';
-const alt = photoCredits.find((c) => c.file === 'about-hero.jpg')?.alt[locale] ?? '';
+const prefix = localePrefix(locale);
+const alt = getPhotoAlt('about-hero.jpg', locale);
 
 const titleJa = { primary: '会社概要、', secondary: 'そして、はじまり。' };
 const titleZh = { primary: '关于我们,', secondary: '与一段日常的开始。' };

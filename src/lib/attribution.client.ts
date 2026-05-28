@@ -112,7 +112,7 @@ function readCurrent(): { attr: Attr; hasUtm: boolean } {
   return { hasUtm, attr: clipAttr(attr) };
 }
 
-(function init() {
+{
   const { attr, hasUtm } = readCurrent();
   if (!safeGet(sessionStorage, KEY_FIRST)) {
     safeSet(sessionStorage, KEY_FIRST, JSON.stringify(attr));
@@ -130,7 +130,7 @@ function readCurrent(): { attr: Attr; hasUtm: boolean } {
       }
     }
   }
-})();
+}
 
 export function readAttribution(): {
   firstTouch: Attr | null;

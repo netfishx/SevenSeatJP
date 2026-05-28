@@ -32,9 +32,9 @@ async function sendInternalEmail(
   safeFrom: string,
   safeTo: string,
   subjectPrefix: string,
+  html: string,
 ): Promise<SendResult> {
   try {
-    const html = await render(InquiryInternalEmail(input));
     return await resend.emails.send({
       from: `SevenSeatJP <${env.INQUIRY_FROM_EMAIL}>`,
       to: env.COMPANY_INBOX,
@@ -81,8 +81,9 @@ export const server = {
     accept: 'json',
     input: InquirySchema,
     handler: async (input, ctx) => {
-      let verifyOk = false;
-      try {
+      // Render the internal email body in parallel with the Turnstile
+      // verify fetch — both are independent and each costs 50–200ms.
+      const verifyPromise = (async () => {
         const verifyRes = await fetch(
           'https://challenges.cloudflare.com/turnstile/v0/siteverify',
           {
@@ -96,7 +97,17 @@ export const server = {
           },
         );
         const verify = (await verifyRes.json()) as { success: boolean };
-        verifyOk = verify.success === true;
+        return verify.success === true;
+      })();
+      const internalHtmlPromise = render(InquiryInternalEmail(input));
+
+      let verifyOk = false;
+      let internalHtml: string;
+      try {
+        [verifyOk, internalHtml] = await Promise.all([
+          verifyPromise,
+          internalHtmlPromise,
+        ]);
       } catch (e) {
         console.error('turnstile_verify_unreachable', e);
         throw new ActionError({
@@ -123,6 +134,7 @@ export const server = {
         safeFrom,
         safeTo,
         subjectPrefix,
+        internalHtml,
       );
       if (internal.error) {
         console.error('inquiry_internal_send_failed', internal.error);

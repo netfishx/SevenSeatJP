@@ -10,16 +10,17 @@ import Container from '@/components/ui/Container.astro';
 import Section from '@/components/ui/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { type Locale, t } from '@/i18n/t';
-import { photoCredits } from '@/lib/credits';
+import { getPhotoAlt } from '@/lib/credits';
+import { inquiryHref as buildInquiryHref } from '@/lib/routes';
 import { Image } from 'astro:assets';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
-const inquiryHref = locale === 'zh' ? '/zh/inquiry' : '/inquiry';
-const fujiAlt = photoCredits.find((c) => c.file === 'home-fuji.jpg')?.alt[locale] ?? '';
-const cabinAlt = photoCredits.find((c) => c.file === 'cabin-detail.png')?.alt[locale] ?? '';
+const inquiryHref = buildInquiryHref(locale);
+const fujiAlt = getPhotoAlt('home-fuji.jpg', locale);
+const cabinAlt = getPhotoAlt('cabin-detail.png', locale);
 
 const leadParagraph =
   locale === 'zh'

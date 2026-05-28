@@ -43,7 +43,7 @@ const isOdd = index % 2 === 1;
     isOdd && 'lg:row-start-1 lg:col-start-1',
   ]}>
     <span class="ordinal text-text-muted text-base tabular">
-      {String(index + 1).padStart(2, '0')} / 0{entry.data.order ?? 0}
+      {String(index + 1).padStart(2, '0')} / {String(entry.data.order).padStart(2, '0')}
     </span>
     <h3 class="font-display text-3xl sm:text-4xl text-text">{entry.data.name[locale]}</h3>
 

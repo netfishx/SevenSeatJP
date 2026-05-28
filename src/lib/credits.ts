@@ -5,6 +5,8 @@
  *
  * Re-export from this module if you ever surface credits in a /colophon page.
  */
+import type { Locale } from '@/i18n/t';
+
 export interface PhotoCredit {
   file: string;
   photographer: string;
@@ -107,3 +109,19 @@ export const photoCredits: ReadonlyArray<PhotoCredit> = [
     },
   },
 ] as const;
+
+/**
+ * Look up alt text for a photo by file name. Throws at build time if no
+ * credit exists for the file — surfacing a11y regressions instead of
+ * silently rendering an empty `alt`.
+ */
+export function getPhotoAlt(file: string, locale: Locale): string {
+  const credit = photoCredits.find((c) => c.file === file);
+  if (!credit) {
+    throw new Error(
+      `[credits] no photo credit registered for "${file}". ` +
+        'Add an entry to photoCredits or fix the file name.',
+    );
+  }
+  return credit.alt[locale];
+}

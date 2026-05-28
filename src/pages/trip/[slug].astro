@@ -5,8 +5,10 @@ import { getCollection } from 'astro:content';
 import TripPage from '@/components/pages/TripPage.astro';
 
 export async function getStaticPaths() {
-  const routes = await getCollection('routes');
-  const packages = await getCollection('packages');
+  const [routes, packages] = await Promise.all([
+    getCollection('routes'),
+    getCollection('packages'),
+  ]);
   return [
     ...routes.map((entry) => ({
       params: { slug: entry.id },
